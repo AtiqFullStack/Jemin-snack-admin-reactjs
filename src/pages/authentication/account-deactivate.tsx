@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { Button, Flex, Switch, Tooltip, Typography, theme } from 'antd';
 import { MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { Logo } from '../../components';

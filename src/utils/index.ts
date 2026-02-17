@@ -1,12 +1,13 @@
 export const getNameInitials = (fullName: string): string => {
-  const fInitial = Array.from(fullName.split(' ')[0])[0],
-    lInitial = Array.from(fullName.split(' ')[1])[0];
-
+  if (!fullName) return '';
+  const parts = fullName.split(' ');
+  const fInitial = Array.from(parts[0])?.[0] ?? '';
+  const lInitial = Array.from(parts[1] ?? '')?.[0] ?? '';
   return `${fInitial}${lInitial}`;
 };
 
 export const colourNameToHex = (color: string): string => {
-  const colours: any = {
+  const colours: Record<string, string> = {
     aliceblue: '#f0f8ff',
     antiquewhite: '#faebd7',
     aqua: '#00ffff',

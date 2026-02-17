@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CSSProperties } from 'react';
 
 import './styles.css';
+import { STRINGS } from '../../../assets';
 
 type LogoProps = {
   color: CSSProperties['color'];
@@ -31,7 +32,7 @@ export const Logo = ({
     <Link to={href || '#'} className="logo-link">
       <Flex gap={others.gap || 'small'} align="center" {...others}>
         <img
-          src="/logo-no-background.png"
+          src={STRINGS.PROJECT.LOGO}
           alt="design sparx logo"
           height={imgSize?.h || 48}
         />
@@ -46,7 +47,7 @@ export const Logo = ({
             borderRadius,
           }}
         >
-          Antd Admin
+          {STRINGS.PROJECT.NAME}
         </Typography.Title>
       </Flex>
     </Link>
@@ -68,7 +69,7 @@ export const Logo = ({
           borderRadius,
         }}
       >
-        Antd Admin
+        {STRINGS.PROJECT.NAME}
       </Typography.Title>
     </Flex>
   );

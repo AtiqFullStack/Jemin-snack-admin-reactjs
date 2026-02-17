@@ -12,6 +12,7 @@ import { Card, PageHeader } from '../components';
 import { createElement } from 'react';
 import { DASHBOARD_ITEMS, PATH_GITHUB } from '../constants';
 import { Link } from 'react-router-dom';
+import { STRINGS } from '../assets';
 
 const { Title, Text } = Typography;
 
@@ -82,7 +83,7 @@ export const AboutPage = () => {
         <Card>
           <Flex vertical gap="small">
             <Title level={3} className="m-0">
-              Antd Admin
+              {STRINGS.PROJECT.NAME}
             </Title>
             <Text>
               A dynamic and versatile multipurpose dashboard template built

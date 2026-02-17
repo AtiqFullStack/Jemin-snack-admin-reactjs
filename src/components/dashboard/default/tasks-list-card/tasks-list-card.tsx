@@ -26,7 +26,7 @@ import './styles.css';
 type Props = {
   data?: Tasks[];
   loading?: boolean;
-  error?: any;
+  error?: unknown;
 } & CardProps;
 
 export const TasksListCard = ({ data, error, loading, ...others }: Props) => {
@@ -76,7 +76,7 @@ export const TasksListCard = ({ data, error, loading, ...others }: Props) => {
                 <Flex vertical gap="middle">
                   <Flex justify="space-between" align="center">
                     <Typography.Text strong className="text-capitalize">
-                      {item.name.slice(0, 20)}...
+                      {item.name?.slice(0, 20) ?? ''}...
                     </Typography.Text>
                     <Tag className="text-capitalize">
                       {getTaskCategoryLabel(item.category)}

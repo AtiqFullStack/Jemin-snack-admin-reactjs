@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment */
 import {
   Alert,
   Button,
@@ -593,6 +594,7 @@ export const EcommerceDashboardPage = () => {
     loading: topSellersLoading,
   } = useFetchData<TopSeller[]>('/antd/sellers/top');
   const topSellers = topSellersRaw ?? [];
+  console.log(topSellersRaw);
 
   // Fetch recent orders data with proper typing
   const {

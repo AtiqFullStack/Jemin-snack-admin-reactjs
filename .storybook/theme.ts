@@ -4,10 +4,10 @@ import { create } from '@storybook/theming/create';
 
 export default create({
   base: 'light',
-  brandTitle: 'Antd Dashboard',
+  brandTitle: 'JEMINI SNACKS',
   brandUrl: 'https://antd-multipurpose-dashboard.netlify.app/',
   brandTarget: '_blank',
 
   //
-  colorPrimary: '#2378c3',
+  colorPrimary: '#c38823ff',
 });

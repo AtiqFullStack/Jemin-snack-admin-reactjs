@@ -1,153 +1,116 @@
-import { Button, Col, Flex, Image, Row, theme, Typography } from 'antd';
+import { Button, Col, Flex, Image, Row, theme, Typography, Tag } from 'antd';
 import { useMediaQuery } from 'react-responsive';
-import {
-  PATH_AUTH,
-  PATH_CORPORATE,
-  PATH_DASHBOARD,
-  PATH_ERROR,
-  PATH_GITHUB,
-  PATH_USER_PROFILE,
-} from '../constants';
 import { Link } from 'react-router-dom';
 import {
-  AntDesignOutlined,
-  AppstoreOutlined,
-  BorderOutlined,
-  CalendarOutlined,
-  EditOutlined,
-  FileOutlined,
-  FormatPainterOutlined,
-  GithubOutlined,
-  LoginOutlined,
-  MergeCellsOutlined,
-  PieChartOutlined,
+  PhoneOutlined,
+  TeamOutlined,
+  FunnelPlotOutlined,
+  FileTextOutlined,
+  SolutionOutlined,
+  ClockCircleOutlined,
+  SafetyCertificateOutlined,
+  BarChartOutlined,
   RocketFilled,
-  TableOutlined,
+  LoginOutlined,
 } from '@ant-design/icons';
 import { Card, Container } from '../components';
 import { createElement, CSSProperties } from 'react';
+import { PATH_AUTH, PATH_DASHBOARD } from '../constants';
 
 const { Title, Text } = Typography;
 
-const DASHBOARDS = [
+// ✅ Jemini modules (replace links with your actual routes)
+const MODULES = [
   {
-    title: 'bidding',
-    link: PATH_DASHBOARD.bidding,
-    image: '/showcase/dashboard/bidding.png',
+    title: 'Leads',
+    link: PATH_DASHBOARD.default, // change to PATH_DASHBOARD.leads
+    image: '/showcase/jemini/leads.png',
   },
   {
-    title: 'default',
-    link: PATH_DASHBOARD.default,
-    image: '/showcase/dashboard/default.png',
+    title: 'Customers',
+    link: PATH_DASHBOARD.default, // change to PATH_DASHBOARD.customers
+    image: '/showcase/jemini/customers.png',
   },
   {
-    title: 'ecommerce',
-    link: PATH_DASHBOARD.ecommerce,
-    image: '/showcase/dashboard/ecommerce.png',
+    title: 'Calls & Recordings',
+    link: PATH_DASHBOARD.default, // change to PATH_DASHBOARD.calls
+    image: '/showcase/jemini/calls.png',
   },
   {
-    title: 'learning',
-    link: PATH_DASHBOARD.learning,
-    image: '/showcase/dashboard/learning.png',
+    title: 'Deals / Pipeline',
+    link: PATH_DASHBOARD.default, // change to PATH_DASHBOARD.pipeline
+    image: '/showcase/jemini/pipeline.png',
   },
   {
-    title: 'logistics',
-    link: PATH_DASHBOARD.logistics,
-    image: '/showcase/dashboard/logistics.png',
+    title: 'Tasks & Follow-ups',
+    link: PATH_DASHBOARD.default, // change to PATH_DASHBOARD.tasks
+    image: '/showcase/jemini/tasks.png',
   },
   {
-    title: 'marketing',
-    link: PATH_DASHBOARD.marketing,
-    image: '/showcase/dashboard/marketing.png',
+    title: 'Contracts',
+    link: PATH_DASHBOARD.default, // change to PATH_DASHBOARD.contracts
+    image: '/showcase/jemini/contracts.png',
   },
   {
-    title: 'projects',
-    link: PATH_DASHBOARD.projects,
-    image: '/showcase/dashboard/projects.png',
+    title: 'Vendors & Visits',
+    link: PATH_DASHBOARD.default, // change to PATH_DASHBOARD.vendors
+    image: '/showcase/jemini/vendors.png',
   },
   {
-    title: 'social',
-    link: PATH_DASHBOARD.social,
-    image: '/showcase/dashboard/social.png',
-  },
-];
-
-const APPS = [
-  {
-    title: 'corporate',
-    link: PATH_CORPORATE.team,
-    image: '/showcase/corporate/team.png',
-  },
-  {
-    title: 'user profile',
-    link: PATH_USER_PROFILE.details,
-    image: '/showcase/profile/details.png',
-  },
-  {
-    title: 'auth',
-    link: PATH_AUTH.signin,
-    image: '/showcase/auth/login.png',
-  },
-  {
-    title: 'errors',
-    link: PATH_ERROR.error400,
-    image: '/showcase/errors/400.png',
+    title: 'Reports',
+    link: PATH_DASHBOARD.default, // change to PATH_DASHBOARD.reports
+    image: '/showcase/jemini/reports.png',
   },
 ];
 
 const FEATURES = [
   {
-    title: 'customizable theme',
+    title: 'Call logging + recording',
     description:
-      'We have included a configurable theme provider to customize your elegant admin.',
-    icon: FormatPainterOutlined,
+      'Sales team calls get logged automatically with notes and recordings (as per permissions).',
+    icon: PhoneOutlined,
   },
   {
-    title: '50+ Page Templates',
-    description: 'We have 50+ pages to make your development easier.',
-    icon: FileOutlined,
-  },
-  {
-    title: '60+ UI components',
-    description: 'Almost 60+ UI Components being given with Antd Admin Pack.',
-    icon: AppstoreOutlined,
-  },
-  {
-    title: 'Ant Design',
-    description: 'Its been made with Ant Design and full responsive layout.',
-    icon: AntDesignOutlined,
-  },
-  {
-    title: '500+ font icons',
+    title: 'Lead → customer journey',
     description:
-      'Lots of Icon Fonts are included here in the package of Antd Admin.',
-    icon: BorderOutlined,
+      'Track every lead from first contact to conversion with complete activity history.',
+    icon: FunnelPlotOutlined,
   },
   {
-    title: 'Slick Carousel',
-    description: 'The Last React Carousel You will Ever Need!.',
-    icon: MergeCellsOutlined,
-  },
-  {
-    title: 'Easy to Customize',
-    description: 'Customization will be easy as we understand your pain.',
-    icon: EditOutlined,
-  },
-  {
-    title: 'Lots of Chart Options',
+    title: 'Sales pipeline',
     description:
-      'You name it and we have it, Yes lots of variations for Charts.',
-    icon: PieChartOutlined,
+      'Stage-wise deal management with expected value, close date, and probability.',
+    icon: SolutionOutlined,
   },
   {
-    title: 'Lots of Table Examples',
-    description: 'Data Tables are initial requirement and we added them.',
-    icon: TableOutlined,
+    title: 'Tasks & reminders',
+    description:
+      'Follow-ups never slip — assign tasks, set reminders, and track completion.',
+    icon: ClockCircleOutlined,
   },
   {
-    title: 'Calendar Design',
-    description: 'Calendar is available with our package & in nice design.',
-    icon: CalendarOutlined,
+    title: 'Contracts & documents',
+    description:
+      'Central place for contracts, quotations, and customer documents with version control.',
+    icon: FileTextOutlined,
+  },
+  {
+    title: 'Roles & permissions',
+    description:
+      'Control access per role (Admin, Sales, Manager, etc.) and keep data secure.',
+    icon: SafetyCertificateOutlined,
+  },
+  {
+    title: 'Teams & performance',
+    description:
+      'Monitor individual/team performance: calls, meetings, conversions, revenue.',
+    icon: TeamOutlined,
+  },
+  {
+    title: 'Analytics & reports',
+    description:
+      'Daily/weekly/monthly dashboards for management and operations.',
+    icon: BarChartOutlined,
   },
 ];
 
@@ -155,6 +118,7 @@ export const HomePage = () => {
   const {
     token: { colorPrimary },
   } = theme.useToken();
+
   const isMobile = useMediaQuery({ maxWidth: 769 });
   const isTablet = useMediaQuery({ maxWidth: 992 });
 
@@ -168,53 +132,53 @@ export const HomePage = () => {
   return (
     <div
       style={{
-        // backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.35) 40%, rgba(255, 255, 255, 1) 40%), url('/grid-3d.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         minHeight: '100vh',
       }}
     >
+      {/* HERO */}
       <Flex
         vertical
         align="center"
         justify="center"
         style={{
-          height: isTablet ? 600 : 800,
+          height: isTablet ? 620 : 820,
           width: '100%',
           padding: isMobile ? '2rem 1rem' : '5rem 0',
-          // backgroundColor: 'rgba(255, 255, 255, 0.85)',
         }}
       >
         <Container>
-          <Row style={{ alignItems: 'center' }}>
+          <Row style={{ alignItems: 'center' }} gutter={[24, 24]}>
             <Col lg={12}>
-              <Text
-                style={{
-                  color: colorPrimary,
-                  fontSize: 16,
-                  fontWeight: 700,
-                }}
-              >
-                <RocketFilled /> Kick start your project with
-              </Text>
+              <Flex align="center" gap={10} style={{ marginBottom: 10 }}>
+                <Tag color="blue">Jemini CRM</Tag>
+                <Text
+                  style={{ color: colorPrimary, fontSize: 14, fontWeight: 700 }}
+                >
+                  <RocketFilled /> Built for sales teams who sell on calls
+                </Text>
+              </Flex>
+
               <Title
                 style={{
-                  fontSize: isMobile ? 36 : 40,
+                  fontSize: isMobile ? 34 : 44,
                   fontWeight: 900,
-                  margin: '1.5rem 0',
+                  margin: '0.75rem 0 1rem',
+                  lineHeight: 1.1,
                 }}
               >
-                A dynamic and versatile multipurpose{' '}
-                <span className="text-highlight">dashboard</span> template built
-                using <span className="text-highlight">React</span>,{' '}
-                <span className="text-highlight">Vite</span>,{' '}
-                <span className="text-highlight">Ant Design</span>, and{' '}
-                <span className="text-highlight">Storybook</span>{' '}
+                Manage <span className="text-highlight">Leads</span>, track{' '}
+                <span className="text-highlight">Calls</span>, and close more{' '}
+                <span className="text-highlight">Deals</span> — in one CRM
               </Title>
-              <Text style={{ fontSize: 20, marginBottom: '1.5rem' }}>
-                <span className="text-highlight fw-bolder">60+</span> ready made
-                components to use.
+
+              <Text style={{ fontSize: isMobile ? 16 : 18, display: 'block' }}>
+                Jemini helps your team handle vendors, customers, contracts,
+                follow-ups, and call recordings with role-based access and clean
+                reporting.
               </Text>
+
               <Flex
                 gap="middle"
                 vertical={isMobile}
@@ -227,90 +191,81 @@ export const HomePage = () => {
                     size="large"
                     block={isMobile}
                   >
-                    Live preview
-                  </Button>
-                </Link>
-                <Link to={PATH_GITHUB.repo}>
-                  <Button
-                    icon={<GithubOutlined />}
-                    type="default"
-                    size="large"
-                    block={isMobile}
-                  >
-                    Give us a star
+                    Login to Jemini
                   </Button>
                 </Link>
               </Flex>
+
+              <Flex gap={10} wrap style={{ marginTop: 18 }}>
+                <Tag>Call Recording</Tag>
+                <Tag>Pipeline</Tag>
+                <Tag>Tasks</Tag>
+                <Tag>Contracts</Tag>
+                <Tag>Reports</Tag>
+              </Flex>
             </Col>
+
             {!isTablet && (
               <Col lg={12}>
-                <Image src="/landing-frame.png" alt="dashboard image snippet" />
+                {/* Replace with your actual CRM screenshot */}
+                <Image
+                  preview={false}
+                  src="https://as2.ftcdn.net/v2/jpg/17/70/20/35/1000_F_1770203548_zg5rzJ9jOVk1Ylc4W3GKUhxCA1zZwNox.jpg"
+                  alt="Jemini CRM dashboard"
+                  style={{ borderRadius: 12 }}
+                />
               </Col>
             )}
           </Row>
         </Container>
       </Flex>
+
+      {/* MODULES */}
       <Container style={sectionStyles}>
         <Title
           level={2}
           className="text-center"
           style={{ marginBottom: '2rem' }}
         >
-          8 dashboard pages available
+          Everything your sales team needs
         </Title>
+
         <Row
           gutter={[
             { xs: 8, sm: 16, md: 24, lg: 32 },
             { xs: 8, sm: 16, md: 24, lg: 32 },
           ]}
         >
-          {DASHBOARDS.map((dashboard) => (
-            <Col key={dashboard.title} xs={24} lg={8} xl={6}>
-              <Link to={dashboard.link}>
-                <Card
-                  hoverable
-                  cover={<img src={dashboard.image} alt={dashboard.title} />}
-                >
-                  <Text className="m-0 text-capitalize">{dashboard.title}</Text>
+          {MODULES.map((m) => (
+            <Col key={m.title} xs={24} sm={12} lg={8} xl={6}>
+              <Link to={m.link}>
+                <Card hoverable cover={<img src={m.image} alt={m.title} />}>
+                  <Text className="m-0 text-capitalize">{m.title}</Text>
                 </Card>
               </Link>
             </Col>
           ))}
         </Row>
+
+        <Flex justify="center" style={{ marginTop: 24 }}>
+          <Link to={PATH_AUTH.signin}>
+            <Button type="primary" size="large">
+              Get Started
+            </Button>
+          </Link>
+        </Flex>
       </Container>
+
+      {/* FEATURES */}
       <Container style={sectionStyles}>
         <Title
           level={2}
           className="text-center"
           style={{ marginBottom: '2rem' }}
         >
-          3+ pages available
+          Built for real-world selling
         </Title>
-        <Row
-          gutter={[
-            { xs: 8, sm: 16, md: 24, lg: 32 },
-            { xs: 8, sm: 16, md: 24, lg: 32 },
-          ]}
-        >
-          {APPS.map((app) => (
-            <Col key={app.title} xs={24} sm={12} lg={8} xl={6}>
-              <Link to={app.link}>
-                <Card hoverable cover={<img src={app.image} alt={app.title} />}>
-                  <Text className="m-0 text-capitalize">{app.title}</Text>
-                </Card>
-              </Link>
-            </Col>
-          ))}
-        </Row>
-      </Container>
-      <Container style={sectionStyles}>
-        <Title
-          level={2}
-          className="text-center"
-          style={{ marginBottom: '2rem' }}
-        >
-          Other Amazing Features & Flexibility Provided
-        </Title>
+
         <Row
           gutter={[
             { xs: 8, sm: 16, md: 24, lg: 32 },
@@ -320,11 +275,15 @@ export const HomePage = () => {
           {FEATURES.map((feature) => (
             <Col key={feature.title} xs={24} md={12} lg={8}>
               <Card style={{ height: '100%' }}>
-                <Flex vertical>
+                <Flex vertical gap={6}>
                   {createElement(feature.icon, {
                     style: { fontSize: 32, color: colorPrimary },
                   })}
-                  <Title level={5} className="text-capitalize">
+                  <Title
+                    level={5}
+                    className="text-capitalize"
+                    style={{ marginBottom: 0 }}
+                  >
                     {feature.title}
                   </Title>
                   <Text>{feature.description}</Text>
@@ -334,26 +293,30 @@ export const HomePage = () => {
           ))}
         </Row>
       </Container>
+
+      {/* CTA */}
       <Card
         style={{
-          width: isMobile ? '95%' : 500,
-          margin: '0 auto',
+          width: isMobile ? '95%' : 560,
+          margin: '0 auto 80px',
           textAlign: 'center',
         }}
       >
         <Title level={4} style={{ marginTop: 0 }}>
-          Haven't found an answer to your question?
+          Want Jemini CRM for your team?
         </Title>
-        <Text style={{ marginTop: '1rem' }}>
-          Connect with us either on discord or email us
+        <Text style={{ marginTop: '1rem', display: 'block' }}>
+          Share your requirements — we’ll help you configure roles, pipeline,
+          and call recording.
         </Text>
-        <Flex gap="middle" justify="center" style={{ marginTop: '1rem' }}>
-          <Button href="mailto:kelvin.kiprop96@gmail.com" type="primary">
-            Email
+
+        <Flex gap="middle" justify="center" style={{ marginTop: '1rem' }} wrap>
+          <Button href="mailto:support@jeminicrm.com" type="primary">
+            Contact Support
           </Button>
-          <Button target="_blank" href={`${PATH_GITHUB.repo}/issues`}>
-            Submit an issue
-          </Button>
+          <Link to={PATH_AUTH.signin}>
+            <Button>Login</Button>
+          </Link>
         </Flex>
       </Card>
     </div>

@@ -1,202 +1,132 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useRef, useState } from 'react';
 import {
   Card,
-  GetStartedCard,
-  Loader,
   NotificationsCard,
   PageHeader,
-  ProjectsCard,
   TasksChartCard,
   TasksListCard,
   WeeklyActivityCard,
 } from '../../components';
 import {
-  Alert,
   Button,
-  CardProps,
   Carousel,
   CarouselProps,
-  Checkbox,
   Col,
   DatePicker,
   Drawer,
   Flex,
   Row,
   Slider,
+  Statistic,
+  Tag,
   Typography,
 } from 'antd';
 import {
   HomeOutlined,
-  PieChartOutlined,
+  AppstoreOutlined,
   FilterOutlined,
+  PhoneOutlined,
+  ThunderboltOutlined,
+  RiseOutlined,
 } from '@ant-design/icons';
-import { DASHBOARD_ITEMS } from '../../constants';
-import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
-import { useStylesContext } from '../../context';
-import { useFetchData } from '../../hooks';
-import { Projects, Tasks, Notifications } from '../../types';
 import CountUp from 'react-countup';
-
-const ACTIVITY_DATA = [
-  {
-    day: 'Monday',
-    value: 10,
-  },
-  {
-    day: 'Tuesday',
-    value: 22,
-  },
-  {
-    day: 'Wednesday',
-    value: 25,
-  },
-  {
-    day: 'Thursday',
-    value: 26,
-  },
-  {
-    day: 'Friday',
-    value: 15,
-  },
-  {
-    day: 'Saturday',
-    value: 12,
-  },
-  {
-    day: 'Sunday',
-    value: 3,
-  },
-];
-
-const TASKS_DATA = [
-  {
-    day: 'Monday',
-    value: 33,
-    status: 'new',
-  },
-  {
-    day: 'Tuesday',
-    value: 44,
-    status: 'new',
-  },
-  {
-    day: 'Wednesday',
-    value: 35,
-    status: 'new',
-  },
-  {
-    day: 'Thursday',
-    value: 55,
-    status: 'new',
-  },
-  {
-    day: 'Friday',
-    value: 49,
-    status: 'new',
-  },
-  {
-    day: 'Saturday',
-    value: 63,
-    status: 'new',
-  },
-  {
-    day: 'Sunday',
-    value: 72,
-    status: 'new',
-  },
-  {
-    day: 'Monday',
-    value: 69,
-    status: 'in progress',
-  },
-  {
-    day: 'Tuesday',
-    value: 81,
-    status: 'in progress',
-  },
-  {
-    day: 'Wednesday',
-    value: 34,
-    status: 'in progress',
-  },
-  {
-    day: 'Thursday',
-    value: 25,
-    status: 'in progress',
-  },
-  {
-    day: 'Friday',
-    value: 39,
-    status: 'in progress',
-  },
-  {
-    day: 'Saturday',
-    value: 45,
-    status: 'in progress',
-  },
-  {
-    day: 'Sunday',
-    value: 60,
-    status: 'in progress',
-  },
-];
+import { Helmet } from 'react-helmet-async';
 
 const CAROUSEL_PROPS: CarouselProps = {
   slidesToShow: 1,
   slidesToScroll: 1,
 };
 
-const CARD_PROPS: CardProps = {
-  style: {
-    height: '100%',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-  },
+/* ===========================
+   STATIC DATA
+=========================== */
+
+const KPI_DATA = {
+  newLeads: 48,
+  openDeals: 21,
+  todayCalls: 17,
+  mtdRevenue: 325000,
 };
 
+const ACTIVITY_DATA = [
+  { day: 'Mon', value: 12 },
+  { day: 'Tue', value: 19 },
+  { day: 'Wed', value: 25 },
+  { day: 'Thu', value: 18 },
+  { day: 'Fri', value: 30 },
+  { day: 'Sat', value: 15 },
+  { day: 'Sun', value: 8 },
+];
+
+const PIPELINE_DATA = [
+  { day: 'Mon', value: 10, status: 'new' },
+  { day: 'Tue', value: 15, status: 'qualified' },
+  { day: 'Wed', value: 8, status: 'proposal' },
+  { day: 'Thu', value: 20, status: 'won' },
+  { day: 'Fri', value: 5, status: 'lost' },
+];
+
+const TASKS_DATA = [
+  {
+    id: '1',
+    title: 'Call ABC Pvt Ltd',
+    status: 'in progress',
+  },
+  {
+    id: '2',
+    title: 'Send proposal to TechNova',
+    status: 'new',
+  },
+  {
+    id: '3',
+    title: 'Follow up with referral lead',
+    status: 'new',
+  },
+];
+
+const HOT_LEADS = [
+  { id: '1', name: 'Ravi Kumar', company: 'ABC Pvt Ltd', score: 85 },
+  { id: '2', name: 'Anjali Singh', company: 'TechNova', score: 92 },
+  { id: '3', name: 'Mohit Jain', company: 'FinCorp', score: 78 },
+];
+
+const MEETINGS = [
+  { id: '1', title: 'Demo with ABC Pvt Ltd', time: 'Today 3:00 PM' },
+  { id: '2', title: 'Internal sales sync', time: 'Tomorrow 11:00 AM' },
+];
+const NOTIFICATIONS = [
+  {
+    id: '1',
+    title: 'New lead assigned',
+    message: 'Ravi Kumar assigned to you',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    title: 'Deal moved to Proposal',
+    message: 'TechNova deal updated',
+    created_at: new Date().toISOString(),
+  },
+];
+
+/* ===========================
+   COMPONENT
+=========================== */
+
 export const DefaultDashboardPage = () => {
-  console.log('[DefaultDashboardPage] Rendering');
-  const stylesContext = useStylesContext();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sliderRef1 = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sliderRef2 = useRef<any>(null);
   const [filterOpen, setFilterOpen] = useState(false);
-
-  // Fetch tasks data with proper typing
-  const {
-    data: tasksListDataRaw,
-    error: tasksListError,
-    loading: tasksListLoading,
-  } = useFetchData<Tasks[]>('/antd/tasks');
-  const tasksListData = tasksListDataRaw ?? [];
-
-  // Fetch projects data with proper typing
-  const {
-    data: projectsDataRaw,
-    error: projectsError,
-    loading: projectsLoading,
-  } = useFetchData<Projects[]>('/antd/projects');
-  const projectsData = projectsDataRaw ?? [];
-
-  // Fetch notifications data with proper typing
-  const {
-    data: notificationsDataRaw,
-    error: notificationsError,
-    loading: notificationsLoading,
-  } = useFetchData<Notifications[]>('/antd/notifications');
-  const notificationsData = notificationsDataRaw ?? [];
 
   return (
     <div>
       <Helmet>
-        <title>Default | Antd Dashboard</title>
+        <title>CRM Dashboard | Jemini</title>
       </Helmet>
+
       <PageHeader
-        title="default dashboard"
+        title="CRM Dashboard"
         extra={[
           <Button
             key="filter"
@@ -210,203 +140,130 @@ export const DefaultDashboardPage = () => {
           {
             title: (
               <>
-                <HomeOutlined />
-                <span>home</span>
+                <HomeOutlined /> home
               </>
             ),
-            path: '/',
           },
           {
             title: (
               <>
-                <PieChartOutlined />
-                <span>dashboards</span>
+                <AppstoreOutlined /> crm
               </>
             ),
-            menu: {
-              items: DASHBOARD_ITEMS.map((d) => ({
-                key: d.title,
-                title: <Link to={d.path}>{d.title}</Link>,
-              })),
-            },
           },
-          {
-            title: 'default',
-          },
+          { title: 'dashboard' },
         ]}
       />
-      <Row {...stylesContext?.rowProps}>
+
+      {/* KPI SECTION */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} md={12} lg={6}>
+          <Card>
+            <Typography.Text type="secondary">New Leads</Typography.Text>
+            <Typography.Title level={3}>
+              <CountUp end={KPI_DATA.newLeads} />
+            </Typography.Title>
+            <ThunderboltOutlined />
+          </Card>
+        </Col>
+
+        <Col xs={24} md={12} lg={6}>
+          <Card>
+            <Typography.Text type="secondary">Open Deals</Typography.Text>
+            <Typography.Title level={3}>
+              <CountUp end={KPI_DATA.openDeals} />
+            </Typography.Title>
+            <RiseOutlined />
+          </Card>
+        </Col>
+
+        <Col xs={24} md={12} lg={6}>
+          <Card>
+            <Typography.Text type="secondary">Today Calls</Typography.Text>
+            <Typography.Title level={3}>
+              <CountUp end={KPI_DATA.todayCalls} />
+            </Typography.Title>
+            <PhoneOutlined />
+          </Card>
+        </Col>
+
+        <Col xs={24} md={12} lg={6}>
+          <Card>
+            <Typography.Text type="secondary">Revenue (MTD)</Typography.Text>
+            <Statistic value={KPI_DATA.mtdRevenue} prefix="₹" />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* MAIN GRID */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={18}>
-          <Row {...stylesContext?.rowProps}>
-            <Col xs={24} md={24}>
-              <Row {...stylesContext?.rowProps}>
-                <Col xs={24} lg={18}>
-                  <GetStartedCard {...CARD_PROPS} />
-                </Col>
-                <Col xs={24} lg={6}>
-                  <Row {...stylesContext?.rowProps}>
-                    <Col xs={12} lg={24}>
-                      <Card>
-                        <Flex vertical align="center" gap="middle">
-                          <Typography.Title style={{ margin: 0 }}>
-                            <CountUp end={10} />+
-                          </Typography.Title>
-                          <Typography.Text>Projects</Typography.Text>
-                        </Flex>
-                      </Card>
-                    </Col>
-                    <Col xs={12} lg={24}>
-                      <Card>
-                        <Flex vertical align="center" gap="middle">
-                          <Typography.Title style={{ margin: 0 }}>
-                            <CountUp end={60} />+
-                          </Typography.Title>
-                          <Typography.Text>Tasks</Typography.Text>
-                        </Flex>
-                      </Card>
-                    </Col>
-                  </Row>
-                </Col>
-              </Row>
-            </Col>
+          <Row gutter={[16, 16]}>
             <Col xs={24} lg={12}>
               <WeeklyActivityCard data={ACTIVITY_DATA} />
             </Col>
             <Col xs={24} lg={12}>
-              <TasksChartCard data={TASKS_DATA} />
+              <TasksChartCard data={PIPELINE_DATA} />
             </Col>
             <Col span={24}>
-              <TasksListCard
-                data={tasksListData}
-                error={tasksListError}
-                loading={tasksListLoading}
-              />
+              <TasksListCard data={TASKS_DATA as any} />
             </Col>
           </Row>
         </Col>
-        <Col md={24} lg={6}>
-          <Row {...stylesContext?.rowProps}>
+
+        <Col xs={24} lg={6}>
+          <Row gutter={[16, 16]}>
             <Col span={24}>
-              <Card
-                title="Ongoing projects"
-                extra={<Button>View all</Button>}
-                variant="borderless"
-              >
-                {projectsError ? (
-                  <Alert
-                    title="Error"
-                    description={projectsError.toString()}
-                    type="error"
-                    showIcon
-                  />
-                ) : projectsLoading ? (
-                  <Loader />
-                ) : (
-                  <Carousel
-                    ref={sliderRef1}
-                    {...stylesContext?.carouselProps}
-                    {...CAROUSEL_PROPS}
-                  >
-                    {projectsData
-                      .filter(
-                        (o: Projects) =>
-                          o.status.toLowerCase() === 'in progress'
-                      )
-                      .slice(0, 4)
-                      .map((o: Projects) => (
-                        <ProjectsCard
-                          key={o.project_id}
-                          project={o}
-                          size="small"
-                          style={{ margin: `0 8px` }}
-                        />
-                      ))}
-                  </Carousel>
-                )}
+              <Card title="Hot Leads">
+                <Carousel ref={sliderRef1} {...CAROUSEL_PROPS}>
+                  {HOT_LEADS.map((lead) => (
+                    <Card key={lead.id} size="small">
+                      <Typography.Text strong>{lead.name}</Typography.Text>
+                      <br />
+                      <Typography.Text type="secondary">
+                        {lead.company}
+                      </Typography.Text>
+                      <br />
+                      <Tag color="blue">Score {lead.score}</Tag>
+                    </Card>
+                  ))}
+                </Carousel>
               </Card>
             </Col>
+
             <Col span={24}>
-              <Card
-                title="Queued projects"
-                extra={<Button>View all</Button>}
-                variant="borderless"
-              >
-                {projectsError ? (
-                  <Alert
-                    title="Error"
-                    description={projectsError.toString()}
-                    type="error"
-                    showIcon
-                  />
-                ) : projectsLoading ? (
-                  <Loader />
-                ) : (
-                  <Carousel
-                    ref={sliderRef2}
-                    {...stylesContext?.carouselProps}
-                    {...CAROUSEL_PROPS}
-                  >
-                    {projectsData
-                      .filter(
-                        (o: Projects) => o.status.toLowerCase() === 'on hold'
-                      )
-                      .slice(0, 4)
-                      .map((o: Projects) => (
-                        <ProjectsCard
-                          key={o.project_id}
-                          project={o}
-                          size="small"
-                          style={{ margin: `0 8px` }}
-                        />
-                      ))}
-                  </Carousel>
-                )}
+              <Card title="Upcoming Meetings">
+                <Carousel ref={sliderRef2} {...CAROUSEL_PROPS}>
+                  {MEETINGS.map((meeting) => (
+                    <Card key={meeting.id} size="small">
+                      <Typography.Text strong>{meeting.title}</Typography.Text>
+                      <br />
+                      <Tag color="green">{meeting.time}</Tag>
+                    </Card>
+                  ))}
+                </Carousel>
               </Card>
             </Col>
+
             <Col span={24}>
-              <NotificationsCard
-                data={notificationsData}
-                error={notificationsError}
-                loading={notificationsLoading}
-              />
+              <NotificationsCard data={NOTIFICATIONS as any} />
             </Col>
           </Row>
         </Col>
       </Row>
+
+      {/* FILTER DRAWER */}
       <Drawer
-        title="Dashboard Filters"
+        title="CRM Filters"
         placement="right"
         onClose={() => setFilterOpen(false)}
         open={filterOpen}
-        width={320}
-        styles={{
-          body: { padding: 16 },
-        }}
       >
         <Flex vertical gap="large">
-          <Flex vertical gap="small">
-            <Typography.Text strong>Date Range</Typography.Text>
-            <DatePicker.RangePicker style={{ width: '100%' }} />
-          </Flex>
-
-          <Flex vertical gap="small">
-            <Typography.Text strong>Project Status</Typography.Text>
-            <Checkbox.Group>
-              <Flex vertical>
-                <Checkbox value="in progress">In Progress</Checkbox>
-                <Checkbox value="completed">Completed</Checkbox>
-                <Checkbox value="on hold">On Hold</Checkbox>
-              </Flex>
-            </Checkbox.Group>
-          </Flex>
-
-          <Flex vertical gap="small">
-            <Typography.Text strong>Task Priority</Typography.Text>
-            <Slider range defaultValue={[20, 50]} />
-          </Flex>
-
-          <Button type="primary" block onClick={() => setFilterOpen(false)}>
-            Apply Filters
+          <DatePicker.RangePicker />
+          <Slider range defaultValue={[0, 100000]} />
+          <Button type="primary" block>
+            Apply
           </Button>
         </Flex>
       </Drawer>

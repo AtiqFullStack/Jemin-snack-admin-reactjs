@@ -34,4 +34,4 @@ export const getThemeColors = (theme: 'light' | 'dark'): ColorPalette => {
 };
 
 // Primary color (same for both themes as the algorithm adjusts it)
-export const PRIMARY_COLOR = '#076ee5';
+export const PRIMARY_COLOR = '#B42014';

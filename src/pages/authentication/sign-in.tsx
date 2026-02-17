@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import {
   Alert,
   Button,
@@ -31,6 +32,8 @@ import { toggleTheme } from '../../redux/theme/themeSlice';
 import { RootState } from '../../redux/store';
 import { useAuth } from '../../hooks';
 import { handleApiError } from '../../services/api/apiClient';
+import { STRINGS } from '../../assets';
+import AuthLeft from '../../components/auth/AuthLeft';
 
 const { Title, Text, Link } = Typography;
 
@@ -105,24 +108,25 @@ export const SignInPage = () => {
           />
         </Tooltip>
       </div>
-      <Col xs={24} lg={12}>
+      <AuthLeft />
+      {/* <Col xs={24} lg={12}>
         <Flex
           vertical
           align="center"
           justify="center"
           className="text-center"
-          style={{ background: colorPrimary, height: '100%', padding: '1rem' }}
+          style={{ backgroundImage: `url(https://as2.ftcdn.net/v2/jpg/02/58/86/97/1000_F_258869730_KSydnAki0M5lBLRthoTtCfIxkwhA5VzF.jpg)`, height: '100%', padding: '1rem' }}
         >
           <Logo color="white" />
           <Title level={2} className="text-white">
-            Welcome back to Antd Admin
+            Welcome back to  {STRINGS.PROJECT.NAME}
           </Title>
           <Text className="text-white" style={{ fontSize: 18 }}>
             A dynamic and versatile multipurpose dashboard utilizing Ant Design,
             React, TypeScript, and Vite.
           </Text>
         </Flex>
-      </Col>
+      </Col> */}
       <Col xs={24} lg={12}>
         <Flex
           vertical

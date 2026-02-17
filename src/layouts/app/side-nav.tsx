@@ -1,267 +1,377 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { ConfigProvider, Layout, Menu, MenuProps, SiderProps } from 'antd';
 import {
-  AppstoreAddOutlined,
-  BranchesOutlined,
-  BugOutlined,
-  GithubOutlined,
-  IdcardOutlined,
-  InfoCircleOutlined,
-  PieChartOutlined,
-  ProductOutlined,
-  SecurityScanOutlined,
-  SnippetsOutlined,
+  AppstoreOutlined,
+  BarChartOutlined,
+  CalendarOutlined,
+  CustomerServiceOutlined,
+  FileTextOutlined,
+  PhoneOutlined,
+  SettingOutlined,
+  ShopOutlined,
+  ShoppingOutlined,
+  SolutionOutlined,
+  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Logo } from '../../components';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  PATH_ABOUT,
-  PATH_AUTH,
-  PATH_CORPORATE,
-  PATH_DASHBOARD,
-  PATH_DOCS,
-  PATH_ERROR,
-  PATH_GITHUB,
-  PATH_LANDING,
-  PATH_SITEMAP,
-  PATH_USER_PROFILE,
-  PATH_GALLERY,
-} from '../../constants';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { getThemeColors } from '../../theme/colors';
+import { Logo } from '../../components';
+
+/**
+ * ✅ Replace these with your actual route constants
+ */
+const PATH_CRM = {
+  dashboard: '/dashboards/default',
+  customers: '/crm/customers',
+  leads: '/crm/leads',
+  contacts: '/crm/contacts',
+  accounts: '/crm/accounts', // companies/customers
+  deals: '/crm/deals', // opportunities
+  activities: {
+    tasks: '/crm/activities/tasks',
+    meetings: '/crm/activities/meetings',
+    calendar: '/crm/activities/calendar',
+  },
+  calls: '/crm/calls', // call logs
+  recordings: '/crm/recordings', // call recordings
+  vendors: '/crm/vendors',
+  products: '/crm/products',
+  reports: {
+    overview: '/crm/reports/overview',
+    sales: '/crm/reports/sales',
+    team: '/crm/reports/team',
+  },
+  settings: {
+    users: '/crm/settings/users',
+    roles: '/crm/settings/roles',
+    pipelines: '/crm/settings/pipelines',
+    sources: '/crm/settings/sources',
+    integrations: '/crm/settings/integrations',
+  },
+  support: '/crm/support',
+};
 
 const { Sider } = Layout;
 
 type MenuItem = Required<MenuProps>['items'][number];
-
 const getItem = (
   label: React.ReactNode,
   key: React.Key,
   icon?: React.ReactNode,
   children?: MenuItem[],
   type?: 'group'
-): MenuItem => {
-  return {
-    key,
-    icon,
-    children,
-    label,
-    type,
-  } as MenuItem;
-};
+): MenuItem => ({ key, icon, children, label, type }) as MenuItem;
 
-const items: MenuProps['items'] = [
-  getItem('Dashboards', 'dashboards', <PieChartOutlined />, [
-    getItem(<Link to={PATH_DASHBOARD.default}>Default</Link>, 'default', null),
-    getItem(
-      <Link to={PATH_DASHBOARD.projects}>Projects</Link>,
-      'projects',
-      null
-    ),
-    getItem(
-      <Link to={PATH_DASHBOARD.ecommerce}>eCommerce</Link>,
-      'ecommerce',
-      null
-    ),
-    getItem(
-      <Link to={PATH_DASHBOARD.marketing}>Marketing</Link>,
-      'marketing',
-      null
-    ),
-    getItem(<Link to={PATH_DASHBOARD.social}>Social</Link>, 'social', null),
-    getItem(<Link to={PATH_DASHBOARD.bidding}>Bidding</Link>, 'bidding', null),
-    getItem(
-      <Link to={PATH_DASHBOARD.learning}>Learning</Link>,
-      'learning',
-      null
-    ),
-    getItem(
-      <Link to={PATH_DASHBOARD.logistics}>Logistics</Link>,
-      'logistics',
-      null
-    ),
-  ]),
+/**
+ * ✅ Jemini CRM base menu
+ * Keys intentionally match routes for easy selectedKeys handling
+ */
+const CRM_MENU_ITEMS: MenuProps['items'] = [
   getItem(
-    <Link to={PATH_ABOUT.root}>About</Link>,
-    'about',
-    <InfoCircleOutlined />
-  ),
-  getItem(
-    <Link to={PATH_SITEMAP.root}>Sitemap</Link>,
-    'sitemap',
-    <BranchesOutlined />
+    <Link to={PATH_CRM.dashboard}>Dashboard</Link>,
+    PATH_CRM.dashboard,
+    <AppstoreOutlined />
   ),
 
-  getItem('Pages', 'pages', null, [], 'group'),
+  getItem('Sales', 'group-sales', null, [], 'group'),
 
-  getItem('Corporate', 'corporate', <IdcardOutlined />, [
-    getItem(<Link to={PATH_CORPORATE.about}>About</Link>, 'about', null),
-    getItem(<Link to={PATH_CORPORATE.team}>Team</Link>, 'team', null),
-    getItem(<Link to={PATH_CORPORATE.faqs}>FAQ</Link>, 'faqs', null),
-    getItem(
-      <Link to={PATH_CORPORATE.contact}>Contact us</Link>,
-      'contact us',
-      null
-    ),
-    getItem(<Link to={PATH_CORPORATE.pricing}>Pricing</Link>, 'pricing', null),
-    getItem(<Link to={PATH_CORPORATE.license}>License</Link>, 'license', null),
-  ]),
+  getItem(
+    <Link to={PATH_CRM.customers}>Customers</Link>,
+    PATH_CRM.customers,
+    <UserOutlined />
+  ),
+  getItem(
+    <Link to={PATH_CRM.leads}>Leads</Link>,
+    PATH_CRM.leads,
+    <SolutionOutlined />
+  ),
+  getItem(
+    <Link to={PATH_CRM.contacts}>Contacts</Link>,
+    PATH_CRM.contacts,
+    <TeamOutlined />
+  ),
+  getItem(
+    <Link to={PATH_CRM.accounts}>Accounts / Companies</Link>,
+    PATH_CRM.accounts,
+    <ShopOutlined />
+  ),
+  getItem(
+    <Link to={PATH_CRM.deals}>Deals / Opportunities</Link>,
+    PATH_CRM.deals,
+    <FileTextOutlined />
+  ),
 
-  getItem('User profile', 'user-profile', <UserOutlined />, [
+  getItem('Activities', 'submenu-activities', <CalendarOutlined />, [
     getItem(
-      <Link to={PATH_USER_PROFILE.details}>Details</Link>,
-      'details',
-      null
+      <Link to={PATH_CRM.activities.tasks}>Tasks</Link>,
+      PATH_CRM.activities.tasks
     ),
     getItem(
-      <Link to={PATH_USER_PROFILE.preferences}>Preferences</Link>,
-      'preferences',
-      null
+      <Link to={PATH_CRM.activities.meetings}>Meetings</Link>,
+      PATH_CRM.activities.meetings
     ),
     getItem(
-      <Link to={PATH_USER_PROFILE.personalInformation}>Information</Link>,
-      'personal-information',
-      null
-    ),
-    getItem(
-      <Link to={PATH_USER_PROFILE.security}>Security</Link>,
-      'security',
-      null
-    ),
-    getItem(
-      <Link to={PATH_USER_PROFILE.activity}>Activity</Link>,
-      'activity',
-      null
-    ),
-    getItem(
-      <Link to={PATH_USER_PROFILE.action}>Actions</Link>,
-      'actions',
-      null
-    ),
-    getItem(<Link to={PATH_USER_PROFILE.help}>Help</Link>, 'help', null),
-    getItem(
-      <Link to={PATH_USER_PROFILE.feedback}>Feedback</Link>,
-      'feedback',
-      null
+      <Link to={PATH_CRM.activities.calendar}>Calendar</Link>,
+      PATH_CRM.activities.calendar
     ),
   ]),
 
-  getItem('Authentication', 'authentication', <SecurityScanOutlined />, [
-    getItem(<Link to={PATH_AUTH.signin}>Sign In</Link>, 'auth-signin', null),
-    getItem(<Link to={PATH_AUTH.signup}>Sign Up</Link>, 'auth-signup', null),
-    getItem(<Link to={PATH_AUTH.welcome}>Welcome</Link>, 'auth-welcome', null),
+  getItem('Calls', 'submenu-calls', <PhoneOutlined />, [
+    getItem(<Link to={PATH_CRM.calls}>Call Logs</Link>, PATH_CRM.calls),
     getItem(
-      <Link to={PATH_AUTH.verifyEmail}>Verify email</Link>,
-      'auth-verify',
-      null
-    ),
-    getItem(
-      <Link to={PATH_AUTH.otpAuth}>OTP Verification</Link>,
-      'auth-otp',
-      null
-    ),
-    getItem(
-      <Link to={PATH_AUTH.passwordReset}>Password reset</Link>,
-      'auth-password-reset',
-      null
-    ),
-    // getItem(<Link to={PATH_AUTH.passwordConfirm}>Passsword confirmation</Link>, 'auth-password-confirmation', null),
-    getItem(
-      <Link to={PATH_AUTH.accountDelete}>Account deleted</Link>,
-      'auth-account-deactivation',
-      null
+      <Link to={PATH_CRM.recordings}>Recordings</Link>,
+      PATH_CRM.recordings
     ),
   ]),
 
-  getItem('Errors', 'errors', <BugOutlined />, [
-    getItem(<Link to={PATH_ERROR.error400}>400</Link>, '400', null),
-    getItem(<Link to={PATH_ERROR.error403}>403</Link>, '403', null),
-    getItem(<Link to={PATH_ERROR.error404}>404</Link>, '404', null),
-    getItem(<Link to={PATH_ERROR.error500}>500</Link>, '500', null),
-    getItem(<Link to={PATH_ERROR.error503}>503</Link>, '503', null),
+  getItem('Operations', 'group-ops', null, [], 'group'),
+
+  getItem(
+    <Link to={PATH_CRM.vendors}>Vendors</Link>,
+    PATH_CRM.vendors,
+    <ShoppingOutlined />
+  ),
+  getItem(
+    <Link to={PATH_CRM.products}>Products</Link>,
+    PATH_CRM.products,
+    <ShoppingOutlined />
+  ),
+
+  getItem('Reports', 'submenu-reports', <BarChartOutlined />, [
+    getItem(
+      <Link to={PATH_CRM.reports.overview}>Overview</Link>,
+      PATH_CRM.reports.overview
+    ),
+    getItem(
+      <Link to={PATH_CRM.reports.sales}>Sales</Link>,
+      PATH_CRM.reports.sales
+    ),
+    getItem(
+      <Link to={PATH_CRM.reports.team}>Team</Link>,
+      PATH_CRM.reports.team
+    ),
+  ]),
+
+  getItem('Admin', 'group-admin', null, [], 'group'),
+
+  getItem('Settings', 'submenu-settings', <SettingOutlined />, [
+    getItem(
+      <Link to={PATH_CRM.settings.users}>Users</Link>,
+      PATH_CRM.settings.users,
+      <UserOutlined />
+    ),
+    getItem(
+      <Link to={PATH_CRM.settings.roles}>Roles & Permissions</Link>,
+      PATH_CRM.settings.roles,
+      <SettingOutlined />
+    ),
+    getItem(
+      <Link to={PATH_CRM.settings.pipelines}>Pipelines</Link>,
+      PATH_CRM.settings.pipelines,
+      <FileTextOutlined />
+    ),
+    getItem(
+      <Link to={PATH_CRM.settings.sources}>Lead Sources</Link>,
+      PATH_CRM.settings.sources,
+      <AppstoreOutlined />
+    ),
+    getItem(
+      <Link to={PATH_CRM.settings.integrations}>Integrations</Link>,
+      PATH_CRM.settings.integrations,
+      <AppstoreOutlined />
+    ),
   ]),
 
   getItem(
-    <Link to={PATH_GALLERY.root}>Gallery</Link>,
-    'gallery',
-    <AppstoreAddOutlined />
-  ),
-
-  getItem('Help', 'help', null, [], 'group'),
-  getItem(
-    <Link to={PATH_DOCS.productRoadmap} target="_blank">
-      Roadmap
-    </Link>,
-    'product-roadmap',
-    <ProductOutlined />
-  ),
-  getItem(
-    <Link to={PATH_DOCS.components} target="_blank">
-      Components
-    </Link>,
-    'components',
-    <AppstoreAddOutlined />
-  ),
-  getItem(
-    <Link to={PATH_DOCS.help} target="_blank">
-      Documentation
-    </Link>,
-    'documentation',
-    <SnippetsOutlined />
-  ),
-  getItem(
-    <Link to={PATH_GITHUB.repo} target="_blank">
-      Give us a star
-    </Link>,
-    'give-us-a-star',
-    <GithubOutlined />
+    <Link to={PATH_CRM.support}>Support</Link>,
+    PATH_CRM.support,
+    <CustomerServiceOutlined />
   ),
 ];
 
-const rootSubmenuKeys = ['dashboards', 'corporate', 'user-profile'];
+/**
+ * ✅ Role based access
+ * Replace roles with your backend roles if different
+ */
+type Role = 'admin' | 'manager' | 'sales' | 'support';
+
+const ROLE_ALLOWED_KEYS: Record<Role, (string | 'ALL')[]> = {
+  admin: ['ALL'],
+  manager: [
+    PATH_CRM.dashboard,
+    PATH_CRM.customers,
+    PATH_CRM.leads,
+    PATH_CRM.contacts,
+    PATH_CRM.accounts,
+    PATH_CRM.deals,
+    PATH_CRM.activities.tasks,
+    PATH_CRM.activities.meetings,
+    PATH_CRM.activities.calendar,
+    PATH_CRM.calls,
+    PATH_CRM.recordings,
+    PATH_CRM.vendors,
+    PATH_CRM.products,
+    PATH_CRM.reports.overview,
+    PATH_CRM.reports.sales,
+    PATH_CRM.reports.team,
+    PATH_CRM.support,
+  ],
+  sales: [
+    PATH_CRM.dashboard,
+    PATH_CRM.customers,
+    PATH_CRM.leads,
+    PATH_CRM.contacts,
+    PATH_CRM.accounts,
+    PATH_CRM.deals,
+    PATH_CRM.activities.tasks,
+    PATH_CRM.activities.meetings,
+    PATH_CRM.activities.calendar,
+    PATH_CRM.calls,
+    PATH_CRM.recordings,
+    PATH_CRM.products,
+    PATH_CRM.support,
+  ],
+  support: [
+    PATH_CRM.dashboard,
+    PATH_CRM.customers,
+    PATH_CRM.contacts,
+    PATH_CRM.accounts,
+    PATH_CRM.calls,
+    PATH_CRM.recordings,
+    PATH_CRM.support,
+  ],
+};
+
+function filterMenuByRole(
+  items: MenuProps['items'],
+  role: Role
+): MenuProps['items'] {
+  const allowed = ROLE_ALLOWED_KEYS[role] || [];
+  if (allowed.includes('ALL')) return items;
+
+  const isAllowedKey = (k?: React.Key) =>
+    typeof k === 'string' ? allowed.includes(k) : false;
+
+  const walk = (list: MenuProps['items']): MenuProps['items'] => {
+    if (!list) return list;
+
+    return list
+      .map((it: MenuItem) => {
+        if (!it) return null;
+
+        // group titles: keep only if any children visible later
+        if (it.type === 'group') return it;
+
+        const hasChildren =
+          Array.isArray(it.children) && it.children.length > 0;
+        if (!hasChildren) {
+          return isAllowedKey(it.key) ? it : null;
+        }
+
+        const children = walk(it.children);
+        const hasAnyChild = Array.isArray(children) && children.some(Boolean);
+
+        // keep submenu if any child is visible
+        return hasAnyChild ? { ...it, children } : null;
+      })
+      .filter(Boolean);
+  };
+
+  // After pruning, remove empty groups
+  const pruned = walk(items);
+
+  const removeEmptyGroups = (list: MenuProps['items']) =>
+    (list || []).filter((it: MenuItem, idx: number, arr: MenuItem[]) => {
+      if (!it) return false;
+      if (it.type !== 'group') return true;
+
+      // group is kept only if there is any non-group item after it before next group
+      for (let i = idx + 1; i < arr.length; i++) {
+        if (arr[i]?.type === 'group') break;
+        if (arr[i]) return true;
+      }
+      return false;
+    });
+
+  return removeEmptyGroups(pruned);
+}
 
 type SideNavProps = SiderProps;
 
 const SideNav = ({ ...others }: SideNavProps) => {
-  const nodeRef = useRef(null);
+  const nodeRef = useRef<HTMLDivElement | null>(null);
   const { pathname } = useLocation();
-  const [openKeys, setOpenKeys] = useState(['']);
-  const [current, setCurrent] = useState('');
+  const [openKeys, setOpenKeys] = useState<string[]>([]);
+  const [current, setCurrent] = useState<string>('');
+
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const colors = getThemeColors(mytheme as 'dark' | 'light');
 
-  const onClick: MenuProps['onClick'] = (e) => {
-    console.log('click ', e);
-  };
+  // ✅ assume auth state
+  const role = (useSelector(
+    (state: RootState) => (state as Record<string, unknown>)?.auth?.user?.role
+  ) || 'sales') as Role;
+
+  const items = useMemo(() => filterMenuByRole(CRM_MENU_ITEMS, role), [role]);
+
+  // Only these submenus should be "single open"
+  const rootSubmenuKeys = [
+    'submenu-activities',
+    'submenu-calls',
+    'submenu-reports',
+    'submenu-settings',
+  ];
 
   const onOpenChange: MenuProps['onOpenChange'] = (keys) => {
-    const latestOpenKey = keys.find((key) => openKeys.indexOf(key) === -1);
-    if (latestOpenKey && rootSubmenuKeys.indexOf(latestOpenKey!) === -1) {
-      setOpenKeys(keys);
-    } else {
-      setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
+    const latestOpenKey = keys.find(
+      (key) => openKeys.indexOf(key as string) === -1
+    ) as string | undefined;
+
+    if (latestOpenKey && rootSubmenuKeys.indexOf(latestOpenKey) === -1) {
+      setOpenKeys(keys as string[]);
+      return;
     }
+    setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
   };
 
   useEffect(() => {
-    const paths = pathname.split('/');
-    setOpenKeys(paths);
-    setCurrent(paths[paths.length - 1]);
+    setCurrent(pathname);
+
+    // auto expand based on route
+    if (pathname.startsWith('/crm/activities'))
+      setOpenKeys(['submenu-activities']);
+    else if (
+      pathname.startsWith('/crm/calls') ||
+      pathname.startsWith('/crm/recordings')
+    )
+      setOpenKeys(['submenu-calls']);
+    else if (pathname.startsWith('/crm/reports'))
+      setOpenKeys(['submenu-reports']);
+    else if (pathname.startsWith('/crm/settings'))
+      setOpenKeys(['submenu-settings']);
+    else setOpenKeys([]);
   }, [pathname]);
 
   return (
-    <Sider ref={nodeRef} breakpoint="lg" collapsedWidth="0" {...others}>
+    <Sider
+      ref={nodeRef as React.Ref<HTMLElement>}
+      breakpoint="lg"
+      collapsedWidth="0"
+      {...others}
+    >
       <Logo
         color="blue"
         asLink
-        href={PATH_LANDING.root}
+        href="/"
         justify="center"
         gap="small"
         imgSize={{ h: 28, w: 28 }}
         style={{ padding: '1rem 0' }}
       />
+
       <ConfigProvider
         theme={{
           components: {
@@ -277,7 +387,6 @@ const SideNav = ({ ...others }: SideNavProps) => {
         <Menu
           mode="inline"
           items={items}
-          onClick={onClick}
           openKeys={openKeys}
           onOpenChange={onOpenChange}
           selectedKeys={[current]}

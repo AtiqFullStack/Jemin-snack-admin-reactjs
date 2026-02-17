@@ -26,7 +26,7 @@ export const NotificationsItem = ({ data, ...others }: Props) => {
       <Flex vertical gap="small" style={{ flexGrow: 1 }}>
         <Flex align="center" justify="space-between">
           <Typography.Text>
-            {notification_message.slice(0, 30)}...
+            {notification_message?.slice(0, 30) ?? ''}...
           </Typography.Text>
           <Tag
             bordered={true}

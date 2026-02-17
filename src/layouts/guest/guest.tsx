@@ -31,6 +31,7 @@ import {
   PATH_GITHUB,
   PATH_LANDING,
 } from '../../constants';
+import { STRINGS } from '../../assets';
 
 const { Header, Content, Footer } = Layout;
 
@@ -92,7 +93,7 @@ export const GuestLayout = () => {
           {!isMobile ? (
             <>
               <Flex gap="small">
-                <Link to={PATH_DOCS.productRoadmap} target="_blank">
+                {/* <Link to={PATH_DOCS.productRoadmap} target="_blank">
                   <Button icon={<ProductOutlined />} type="link">
                     Product Roadmap
                   </Button>
@@ -106,10 +107,10 @@ export const GuestLayout = () => {
                   <Button icon={<GithubOutlined />} type="link">
                     Give us a star
                   </Button>
-                </Link>
+                </Link> */}
                 <Link to={PATH_AUTH.signin}>
                   <Button icon={<LoginOutlined />} type="primary">
-                    Live Preview
+                    {STRINGS.BUTTON.LOGIN}
                   </Button>
                 </Link>
               </Flex>
@@ -172,8 +173,7 @@ export const GuestLayout = () => {
             backgroundColor: 'rgba(52, 152, 219, 0.2)',
           }}
         >
-          AntD Dashboard &copy; {new Date().getFullYear()} Created by Design
-          Sparx
+          {STRINGS.PROJECT.NAME} &nbsp; &copy; {new Date().getFullYear()}
         </Footer>
       </Layout>
       <Drawer
