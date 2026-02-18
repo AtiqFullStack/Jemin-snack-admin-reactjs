@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Card,
   Table,
@@ -37,8 +37,6 @@ type Role = {
   key: string; // slug like 'admin', 'sales_manager'
 };
 
-const INITIAL_USERS: User[] = [];
-
 const StaffPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const { canCreate, canUpdate, canDelete } = usePermissions();
@@ -51,7 +49,6 @@ const StaffPage = () => {
   // ✅ Dynamic roles (replace with API)
   const [roles, setRoles] = useState<Role[]>([]);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
@@ -75,13 +72,13 @@ const StaffPage = () => {
     fetchRoles();
   }, []);
 
-  const roleById = useCallback(
-    (id: any) => {
-      const sRole = roles.find((r: any) => r._id == id);
-      return sRole;
-    },
-    [roles]
-  );
+  // const roleById = useCallback(
+  //   (id: any) => {
+  //     const sRole = roles.find((r: any) => r._id == id);
+  //     return sRole;
+  //   },
+  //   [roles]
+  // );
 
   const openAddModal = () => {
     setEditingUser(null);
@@ -125,8 +122,6 @@ const StaffPage = () => {
       (u: any) => normalizePhone(u.phone) === p && u._id !== excludeUserId
     );
   };
-
-  const nextUserId = () => `U-${String(users.length + 1).padStart(3, '0')}`;
 
   const handleSubmit = async () => {
     try {

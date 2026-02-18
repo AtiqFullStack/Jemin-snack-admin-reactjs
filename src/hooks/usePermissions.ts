@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Permission } from '../config/permissions';
 
 export const usePermissions = () => {
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const userPermissions = user?.roleId?.permissions || [];
 
   const hasPermission = (permission: Permission): boolean => {

@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = useCallback(async (credentials: LoginDto): Promise<void> => {
     setIsLoading(true);
     try {
-      const response = await authService.login(credentials);
+      const response = (await authService.login(credentials)) as any;
       setUser(response.user);
     } catch (error) {
       console.error('Login failed:', error);

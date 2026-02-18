@@ -33,10 +33,10 @@ import HeaderNav from './header-nav.tsx';
 import FooterNav from './footer-nav.tsx';
 import { NProgress, LoginModal } from '../../components';
 import { PATH_LANDING, PATH_USER_PROFILE } from '../../constants';
-import { useSelector, useDispatch } from 'react-redux';
-import { logoutUser } from '../../redux/auth/authSlice';
-import { enableMockData } from '../../redux/data-mode/dataModeSlice';
-import { RootState } from '../../redux/store.ts';
+
+// import { logoutUser } from '../../redux/auth/authSlice';
+// import { enableMockData } from '../../redux/data-mode/dataModeSlice';
+// import { RootState } from '../../redux/store.ts';
 import { useAuth } from '../../contexts/AuthContext.tsx';
 const { Content } = Layout;
 
@@ -56,7 +56,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const navigate = useNavigate();
   const nodeRef = useRef(null);
   const floatBtnRef = useRef(null);
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   // const { user, isAuthenticated } = useSelector(
   //   (state: RootState) => state.auth
   // );
@@ -73,7 +73,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
     setTimeout(() => {
       navigate(PATH_LANDING.root);
-    }, 1000);
+    }, 2500);
   };
 
   const items: MenuProps['items'] = [

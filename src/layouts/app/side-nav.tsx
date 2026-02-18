@@ -21,7 +21,7 @@ import { getThemeColors } from '../../theme/colors';
 import { Logo } from '../../components';
 import {
   PATH_CRM,
-  Role as PermissionRole,
+  // Role as PermissionRole,
   hasRouteAccess,
 } from '../../config/permissions';
 import { useAuth } from '../../hooks';
@@ -167,7 +167,7 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
 /**
  * ✅ Role based access
  */
-type Role = 'admin' | 'manager' | 'sales' | 'support';
+// type Role = 'admin' | 'manager' | 'sales' | 'support';
 
 function filterMenuByRole(
   items: MenuProps['items'],
