@@ -15,6 +15,7 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import staffService from '../../../services/staffService';
 import roleService from '../../../services/roleService';
+import { usePermissions } from '../../../hooks';
 
 type UserStatus = 'active' | 'inactive';
 
@@ -40,6 +41,7 @@ const INITIAL_USERS: User[] = [];
 
 const StaffPage = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const { canCreate, canUpdate, canDelete } = usePermissions();
 
   console.log(users);
   //  Services
@@ -232,17 +234,21 @@ const StaffPage = () => {
       key: 'actions',
       render: (_: any, record: User) => (
         <Space>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => openEditModal(record)}
-          />
-          <Button
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-          />
+          {canUpdate('settings.users') && (
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => openEditModal(record)}
+            />
+          )}
+          {canDelete('settings.users') && (
+            <Button
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record)}
+            />
+          )}
         </Space>
       ),
     },
@@ -253,9 +259,15 @@ const StaffPage = () => {
       <Card
         title="Staff Management"
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
-            Add Staff
-          </Button>
+          canCreate('settings.users') && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={openAddModal}
+            >
+              Add Staff
+            </Button>
+          )
         }
       >
         <Table

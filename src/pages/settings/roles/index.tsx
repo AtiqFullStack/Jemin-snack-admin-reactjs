@@ -24,6 +24,7 @@ import {
 import { getPermissionsGrouped } from '../../../config/permissions';
 import './styles.css';
 import roleService from '../../../services/roleService';
+import { usePermissions } from '../../../hooks';
 
 type Role = {
   id?: string;
@@ -41,6 +42,7 @@ const RolesPage = () => {
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [form] = Form.useForm();
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const { canCreate, canUpdate, canDelete } = usePermissions();
 
   // get ROles and Permissions from config
   const { getRoles, createRoles, deleteRoles, updateRoles } = roleService();
@@ -130,17 +132,21 @@ const RolesPage = () => {
       key: 'actions',
       render: (role: any) => (
         <Space>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEditRole(role)}
-          />
-          <Button
-            size="small"
-            onClick={() => handleDeleteRole(role)}
-            danger
-            icon={<DeleteOutlined />}
-          />
+          {canUpdate('settings.roles') && (
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEditRole(role)}
+            />
+          )}
+          {canDelete('settings.roles') && (
+            <Button
+              size="small"
+              onClick={() => handleDeleteRole(role)}
+              danger
+              icon={<DeleteOutlined />}
+            />
+          )}
         </Space>
       ),
     },
@@ -232,13 +238,15 @@ const RolesPage = () => {
       <Card
         title="Roles & Permissions"
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsDrawerOpen(true)}
-          >
-            Add Role
-          </Button>
+          canCreate('settings.roles') && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setIsDrawerOpen(true)}
+            >
+              Add Role
+            </Button>
+          )
         }
       >
         <Table
