@@ -13,6 +13,8 @@ import {
   ResetPasswordRequestDto,
 } from '../../types/api/auth.types';
 import { tokenStorage } from './tokenStorage';
+import { apiRequest } from '../api/apiClient.ts';
+import { API_ENDPOINTS } from '../api/endpoints.ts';
 
 // Dummy user data
 const DUMMY_USER = {
@@ -32,27 +34,29 @@ export const authService = {
    * Login with email and password - DUMMY IMPLEMENTATION
    * Accepts any credentials and returns dummy user
    */
-  login: async (credentials: LoginDto): Promise<LoginResponse> => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  login: async (credentials: LoginDto): Promise<LoginResponse | undefined> => {
+    const res = (await apiRequest.post(
+      API_ENDPOINTS.AUTH.LOGIN,
+      credentials
+    )) as any;
 
-    console.log('[Auth Service - MOCK] Dummy login with:', credentials.email);
+    if (res.success) {
+      const token = res.data.token;
+      const user = res.data.user;
 
-    const response: LoginResponse = {
-      token: DUMMY_TOKEN,
-      refreshToken: DUMMY_TOKEN,
-      tokenType: 'Bearer',
-      expiresIn: 3600,
-      user: DUMMY_USER,
-    };
-
-    // Store tokens and user data
-    tokenStorage.setTokens(response.token, response.refreshToken);
-    tokenStorage.setUser(response.user);
-
-    console.log('[Auth Service - MOCK] Login successful, user:', DUMMY_USER);
-
-    return response;
+      const response: LoginResponse = {
+        token: token,
+        refreshToken: token,
+        tokenType: 'Bearer',
+        expiresIn: 3600,
+        user: user,
+      };
+      tokenStorage.setTokens(response.token, response.refreshToken);
+      tokenStorage.setUser(response.user);
+      tokenStorage.setRolesAndPermissions(user.roleId);
+      return response;
+    }
+    return;
   },
 
   /**

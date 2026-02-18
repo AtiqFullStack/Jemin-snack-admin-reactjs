@@ -52,6 +52,21 @@ export const tokenStorage = {
   },
 
   /**
+   * Store  Role and Permissions
+   */
+  setRolesAndPermissions: (roles: string): void => {
+    localStorage.setItem('roles', JSON.stringify(roles));
+  },
+
+  /**
+   * Get Role and Permissions
+   */
+  getRolesAndPermissions: (): any | null => {
+    const roles = localStorage.getItem('roles');
+    return roles ? JSON.parse(roles) : null;
+  },
+
+  /**
    * Get user profile data
    */
   getUser: (): any | null => {

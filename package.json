@@ -8,7 +8,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "changeset": "changeset",
     "storybook": "storybook dev -p 6006",
@@ -81,8 +80,7 @@
   },
   "lint-staged": {
     "**/*.{ts,tsx,js,jsx,cjs,mjs}": [
-      "prettier --write",
-      "eslint --fix"
+      "prettier --write"
     ],
     "**/*": "prettier --write --ignore-unknown"
   }

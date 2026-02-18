@@ -21,7 +21,6 @@ import {
   SunOutlined,
   TwitterOutlined,
 } from '@ant-design/icons';
-import { Logo } from '../../components';
 import { useMediaQuery } from 'react-responsive';
 import { PATH_AUTH, PATH_DASHBOARD } from '../../constants';
 import { useNavigate } from 'react-router-dom';
@@ -29,7 +28,6 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '../../redux/theme/themeSlice';
 import { RootState } from '../../redux/store';
-import { STRINGS } from '../../assets';
 import AuthLeft from '../../components/auth/AuthLeft';
 
 const { Title, Text, Link } = Typography;
@@ -45,7 +43,7 @@ type FieldType = {
 
 export const SignUpPage = () => {
   const {
-    token: { colorPrimary, colorBgContainer },
+    token: { colorBgContainer },
   } = theme.useToken();
   const isMobile = useMediaQuery({ maxWidth: 769 });
   const navigate = useNavigate();

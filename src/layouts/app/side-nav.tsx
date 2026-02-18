@@ -19,40 +19,11 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { getThemeColors } from '../../theme/colors';
 import { Logo } from '../../components';
-
-/**
- * ✅ Replace these with your actual route constants
- */
-const PATH_CRM = {
-  dashboard: '/dashboards/default',
-  customers: '/crm/customers',
-  leads: '/crm/leads',
-  contacts: '/crm/contacts',
-  accounts: '/crm/accounts', // companies/customers
-  deals: '/crm/deals', // opportunities
-  activities: {
-    tasks: '/crm/activities/tasks',
-    meetings: '/crm/activities/meetings',
-    calendar: '/crm/activities/calendar',
-  },
-  calls: '/crm/calls', // call logs
-  recordings: '/crm/recordings', // call recordings
-  vendors: '/crm/vendors',
-  products: '/crm/products',
-  reports: {
-    overview: '/crm/reports/overview',
-    sales: '/crm/reports/sales',
-    team: '/crm/reports/team',
-  },
-  settings: {
-    users: '/crm/settings/users',
-    roles: '/crm/settings/roles',
-    pipelines: '/crm/settings/pipelines',
-    sources: '/crm/settings/sources',
-    integrations: '/crm/settings/integrations',
-  },
-  support: '/crm/support',
-};
+import {
+  PATH_CRM,
+  Role as PermissionRole,
+  hasRouteAccess,
+} from '../../config/permissions';
 
 const { Sider } = Layout;
 
@@ -159,7 +130,7 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
 
   getItem('Settings', 'submenu-settings', <SettingOutlined />, [
     getItem(
-      <Link to={PATH_CRM.settings.users}>Users</Link>,
+      <Link to={PATH_CRM.settings.users}>Staff</Link>,
       PATH_CRM.settings.users,
       <UserOutlined />
     ),
@@ -194,84 +165,35 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
 
 /**
  * ✅ Role based access
- * Replace roles with your backend roles if different
  */
 type Role = 'admin' | 'manager' | 'sales' | 'support';
-
-const ROLE_ALLOWED_KEYS: Record<Role, (string | 'ALL')[]> = {
-  admin: ['ALL'],
-  manager: [
-    PATH_CRM.dashboard,
-    PATH_CRM.customers,
-    PATH_CRM.leads,
-    PATH_CRM.contacts,
-    PATH_CRM.accounts,
-    PATH_CRM.deals,
-    PATH_CRM.activities.tasks,
-    PATH_CRM.activities.meetings,
-    PATH_CRM.activities.calendar,
-    PATH_CRM.calls,
-    PATH_CRM.recordings,
-    PATH_CRM.vendors,
-    PATH_CRM.products,
-    PATH_CRM.reports.overview,
-    PATH_CRM.reports.sales,
-    PATH_CRM.reports.team,
-    PATH_CRM.support,
-  ],
-  sales: [
-    PATH_CRM.dashboard,
-    PATH_CRM.customers,
-    PATH_CRM.leads,
-    PATH_CRM.contacts,
-    PATH_CRM.accounts,
-    PATH_CRM.deals,
-    PATH_CRM.activities.tasks,
-    PATH_CRM.activities.meetings,
-    PATH_CRM.activities.calendar,
-    PATH_CRM.calls,
-    PATH_CRM.recordings,
-    PATH_CRM.products,
-    PATH_CRM.support,
-  ],
-  support: [
-    PATH_CRM.dashboard,
-    PATH_CRM.customers,
-    PATH_CRM.contacts,
-    PATH_CRM.accounts,
-    PATH_CRM.calls,
-    PATH_CRM.recordings,
-    PATH_CRM.support,
-  ],
-};
 
 function filterMenuByRole(
   items: MenuProps['items'],
   role: Role
 ): MenuProps['items'] {
-  const allowed = ROLE_ALLOWED_KEYS[role] || [];
-  if (allowed.includes('ALL')) return items;
-
   const isAllowedKey = (k?: React.Key) =>
-    typeof k === 'string' ? allowed.includes(k) : false;
+    typeof k === 'string' ? hasRouteAccess(role as PermissionRole, k) : false;
 
   const walk = (list: MenuProps['items']): MenuProps['items'] => {
     if (!list) return list;
 
     return list
-      .map((it: MenuItem) => {
+      .map((it) => {
         if (!it) return null;
 
         // group titles: keep only if any children visible later
-        if (it.type === 'group') return it;
+        if ('type' in it && it.type === 'group') return it;
 
         const hasChildren =
-          Array.isArray(it.children) && it.children.length > 0;
+          'children' in it &&
+          Array.isArray(it.children) &&
+          it.children.length > 0;
         if (!hasChildren) {
-          return isAllowedKey(it.key) ? it : null;
+          return isAllowedKey(it?.key) ? it : null;
         }
 
-        const children = walk(it.children);
+        const children = walk('children' in it ? it.children : undefined);
         const hasAnyChild = Array.isArray(children) && children.some(Boolean);
 
         // keep submenu if any child is visible
@@ -284,14 +206,15 @@ function filterMenuByRole(
   const pruned = walk(items);
 
   const removeEmptyGroups = (list: MenuProps['items']) =>
-    (list || []).filter((it: MenuItem, idx: number, arr: MenuItem[]) => {
+    (list || []).filter((it, idx: number, arr) => {
       if (!it) return false;
-      if (it.type !== 'group') return true;
+      if (!('type' in it) || it.type !== 'group') return true;
 
       // group is kept only if there is any non-group item after it before next group
       for (let i = idx + 1; i < arr.length; i++) {
-        if (arr[i]?.type === 'group') break;
-        if (arr[i]) return true;
+        const nextItem = arr[i];
+        if (nextItem && 'type' in nextItem && nextItem.type === 'group') break;
+        if (nextItem) return true;
       }
       return false;
     });
@@ -310,10 +233,11 @@ const SideNav = ({ ...others }: SideNavProps) => {
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const colors = getThemeColors(mytheme as 'dark' | 'light');
 
-  // ✅ assume auth state
-  const role = (useSelector(
-    (state: RootState) => (state as Record<string, unknown>)?.auth?.user?.role
-  ) || 'sales') as Role;
+  // ✅ assume auth state - get first role from roles array
+  const userRoles = useSelector((state: RootState) => state.auth?.user?.roles);
+  const role = (
+    Array.isArray(userRoles) && userRoles.length > 0 ? userRoles[0] : 'admin'
+  ) as Role;
 
   const items = useMemo(() => filterMenuByRole(CRM_MENU_ITEMS, role), [role]);
 
@@ -357,7 +281,7 @@ const SideNav = ({ ...others }: SideNavProps) => {
 
   return (
     <Sider
-      ref={nodeRef as React.Ref<HTMLElement>}
+      ref={nodeRef as React.Ref<HTMLDivElement>}
       breakpoint="lg"
       collapsedWidth="0"
       {...others}

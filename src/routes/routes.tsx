@@ -52,6 +52,8 @@ import { ProtectedRoute } from '../utils/ProtectedRoute';
 import LeadsPage from '../pages/Leads';
 import ContractPage from '../pages/Contract/index.tsx';
 import CustomerPage from '../pages/customer';
+import StaffPage from '../pages/settings/Staff/index.tsx';
+import RolesPage from '../pages/settings/roles';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -169,6 +171,14 @@ const router = createBrowserRouter([
       {
         path: 'customers',
         element: <CustomerPage />,
+      },
+      {
+        path: 'settings/staff',
+        element: <StaffPage />,
+      },
+      {
+        path: 'settings/roles',
+        element: <RolesPage />,
       },
     ],
   },

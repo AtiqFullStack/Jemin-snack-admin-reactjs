@@ -24,10 +24,9 @@ import {
 console.log('[API Client] Module loaded!');
 
 // API Configuration
-const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-const API_BASE_URL = API_HOST.endsWith('/api/v1')
-  ? API_HOST
-  : `${API_HOST}/api/v1`;
+// const API_HOST = import.meta.env.VITE_API_BASE_URL || 'https://crm.jeminisnacks.com/backend';
+const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5025';
+const API_BASE_URL = API_HOST.endsWith('/api') ? API_HOST : `${API_HOST}/api/`;
 
 console.log('[API Client] Configuration:', {
   API_HOST,
@@ -121,7 +120,9 @@ apiClient.interceptors.request.use(
     // Log request in development
     if (import.meta.env.DEV) {
       console.log(
-        `[API Request - Live Mode] ${config.method?.toUpperCase()} ${config.url}`,
+        `[API Request - Live Mode] ${config.method?.toUpperCase()} ${
+          config.url
+        }`,
         {
           params: config.params,
           data: config.data,
@@ -268,14 +269,26 @@ export const apiRequest = {
     return apiClient.get<T>(url, config).then((response) => response.data);
   },
 
-  post: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
+  post: <T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
     console.log('[apiRequest.post] Called with URL:', url);
-    return apiClient.post<T>(url, data, config).then((response) => response.data);
+    return apiClient
+      .post<T>(url, data, config)
+      .then((response) => response.data);
   },
 
-  put: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
+  put: <T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
     console.log('[apiRequest.put] Called with URL:', url);
-    return apiClient.put<T>(url, data, config).then((response) => response.data);
+    return apiClient
+      .put<T>(url, data, config)
+      .then((response) => response.data);
   },
 
   patch: <T>(
@@ -284,7 +297,9 @@ export const apiRequest = {
     config?: AxiosRequestConfig
   ): Promise<T> => {
     console.log('[apiRequest.patch] Called with URL:', url);
-    return apiClient.patch<T>(url, data, config).then((response) => response.data);
+    return apiClient
+      .patch<T>(url, data, config)
+      .then((response) => response.data);
   },
 
   delete: <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {

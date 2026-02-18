@@ -14,6 +14,25 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/auth/reset-password',
   },
 
+  // ==================== ROLES & PERMISSIONS ====================
+  ROLES: {
+    LIST: '/roles/get',
+    GET: (id: string) => `/roles/${id}`,
+    CREATE: '/roles/create',
+    UPDATE: (id: string) => `/roles/${id}`,
+    DELETE: (id: string) => `/roles/${id}`,
+  },
+
+  //=========================Staff===========================
+
+  STAFF: {
+    LIST: '/staff',
+    GET: (id: string) => `/staff/${id}`,
+    CREATE: '/staff',
+    UPDATE: (id: string) => `/staff/${id}`,
+    DELETE: (id: string) => `/staff/${id}`,
+  },
+
   // ==================== USER PROFILE ====================
   PROFILE: {
     GET: '/profile',

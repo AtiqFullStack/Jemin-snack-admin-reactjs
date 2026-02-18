@@ -22,7 +22,6 @@ import {
   SunOutlined,
   TwitterOutlined,
 } from '@ant-design/icons';
-import { Logo } from '../../components';
 import { useMediaQuery } from 'react-responsive';
 import { PATH_AUTH, PATH_DASHBOARD } from '../../constants';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -32,7 +31,6 @@ import { toggleTheme } from '../../redux/theme/themeSlice';
 import { RootState } from '../../redux/store';
 import { useAuth } from '../../hooks';
 import { handleApiError } from '../../services/api/apiClient';
-import { STRINGS } from '../../assets';
 import AuthLeft from '../../components/auth/AuthLeft';
 
 const { Title, Text, Link } = Typography;
@@ -45,7 +43,7 @@ type FieldType = {
 
 export const SignInPage = () => {
   const {
-    token: { colorPrimary, colorBgContainer },
+    token: { colorBgContainer },
   } = theme.useToken();
   const isMobile = useMediaQuery({ maxWidth: 769 });
   const navigate = useNavigate();
@@ -160,8 +158,8 @@ export const SignInPage = () => {
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
             initialValues={{
-              email: 'demo@adminhub.com',
-              password: 'Demo@Pass1',
+              email: 'cafofug@mailinator.com',
+              password: 'Pa$$w0rd!',
               remember: true,
             }}
             onFinish={onFinish}
