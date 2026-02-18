@@ -6,6 +6,7 @@
 const TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 const USER_KEY = 'user';
+const ROLE_KEY = 'roles';
 
 export const tokenStorage = {
   /**
@@ -81,6 +82,7 @@ export const tokenStorage = {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(ROLE_KEY);
   },
 
   /**

@@ -37,6 +37,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../../redux/auth/authSlice';
 import { enableMockData } from '../../redux/data-mode/dataModeSlice';
 import { RootState } from '../../redux/store.ts';
+import { useAuth } from '../../contexts/AuthContext.tsx';
 const { Content } = Layout;
 
 type AppLayoutProps = {
@@ -56,9 +57,10 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const nodeRef = useRef(null);
   const floatBtnRef = useRef(null);
   const dispatch = useDispatch();
-  const { user, isAuthenticated } = useSelector(
-    (state: RootState) => state.auth
-  );
+  // const { user, isAuthenticated } = useSelector(
+  //   (state: RootState) => state.auth
+  // );
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
     message.open({
@@ -67,13 +69,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     });
 
     // If authenticated, logout from API
-    if (isAuthenticated && user?.email) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await dispatch(logoutUser(user.email) as any);
-    }
-
-    // Switch back to mock data mode
-    dispatch(enableMockData());
+    logout();
 
     setTimeout(() => {
       navigate(PATH_LANDING.root);

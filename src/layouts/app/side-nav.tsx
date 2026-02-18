@@ -24,6 +24,7 @@ import {
   Role as PermissionRole,
   hasRouteAccess,
 } from '../../config/permissions';
+import { useAuth } from '../../hooks';
 
 const { Sider } = Layout;
 
@@ -170,10 +171,10 @@ type Role = 'admin' | 'manager' | 'sales' | 'support';
 
 function filterMenuByRole(
   items: MenuProps['items'],
-  role: Role
+  userPermissions: string[]
 ): MenuProps['items'] {
   const isAllowedKey = (k?: React.Key) =>
-    typeof k === 'string' ? hasRouteAccess(role as PermissionRole, k) : false;
+    typeof k === 'string' ? hasRouteAccess(userPermissions, k) : false;
 
   const walk = (list: MenuProps['items']): MenuProps['items'] => {
     if (!list) return list;
@@ -229,17 +230,24 @@ const SideNav = ({ ...others }: SideNavProps) => {
   const { pathname } = useLocation();
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [current, setCurrent] = useState<string>('');
+  const { user } = useAuth();
 
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const colors = getThemeColors(mytheme as 'dark' | 'light');
 
-  // ✅ assume auth state - get first role from roles array
-  const userRoles = useSelector((state: RootState) => state.auth?.user?.roles);
-  const role = (
-    Array.isArray(userRoles) && userRoles.length > 0 ? userRoles[0] : 'admin'
-  ) as Role;
+  // Get user's role permissions from auth state
+  // const user = useSelector((state: RootState) => state.auth?.user);
+  console.log(user);
 
-  const items = useMemo(() => filterMenuByRole(CRM_MENU_ITEMS, role), [role]);
+  const userPermissions = user?.roleId?.permissions || [];
+
+  console.log('User:', user);
+  console.log('User Permissions:', userPermissions);
+
+  const items = useMemo(
+    () => filterMenuByRole(CRM_MENU_ITEMS, userPermissions),
+    [userPermissions]
+  );
 
   // Only these submenus should be "single open"
   const rootSubmenuKeys = [

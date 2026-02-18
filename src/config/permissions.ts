@@ -188,9 +188,9 @@ export const ROLE_PERMISSIONS: Record<Role, (Permission | 'ALL')[]> = {
   ],
 };
 
-// Route to permission mapping
-export const ROUTE_PERMISSIONS: Record<string, Permission> = {
-  [PATH_CRM.dashboard]: 'dashboard.read',
+// Route to permission mapping (make routes optional if no specific permission needed)
+export const ROUTE_PERMISSIONS: Record<string, Permission | null> = {
+  [PATH_CRM.dashboard]: null, // Dashboard always accessible
   [PATH_CRM.customers]: 'customers.read',
   [PATH_CRM.leads]: 'leads.read',
   [PATH_CRM.contacts]: 'contacts.read',
@@ -211,20 +211,29 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   [PATH_CRM.settings.pipelines]: 'settings.manage',
   [PATH_CRM.settings.sources]: 'settings.manage',
   [PATH_CRM.settings.integrations]: 'settings.manage',
+  [PATH_CRM.support]: 'support.read',
 };
 
-// Helper function to check permission
-export const hasPermission = (role: Role, permission: Permission): boolean => {
-  const permissions = ROLE_PERMISSIONS[role];
-  if (permissions.includes('ALL')) return true;
-  return permissions.includes(permission);
+// Helper function to check permission from user's role object
+export const hasPermission = (
+  userPermissions: string[],
+  permission: Permission
+): boolean => {
+  // Check for wildcard permission (*)
+  if (userPermissions.includes('*')) return true;
+  // Check for specific permission
+  return userPermissions.includes(permission);
 };
 
-// Helper function to check route access
-export const hasRouteAccess = (role: Role, route: string): boolean => {
+// Helper function to check route access from user's role object
+export const hasRouteAccess = (
+  userPermissions: string[],
+  route: string
+): boolean => {
   const permission = ROUTE_PERMISSIONS[route];
-  if (!permission) return false;
-  return hasPermission(role, permission);
+  // If no permission required for route, allow access
+  if (!permission) return true;
+  return hasPermission(userPermissions, permission);
 };
 
 // Get all permissions as options for select
