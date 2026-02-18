@@ -230,7 +230,7 @@ const SideNav = ({ ...others }: SideNavProps) => {
   const { pathname } = useLocation();
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [current, setCurrent] = useState<string>('');
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
 
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const colors = getThemeColors(mytheme as 'dark' | 'light');
