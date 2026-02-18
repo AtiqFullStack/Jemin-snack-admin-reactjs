@@ -43,8 +43,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const initializeAuth = () => {
       try {
         const isAuth = authService.isAuthenticated();
+        console.log(isAuth);
         if (isAuth) {
           const storedUser = authService.getCurrentUser();
+          console.log(storedUser);
           setUser(storedUser);
         }
       } catch (error) {

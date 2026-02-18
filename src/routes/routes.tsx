@@ -88,7 +88,11 @@ const PageWrapper = ({ children }: PageProps) => {
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <PageWrapper children={<GuestLayout />} />,
+    element: (
+      <ProtectedRoute requireAuth={false}>
+        <PageWrapper children={<GuestLayout />} />
+      </ProtectedRoute>
+    ),
     errorElement: <ErrorPage />,
     children: [
       {
