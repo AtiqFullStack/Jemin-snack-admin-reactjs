@@ -2,6 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import themeReducer, { ThemeState } from './theme/themeSlice';
 import dataModeReducer, { DataModeState } from './data-mode/dataModeSlice';
 import authReducer, { AuthState } from './auth/authSlice';
+import countriesReducer from './countriesSlice';
 import { persistReducer, persistStore, PersistConfig } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
@@ -10,6 +11,11 @@ interface RootState {
   theme: ThemeState;
   dataMode: DataModeState;
   auth: AuthState;
+  countries: {
+    countries: any[];
+    loading: boolean;
+    error: string | null;
+  };
 }
 
 // Combine reducers
@@ -17,6 +23,7 @@ const rootReducer = combineReducers({
   theme: themeReducer,
   dataMode: dataModeReducer,
   auth: authReducer,
+  countries: countriesReducer,
 });
 
 // Persist config with RootState

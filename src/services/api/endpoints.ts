@@ -33,6 +33,27 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/staff/${id}`,
   },
 
+  //=========================LEADS===========================
+
+  LEADS: {
+    LIST: '/leads',
+    GET: (id: string) => `/leads/${id}`,
+    CREATE: '/leads',
+    UPDATE: (id: string) => `/leads/${id}`,
+    DELETE: (id: string) => `/leads/${id}`,
+  },
+
+  //=========================ACTIVITY LOGS===========================
+
+  ACTIVITY_LOGS: {
+    LIST: '/activityLogs/get',
+    GET: (id: string) => `/activityLogs//${id}`,
+    GET_BY_LEAD_ID: (id: string) => `/activityLogs/byLeadId/${id}`,
+    CREATE: '/activityLogs/create',
+    UPDATE: (id: string) => `/activityLogs/${id}`,
+    DELETE: (id: string) => `/activityLogs/${id}`,
+  },
+
   // ==================== USER PROFILE ====================
   PROFILE: {
     GET: '/profile',

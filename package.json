@@ -27,6 +27,7 @@
     "antd": "^6.3.0",
     "axios": "^1.13.5",
     "dayjs": "^1.11.9",
+    "framer-motion": "^12.34.2",
     "interactjs": "^1.10.18",
     "lodash": "4.17.23",
     "moment": "^2.29.4",

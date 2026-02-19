@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useReducer } from 'react';
 import {
   Card,
   Col,
@@ -10,105 +10,80 @@ import {
   Input,
   Select,
   Typography,
-  Modal,
+  Drawer,
   Form,
   Divider,
   Checkbox,
+  Space,
+  Modal,
+  message,
 } from 'antd';
-import { PlusOutlined, PhoneOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  PhoneOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { UserAvatar } from '../../components';
-
-type LeadStage =
-  | 'New'
-  | 'Contacted'
-  | 'Qualified'
-  | 'Proposal'
-  | 'Won'
-  | 'Lost';
-
-type LeadSource = 'Facebook' | 'Referral' | 'Website' | 'Walk-in' | 'Instagram';
-type LeadStatus =
-  | 'New'
-  | 'Contacted'
-  | 'Qualified'
-  | 'Proposal'
-  | 'Won'
-  | 'Lost';
-
-type LeadFormValues = {
-  status: LeadStatus;
-  source: LeadSource;
-  assigned: string;
-  tags?: string[];
-
-  name: string;
-  position?: string;
-  email?: string;
-  website?: string;
-  phone?: string;
-  lead_value?: number;
-  company?: string;
-
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  zip?: string;
-  language?: string;
-
-  description?: string;
-  is_public?: boolean;
-  contacted_today?: boolean;
-};
-
-type Lead = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  company: string;
-  source: LeadSource;
-  stage: LeadStage;
-  owner: string;
-  score: number;
-  created_at: string;
-};
-
-const STAGE_COLOR: Record<LeadStage, string> = {
-  New: 'default',
-  Contacted: 'blue',
-  Qualified: 'geekblue',
-  Proposal: 'gold',
-  Won: 'green',
-  Lost: 'red',
-};
-
-const STATIC_LEADS: Lead[] = [
-  {
-    id: 'L-1001',
-    first_name: 'Ravi',
-    last_name: 'Kumar',
-    email: 'ravi.kumar@example.com',
-    phone: '+91 98765 43210',
-    company: 'ABC Pvt Ltd',
-    source: 'Referral',
-    stage: 'New',
-    owner: 'You',
-    score: 85,
-    created_at: '2026-02-16',
-  },
-];
+import leadServices from '../../services/leadServices';
+import staffService from '../../services/staffService';
+import { timeConverter } from '../../utils/convertor';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCountries } from '../../redux/countriesSlice';
+import {
+  LeadStage,
+  LeadSource,
+  LeadStatus,
+  LeadFormValues,
+  Lead,
+} from '../../types/leads';
+import LeadViewModal from './LeadViewModal';
 
 const LeadsPage = () => {
-  const [leads, setLeads] = useState<Lead[]>(STATIC_LEADS);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [q, setQ] = useState('');
   const [stage, setStage] = useState<LeadStage | undefined>();
   const [source, setSource] = useState<LeadSource | undefined>();
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [form] = Form.useForm<LeadFormValues>();
+  const [staffs, setStaffs] = useState([]);
+
+  const { creatLeads, getLeads, getById, deleteLeads, updateLeads } =
+    leadServices();
+  const { getStaff } = staffService();
+  const dispatch = useDispatch();
+  const countries = useSelector((state: any) => state.countries.countries);
+
+  useEffect(() => {
+    fetchLeads();
+    dispatch(fetchCountries());
+    getStaff().then((res: any) => {
+      if (res.success) {
+        console.log(res.data);
+        if (res.data.items && res.data.items.length) {
+          const options = res.data.items.map((r: any) => {
+            return {
+              value: r._id,
+              label: r.firstName + ' ' + r.lastName,
+            };
+          }) as any;
+          setStaffs(options);
+        }
+      }
+    });
+  }, [dispatch]);
+
+  const fetchLeads = async () => {
+    const res = (await getLeads()) as any;
+    if (res.success) {
+      setLeads(res.data);
+    }
+  };
 
   // dropdown add option state
   const [statusOptions, setStatusOptions] = useState<LeadStatus[]>([
@@ -134,23 +109,24 @@ const LeadsPage = () => {
       const search = q.trim().toLowerCase();
       const matchesSearch =
         !search ||
-        `${l.first_name} ${l.last_name}`.toLowerCase().includes(search) ||
+        l.name.toLowerCase().includes(search) ||
         l.company.toLowerCase().includes(search) ||
         l.email.toLowerCase().includes(search) ||
         l.phone.toLowerCase().includes(search);
 
-      const matchesStage = !stage || l.stage === stage;
+      const matchesStage = !stage || l.status === stage;
       const matchesSource = !source || l.source === source;
 
       return matchesSearch && matchesStage && matchesSource;
     });
   }, [q, stage, source, leads]);
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
+  const handleOpenDrawer = () => {
+    setEditingLead(null);
+    setIsDrawerOpen(true);
+    form.resetFields();
     form.setFieldsValue({
       status: 'New',
-      assigned: 'admin user',
       language: 'System Default',
       contacted_today: true,
       is_public: false,
@@ -158,48 +134,104 @@ const LeadsPage = () => {
     });
   };
 
+  const handleEdit = (record: Lead) => {
+    setEditingLead(record);
+    form.setFieldsValue({
+      status: record.status,
+      source: record.source,
+      assigned: record.assignedTo?._id,
+      name: record.name,
+      position: record.position,
+      email: record.email,
+      website: record.website,
+      phone: record.phone,
+      lead_value: record.leadValue,
+      company: record.company,
+      tags: record.tags,
+      address: record.address,
+      city: record.city,
+      state: record.state,
+      country: record.country,
+      zip: record.zip,
+      language: record.language,
+      description: record.description,
+      is_public: record.isPublic,
+      contacted_today: !!record.lastContactedAt,
+    });
+    setIsDrawerOpen(true);
+  };
+
+  const handleDelete = (record: Lead) => {
+    Modal.confirm({
+      title: 'Delete Lead',
+      icon: <ExclamationCircleOutlined />,
+      content: `Are you sure you want to delete "${record.name}"?`,
+      okText: 'Delete',
+      okType: 'danger',
+      onOk: async () => {
+        const res = (await deleteLeads(record._id)) as any;
+        if (res.success) {
+          message.success(res.message);
+          await fetchLeads();
+        }
+        // Call delete API here
+      },
+    });
+  };
+
   const handleSaveLead = async () => {
     const values = await form.validateFields();
 
-    // Split name into first/last (simple)
-    const parts = (values.name || '').trim().split(' ');
-    const first_name = parts[0] || '—';
-    const last_name = parts.slice(1).join(' ') || '';
-
-    const newLead: Lead = {
-      id: `L-${1000 + leads.length + 1}`,
-      first_name,
-      last_name,
-      email: values.email || '—',
-      phone: values.phone || '—',
-      company: values.company || '—',
+    const payload = {
+      status: values.status,
       source: values.source,
-      stage: (values.status as LeadStage) || 'New',
-      owner: values.assigned || 'admin user',
-      score: 50,
-      created_at: new Date().toISOString().split('T')[0],
+      assignedTo: values.assigned,
+      name: values.name,
+      position: values.position,
+      email: values.email,
+      website: values.website,
+      phone: values.phone,
+      leadValue: values.lead_value,
+      company: values.company,
+      tags: values.tags,
+      address: values.address,
+      city: values.city,
+      state: values.state,
+      country: values.country,
+      zip: values.zip,
+      language: values.language,
+      description: values.description,
+      isPublic: values.is_public,
+      contacted_today: values.contacted_today,
     };
 
-    setLeads([newLead, ...leads]);
-    setIsModalOpen(false);
-    form.resetFields();
+    let res;
+    if (editingLead) {
+      res = (await updateLeads(editingLead._id, payload)) as any;
+    } else {
+      res = (await creatLeads(payload)) as any;
+    }
+
+    if (res.success) {
+      message.success(res.meassge);
+      await fetchLeads();
+      setIsDrawerOpen(false);
+      form.resetFields();
+    }
   };
 
   const columns = [
     {
-      title: 'Lead',
+      title: 'Name/Company',
       dataIndex: 'first_name',
-      key: 'lead',
+      key: 'name',
       render: (_: unknown, row: Lead) => (
-        <Flex align="center" gap={10}>
-          <UserAvatar fullName={`${row.first_name} ${row.last_name}`} />
+        <Flex align="center" gap={10} style={{ cursor: 'pointer' }}>
           <div>
-            <Typography.Text strong>
-              {row.first_name} {row.last_name}
+            <UserAvatar fullName={row?.name} />
+            <Typography.Text style={{ marginLeft: 30 }} type="secondary">
+              {row.company}
             </Typography.Text>
-            <div>
-              <Typography.Text type="secondary">{row.company}</Typography.Text>
-            </div>
           </div>
         </Flex>
       ),
@@ -224,22 +256,67 @@ const LeadsPage = () => {
       render: (v: LeadSource) => <Tag>{v}</Tag>,
     },
     {
-      title: 'Stage',
-      dataIndex: 'stage',
-      key: 'stage',
-      render: (v: LeadStage) => <Tag color={STAGE_COLOR[v]}>{v}</Tag>,
+      title: 'Value',
+      dataIndex: 'leadValue',
+      key: 'leadValue',
+      render: (v: LeadSource) => <Tag>{v}</Tag>,
     },
     {
-      title: 'Owner',
-      dataIndex: 'owner',
-      key: 'owner',
-      render: (v: string) => <Tag color="blue">{v}</Tag>,
+      title: 'Tags',
+      dataIndex: 'tags',
+      key: 'tags',
+      render: (v: any) => (
+        <Flex gap={2}>
+          {v.length && v.map((tag: any) => <Tag key={tag}>{tag}</Tag>)}
+        </Flex>
+      ),
     },
-    { title: 'Created', dataIndex: 'created_at', key: 'created_at' },
+
+    {
+      title: 'Assigned',
+      dataIndex: 'assignedTo',
+      key: 'assignedTo',
+      render: (v: any) => <Tag color="blue">{v?.name}</Tag>,
+    },
+    {
+      title: 'Created',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (v: any) => timeConverter(v),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_: any, record: Lead) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => setViewLead(record)}
+          />
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          />
+          <Button
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record)}
+          />
+        </Space>
+      ),
+    },
   ];
 
   return (
     <div>
+      <LeadViewModal
+        open={!!viewLead}
+        lead={viewLead}
+        onClose={() => setViewLead(null)}
+      />
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card
@@ -248,7 +325,7 @@ const LeadsPage = () => {
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={handleOpenModal}
+                onClick={handleOpenDrawer}
               >
                 Add Lead
               </Button>
@@ -299,29 +376,32 @@ const LeadsPage = () => {
         </Col>
       </Row>
 
-      {/* ✅ Screenshot-like Modal */}
-      <Modal
-        title="Add New lead"
-        open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false);
+      <Drawer
+        title={editingLead ? 'Edit Lead' : 'Add New Lead'}
+        open={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setEditingLead(null);
           form.resetFields();
         }}
-        footer={[
-          <Button
-            key="close"
-            onClick={() => {
-              setIsModalOpen(false);
-              form.resetFields();
-            }}
-          >
-            Close
-          </Button>,
-          <Button key="save" type="primary" onClick={handleSaveLead}>
-            Save
-          </Button>,
-        ]}
         width={900}
+        placement="right"
+        extra={
+          <Space>
+            <Button
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setEditingLead(null);
+                form.resetFields();
+              }}
+            >
+              Close
+            </Button>
+            <Button type="primary" onClick={handleSaveLead}>
+              {editingLead ? 'Update' : 'Save'}
+            </Button>
+          </Space>
+        }
       >
         <Form form={form} layout="vertical" style={{ marginTop: 8 }}>
           {/* Top row: Status, Source, Assigned */}
@@ -422,13 +502,7 @@ const LeadsPage = () => {
                 label="Assigned"
                 rules={[{ required: true }]}
               >
-                <Select
-                  options={[
-                    { value: 'admin user', label: 'admin user' },
-                    { value: 'sales user', label: 'sales user' },
-                    { value: 'manager', label: 'manager' },
-                  ]}
-                />
+                <Select options={staffs} />
               </Form.Item>
             </Col>
           </Row>
@@ -510,12 +584,17 @@ const LeadsPage = () => {
 
               <Form.Item name="country" label="Country">
                 <Select
+                  showSearch
                   placeholder="Nothing selected"
-                  options={[
-                    { value: 'India', label: 'India' },
-                    { value: 'USA', label: 'USA' },
-                    { value: 'UAE', label: 'UAE' },
-                  ]}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '')
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                  options={countries.map((c: any) => ({
+                    value: c.name.common,
+                    label: c.name.common,
+                  }))}
                 />
               </Form.Item>
 
@@ -567,7 +646,7 @@ const LeadsPage = () => {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </Drawer>
     </div>
   );
 };

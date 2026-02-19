@@ -19,14 +19,14 @@ import {
   convertToMockEndpoint,
   isMockOnlyEndpoint,
 } from './mockEndpointMapper';
+import { message } from 'antd';
 
 // DEBUG: Module loaded
 console.log('[API Client] Module loaded!');
 
 // API Configuration
-const API_HOST =
-  import.meta.env.VITE_API_BASE_URL || 'https://crm.jeminisnacks.com/backend';
-// const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5025';
+// const API_HOST = import.meta.env.VITE_API_BASE_URL || 'https://crm.jeminisnacks.com/backend';
+const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5025';
 const API_BASE_URL = API_HOST.endsWith('/api') ? API_HOST : `${API_HOST}/api/`;
 
 console.log('[API Client] Configuration:', {
@@ -159,6 +159,7 @@ apiClient.interceptors.response.use(
 
     return response;
   },
+
   async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as AxiosRequestConfig & {
       _retry?: boolean;
@@ -166,6 +167,7 @@ apiClient.interceptors.response.use(
 
     // Log error in development
     if (import.meta.env.DEV) {
+      message.error(error.response?.data?.message || error.message);
       console.error('[API Response Error]', {
         status: error.response?.status,
         message: error.response?.data?.message || error.message,
@@ -209,8 +211,8 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed, logout user
         console.error('[Token Refresh Failed]', refreshError);
-        tokenStorage.clearAuth();
-        window.location.href = '/auth/signin';
+        // tokenStorage.clearAuth();
+        // window.location.href = '/auth/signin';
         return Promise.reject(refreshError);
       }
     }
