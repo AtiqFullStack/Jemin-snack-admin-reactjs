@@ -21,7 +21,7 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { getPermissionsGrouped } from '../../../config/permissions';
+import { getPermissionsGrouped, PERMISSIONS } from '../../../config/permissions';
 import './styles.css';
 import roleService from '../../../services/roleService';
 import { usePermissions } from '../../../hooks';
@@ -33,7 +33,9 @@ type Role = {
   description: string;
   permissions: string[];
   users_count: number;
+  usersCount?: number;
   created_at: string;
+  createdAt?: string;
 };
 
 const RolesPage = () => {
@@ -43,6 +45,7 @@ const RolesPage = () => {
   const [form] = Form.useForm();
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const { canCreate, canUpdate, canDelete } = usePermissions();
+  const permissionLabelMap = PERMISSIONS as Record<string, string>;
 
   // get ROles and Permissions from config
   const { getRoles, createRoles, deleteRoles, updateRoles } = roleService();
@@ -52,11 +55,30 @@ const RolesPage = () => {
     g.items.map((i) => i.key)
   );
 
+  const normalizeRole = (role: any): Role => ({
+    ...role,
+    users_count: role?.users_count ?? role?.usersCount ?? 0,
+    created_at: role?.created_at ?? role?.createdAt ?? '',
+    createdAt: role?.createdAt ?? role?.created_at ?? '',
+  });
+
+  const formatCreatedDate = (role: Role) => {
+    const rawDate = role.createdAt || role.created_at;
+    if (!rawDate) {
+      return '-';
+    }
+    const parsedDate = new Date(rawDate);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return rawDate;
+    }
+    return parsedDate.toLocaleDateString();
+  };
+
   useEffect(() => {
     getRoles()
       .then((fetchedRoles: any) => {
         if (fetchedRoles.success) {
-          setRoles(fetchedRoles.data); // Assuming the API response has a 'data' object with 'roles' array
+          setRoles((fetchedRoles.data ?? []).map(normalizeRole));
         }
         console.log(fetchedRoles);
         // Assuming fetchedRoles is an array of roles in the correct format
@@ -119,14 +141,28 @@ const RolesPage = () => {
       render: (permissions: string[]) => (
         <Space wrap>
           {permissions.slice(0, 3).map((p) => (
-            <Tag key={p}>{p}</Tag>
+            <Tag key={p}>
+              {p === '*' || p === 'ALL'
+                ? 'All Permissions'
+                : permissionLabelMap[p] || p}
+            </Tag>
           ))}
           {permissions.length > 3 && <Tag>+{permissions.length - 3} more</Tag>}
         </Space>
       ),
     },
-    { title: 'Users', dataIndex: 'users_count', key: 'users_count' },
-    { title: 'Created', dataIndex: 'createdAt', key: 'createdAt' },
+    {
+      title: 'Users',
+      dataIndex: 'users_count',
+      key: 'users_count',
+      render: (count: number) => count ?? 0,
+    },
+    {
+      title: 'Created',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (_: string, role: Role) => formatCreatedDate(role),
+    },
     {
       title: 'Actions',
       key: 'actions',
@@ -152,30 +188,62 @@ const RolesPage = () => {
     },
   ];
 
+  const hasDuplicateRoleName = (name: string) => {
+    const normalizedName = name.trim().toLowerCase();
+    return roles.some((role) => {
+      const isEditingCurrentRole =
+        editingRole?._id && role._id && role._id === editingRole._id;
+
+      if (isEditingCurrentRole) {
+        return false;
+      }
+
+      return role.name.trim().toLowerCase() === normalizedName;
+    });
+  };
+
   const handleSaveRole = async () => {
     form.validateFields().then(async (values) => {
+      const normalizedRoleName = values.name.trim();
+
+      if (hasDuplicateRoleName(normalizedRoleName)) {
+        form.setFields([
+          { name: 'name', errors: ['Role name already exists'] },
+        ]);
+        return;
+      }
+
+      form.setFields([{ name: 'name', errors: [] }]);
+
       if (editingRole) {
         // Update existing role
         const updatedRole: Role = {
           ...editingRole,
-          name: values.name,
+          name: normalizedRoleName,
           description: values.description,
           permissions: selectedPermissions,
         };
         const res = (await updateRoles(editingRole._id!, updatedRole)) as any;
         if (res.success) {
+          const normalizedUpdatedRole = normalizeRole(updatedRole);
           setRoles(
-            roles.map((r) => (r._id === editingRole._id ? updatedRole : r))
+            roles.map((r) =>
+              r._id === editingRole._id ? normalizedUpdatedRole : r
+            )
           );
           message.success(res.message || 'Role updated successfully');
         } else {
+          if (res?.message && /exist|duplicate|already/i.test(res.message)) {
+            form.setFields([{ name: 'name', errors: [res.message] }]);
+            return;
+          }
           message.error(res.message || 'Failed to update role');
         }
       } else {
         // Create new role
         const newRole: Role = {
           id: `R-${String(roles.length + 1).padStart(3, '0')}`,
-          name: values.name,
+          name: normalizedRoleName,
           description: values.description,
           permissions: selectedPermissions,
           users_count: 0,
@@ -183,9 +251,14 @@ const RolesPage = () => {
         };
         const res = (await createRoles(newRole)) as any;
         if (res.success) {
-          setRoles([...roles, newRole]);
+          const createdRole = normalizeRole(res.data ?? newRole);
+          setRoles([...roles, createdRole]);
           message.success(res.message || 'Role created successfully');
         } else {
+          if (res?.message && /exist|duplicate|already/i.test(res.message)) {
+            form.setFields([{ name: 'name', errors: [res.message] }]);
+            return;
+          }
           message.error(res.message || 'Failed to create role');
         }
       }
@@ -193,6 +266,15 @@ const RolesPage = () => {
       form.resetFields();
       setSelectedPermissions([]);
       setEditingRole(null);
+    }).catch((error: any) => {
+      const apiMessage =
+        error?.response?.data?.message || error?.message || 'Failed to save role';
+
+      if (/exist|duplicate|already/i.test(apiMessage)) {
+        form.setFields([{ name: 'name', errors: [apiMessage] }]);
+        return;
+      }
+      message.error(apiMessage);
     });
   };
 
@@ -250,7 +332,7 @@ const RolesPage = () => {
         }
       >
         <Table
-          rowKey="id"
+          rowKey={(record) => record._id || record.id || record.name}
           columns={columns}
           dataSource={roles}
           pagination={{ pageSize: 10 }}
@@ -291,9 +373,31 @@ const RolesPage = () => {
               <Form.Item
                 name="name"
                 label="Role Name"
-                rules={[{ required: true }]}
+                rules={[
+                  { required: true, message: 'Role name is required' },
+                  {
+                    validator: (_, value) => {
+                      if (!value || !value.trim()) {
+                        return Promise.resolve();
+                      }
+
+                      if (hasDuplicateRoleName(value)) {
+                        return Promise.reject(
+                          new Error('Role name already exists')
+                        );
+                      }
+
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
               >
-                <Input placeholder="Enter role name" />
+                <Input
+                  placeholder="Enter role name"
+                  onChange={() =>
+                    form.setFields([{ name: 'name', errors: [] }])
+                  }
+                />
               </Form.Item>
               <Form.Item
                 name="description"

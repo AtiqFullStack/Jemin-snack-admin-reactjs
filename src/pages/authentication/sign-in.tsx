@@ -4,7 +4,7 @@ import {
   Button,
   Checkbox,
   Col,
-  Divider,
+
   Flex,
   Form,
   Input,
@@ -16,14 +16,13 @@ import {
   Typography,
 } from 'antd';
 import {
-  FacebookFilled,
-  GoogleOutlined,
+
   MoonOutlined,
   SunOutlined,
-  TwitterOutlined,
+
 } from '@ant-design/icons';
 import { useMediaQuery } from 'react-responsive';
-import { PATH_AUTH, PATH_DASHBOARD } from '../../constants';
+import {  PATH_DASHBOARD } from '../../constants';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,7 +32,7 @@ import { useAuth } from '../../hooks';
 import { handleApiError } from '../../services/api/apiClient';
 import AuthLeft from '../../components/auth/AuthLeft';
 
-const { Title, Text, Link } = Typography;
+const { Title} = Typography;
 
 type FieldType = {
   email?: string;
@@ -73,10 +72,16 @@ export const SignInPage = () => {
     } catch (err) {
       console.error('Login error:', err);
       const apiError = handleApiError(err);
-      setError(
-        apiError.message || 'Invalid email or password. Please try again.'
-      );
-      message.error(apiError.message || 'Login failed. Please try again.');
+      const fallbackMessage =
+        err instanceof Error
+          ? err.message
+          : 'Invalid email or password. Please try again.';
+      const errorMessage =
+        apiError.message && apiError.message !== 'An unexpected error occurred'
+          ? apiError.message
+          : fallbackMessage;
+      setError(errorMessage);
+      message.error(errorMessage || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -138,10 +143,10 @@ export const SignInPage = () => {
           }}
         >
           <Title className="m-0">Login</Title>
-          <Flex gap={4}>
+          {/* <Flex gap={4}>
             <Text>Don't have an account?</Text>
             <Link href={PATH_AUTH.signup}>Create an account here</Link>
-          </Flex>
+          </Flex> */}
           {error && (
             <Alert
               message="Login Failed"
@@ -204,13 +209,13 @@ export const SignInPage = () => {
                   size="middle"
                   loading={loading}
                 >
-                  Continue
+                  Login
                 </Button>
-                <Link href={PATH_AUTH.passwordReset}>Forgot password?</Link>
+                {/* <Link href={PATH_AUTH.passwordReset}>Forgot password?</Link> */}
               </Flex>
             </Form.Item>
           </Form>
-          <Divider className="m-0">or</Divider>
+          {/* <Divider className="m-0">or</Divider>
           <Flex
             vertical={isMobile}
             gap="small"
@@ -220,7 +225,7 @@ export const SignInPage = () => {
             <Button icon={<GoogleOutlined />}>Sign in with Google</Button>
             <Button icon={<FacebookFilled />}>Sign in with Facebook</Button>
             <Button icon={<TwitterOutlined />}>Sign in with Twitter</Button>
-          </Flex>
+          </Flex> */}
         </Flex>
       </Col>
     </Row>

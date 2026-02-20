@@ -161,7 +161,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/crm',
-    element: <PageWrapper children={<DashboardLayout />} />,
+    element: (
+      <ProtectedRoute>
+        <PageWrapper children={<DashboardLayout />} />
+      </ProtectedRoute>
+    ),
     errorElement: <ErrorPage />,
     children: [
       {

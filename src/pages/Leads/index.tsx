@@ -217,10 +217,20 @@ const LeadsPage = () => {
     }
 
     if (res.success) {
-      message.success(res.meassge);
+      message.success(
+        res.message ||
+          (editingLead
+            ? 'Lead updated successfully'
+            : 'Lead created successfully')
+      );
       await fetchLeads();
       setIsDrawerOpen(false);
       form.resetFields();
+    } else {
+      message.error(
+        res?.message ||
+          (editingLead ? 'Failed to update lead' : 'Failed to create lead')
+      );
     }
   };
 

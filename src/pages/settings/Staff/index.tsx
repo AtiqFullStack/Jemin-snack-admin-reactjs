@@ -28,6 +28,7 @@ type User = {
   roleId: any;
   status: UserStatus;
   created_at: string;
+  createdAt?: string;
   password?: string;
 };
 
@@ -53,11 +54,29 @@ const StaffPage = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
 
+  const normalizeUser = (user: any): User => ({
+    ...user,
+    created_at: user?.created_at ?? user?.createdAt ?? '',
+    createdAt: user?.createdAt ?? user?.created_at ?? '',
+  });
+
+  const formatCreatedDate = (user: User) => {
+    const rawDate = user.created_at || user.createdAt;
+    if (!rawDate) {
+      return '-';
+    }
+    const parsedDate = new Date(rawDate);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return rawDate;
+    }
+    return parsedDate.toLocaleDateString();
+  };
+
   // Later: API call
   const getStaffs = async () => {
     const res = (await getStaff()) as any;
     if (res.success) {
-      setUsers(res.data.items);
+      setUsers((res.data.items ?? []).map(normalizeUser));
     }
   };
   useEffect(() => {
@@ -223,7 +242,12 @@ const StaffPage = () => {
         <Tag color={status === 'active' ? 'green' : 'red'}>{status}</Tag>
       ),
     },
-    { title: 'Created', dataIndex: 'created_at', key: 'created_at' },
+    {
+      title: 'Created',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (_: string, record: User) => formatCreatedDate(record),
+    },
     {
       title: 'Actions',
       key: 'actions',
@@ -266,7 +290,7 @@ const StaffPage = () => {
         }
       >
         <Table
-          rowKey="id"
+          rowKey={(record) => record._id}
           columns={columns}
           dataSource={users}
           pagination={{ pageSize: 10 }}

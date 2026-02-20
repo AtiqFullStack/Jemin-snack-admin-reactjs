@@ -32,7 +32,7 @@ import SideNav from './side-nav.tsx';
 import HeaderNav from './header-nav.tsx';
 import FooterNav from './footer-nav.tsx';
 import { NProgress, LoginModal } from '../../components';
-import { PATH_LANDING, PATH_USER_PROFILE } from '../../constants';
+import { PATH_AUTH, PATH_USER_PROFILE } from '../../constants';
 
 // import { logoutUser } from '../../redux/auth/authSlice';
 // import { enableMockData } from '../../redux/data-mode/dataModeSlice';
@@ -69,11 +69,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     });
 
     // If authenticated, logout from API
-    logout();
-
-    setTimeout(() => {
-      navigate(PATH_LANDING.root);
-    }, 2500);
+    await logout();
+    message.destroy();
+    navigate(PATH_AUTH.signin, { replace: true });
   };
 
   const items: MenuProps['items'] = [

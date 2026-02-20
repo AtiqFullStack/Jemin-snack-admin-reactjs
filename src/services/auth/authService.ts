@@ -29,6 +29,32 @@ const DUMMY_USER = {
 
 const DUMMY_TOKEN = 'dummy-jwt-token-mock-mode';
 
+const getAccountBlockReason = (user: any): string | null => {
+  if (!user) {
+    return 'User not found';
+  }
+
+  const status = String(user?.status ?? '')
+    .trim()
+    .toLowerCase();
+
+  const isDeleted =
+    user?.isDeleted === true ||
+    Boolean(user?.deletedAt) ||
+    status === 'deleted';
+  const isInactive = user?.isActive === false || status === 'inactive';
+
+  if (isDeleted) {
+    return 'Your account has been deleted. Please contact admin.';
+  }
+
+  if (isInactive) {
+    return 'Your account is inactive. Please contact admin.';
+  }
+
+  return null;
+};
+
 export const authService = {
   /**
    * Login with email and password - DUMMY IMPLEMENTATION
@@ -43,6 +69,12 @@ export const authService = {
     if (res.success) {
       const token = res.data.token;
       const user = res.data.user;
+      const blockedReason = getAccountBlockReason(user);
+
+      if (blockedReason) {
+        tokenStorage.clearAuth();
+        throw new Error(blockedReason);
+      }
 
       const response: LoginResponse = {
         token: token,
@@ -156,4 +188,6 @@ export const authService = {
   isAuthenticated: (): boolean => {
     return tokenStorage.isAuthenticated();
   },
+
+  getAccountBlockReason,
 };

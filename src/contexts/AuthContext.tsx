@@ -46,8 +46,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log(isAuth);
         if (isAuth) {
           const storedUser = authService.getCurrentUser();
+          const blockedReason = authService.getAccountBlockReason(storedUser);
           console.log(storedUser);
-          setUser(storedUser);
+          if (blockedReason) {
+            tokenStorage.clearAuth();
+            setUser(null);
+          } else {
+            setUser(storedUser);
+          }
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
