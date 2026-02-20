@@ -1,6 +1,6 @@
-import { Modal, Descriptions, Tag, Flex } from 'antd';
+import { Modal } from 'antd';
 import { Lead } from '../../types/leads';
-import { timeConverter } from '../../utils/convertor';
+
 import HeaderTabs from './HeaderTabs';
 
 interface LeadViewModalProps {

@@ -1,14 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import {
-  UserOutlined,
-  FileTextOutlined,
-  CheckCircleOutlined,
-  PaperClipOutlined,
-  BellOutlined,
-  FileDoneOutlined,
-  BarChartOutlined,
-} from '@ant-design/icons';
-import { Descriptions } from 'antd';
+import { UserOutlined, BarChartOutlined } from '@ant-design/icons';
+
 import { AnimatePresence, motion } from 'framer-motion';
 import { Lead } from '../../types/leads';
 import {
@@ -21,7 +13,6 @@ import {
   Row,
   Col,
   Space,
-  Button,
 } from 'antd';
 import {
   MailOutlined,

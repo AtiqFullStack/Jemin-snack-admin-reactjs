@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useReducer } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Card,
   Col,
@@ -32,7 +32,9 @@ import leadServices from '../../services/leadServices';
 import staffService from '../../services/staffService';
 import { timeConverter } from '../../utils/convertor';
 import { useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch } from '../../redux/store';
 import { fetchCountries } from '../../redux/countriesSlice';
+
 import {
   LeadStage,
   LeadSource,
@@ -41,6 +43,7 @@ import {
   Lead,
 } from '../../types/leads';
 import LeadViewModal from './LeadViewModal';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const LeadsPage = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -52,12 +55,13 @@ const LeadsPage = () => {
   const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [form] = Form.useForm<LeadFormValues>();
   const [staffs, setStaffs] = useState([]);
+  const {} = usePermissions();
 
-  const { creatLeads, getLeads, getById, deleteLeads, updateLeads } =
-    leadServices();
+  const { creatLeads, getLeads, deleteLeads, updateLeads } = leadServices();
   const { getStaff } = staffService();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const countries = useSelector((state: any) => state.countries.countries);
+  const { canCreate, canUpdate, canDelete } = usePermissions();
 
   useEffect(() => {
     fetchLeads();
@@ -294,17 +298,21 @@ const LeadsPage = () => {
             icon={<EyeOutlined />}
             onClick={() => setViewLead(record)}
           />
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Button
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-          />
+          {canUpdate('leads.update') && (
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            />
+          )}
+          {canDelete('leads.delete') && (
+            <Button
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record)}
+            />
+          )}
         </Space>
       ),
     },
@@ -322,13 +330,15 @@ const LeadsPage = () => {
           <Card
             title="Leads"
             extra={
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleOpenDrawer}
-              >
-                Add Lead
-              </Button>
+              canCreate('leads.create') && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleOpenDrawer}
+                >
+                  Add Lead
+                </Button>
+              )
             }
           >
             <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
@@ -587,7 +597,7 @@ const LeadsPage = () => {
                   showSearch
                   placeholder="Nothing selected"
                   filterOption={(input, option) =>
-                    (option?.label ?? '')
+                    String(option?.label ?? '')
                       .toLowerCase()
                       .includes(input.toLowerCase())
                   }

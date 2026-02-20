@@ -25,8 +25,9 @@ import { message } from 'antd';
 console.log('[API Client] Module loaded!');
 
 // API Configuration
-// const API_HOST = import.meta.env.VITE_API_BASE_URL || 'https://crm.jeminisnacks.com/backend';
-const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5025';
+const API_HOST =
+  import.meta.env.VITE_API_BASE_URL || 'https://crm.jeminisnacks.com/backend';
+// const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5025';
 const API_BASE_URL = API_HOST.endsWith('/api') ? API_HOST : `${API_HOST}/api/`;
 
 console.log('[API Client] Configuration:', {
