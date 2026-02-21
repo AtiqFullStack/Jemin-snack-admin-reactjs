@@ -557,7 +557,10 @@ const LeadsPage = () => {
 
               {/* <Form.Item name="language" label="Default Language">
                 <Select
-                  options={[{ value: 'System Default', label: 'System Default' }]}
+                  options={[
+                  { value: 'System Default', label: 'System Default' },
+                  { value: 'English', label: 'English' },
+                  ]}
                 />
                 
               </Form.Item> */}
