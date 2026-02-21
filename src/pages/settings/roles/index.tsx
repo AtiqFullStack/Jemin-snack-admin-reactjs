@@ -57,6 +57,9 @@ const RolesPage = () => {
 
   const normalizeRole = (role: any): Role => ({
     ...role,
+    name: role?.name ?? '',
+    description: role?.description ?? '',
+    permissions: Array.isArray(role?.permissions) ? role.permissions : [],
     users_count: role?.users_count ?? role?.usersCount ?? 0,
     created_at: role?.created_at ?? role?.createdAt ?? '',
     createdAt: role?.createdAt ?? role?.created_at ?? '',
@@ -138,18 +141,23 @@ const RolesPage = () => {
       title: 'Permissions',
       dataIndex: 'permissions',
       key: 'permissions',
-      render: (permissions: string[]) => (
-        <Space wrap>
-          {permissions.slice(0, 3).map((p) => (
+      render: (permissions?: string[]) => {
+        const safePermissions = Array.isArray(permissions) ? permissions : [];
+        return (
+          <Space wrap>
+            {safePermissions.slice(0, 3).map((p) => (
             <Tag key={p}>
               {p === '*' || p === 'ALL'
                 ? 'All Permissions'
                 : permissionLabelMap[p] || p}
             </Tag>
-          ))}
-          {permissions.length > 3 && <Tag>+{permissions.length - 3} more</Tag>}
-        </Space>
-      ),
+            ))}
+            {safePermissions.length > 3 && (
+              <Tag>+{safePermissions.length - 3} more</Tag>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: 'Users',
@@ -198,7 +206,7 @@ const RolesPage = () => {
         return false;
       }
 
-      return role.name.trim().toLowerCase() === normalizedName;
+      return (role.name ?? '').trim().toLowerCase() === normalizedName;
     });
   };
 

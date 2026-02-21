@@ -29,20 +29,63 @@ const DUMMY_USER = {
 
 const DUMMY_TOKEN = 'dummy-jwt-token-mock-mode';
 
+const toBoolean = (value: unknown): boolean => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value === 1;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return ['true', '1', 'yes', 'y'].includes(normalized);
+  }
+
+  return false;
+};
+
+const normalizeStatus = (value: unknown): string => {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase();
+};
+
 const getAccountBlockReason = (user: any): string | null => {
   if (!user) {
     return 'User not found';
   }
 
-  const status = String(user?.status ?? '')
-    .trim()
-    .toLowerCase();
+  const status = normalizeStatus(
+    user?.status ?? user?.userStatus ?? user?.accountStatus
+  );
+  const activeFlag = user?.isActive ?? user?.active ?? user?.enabled;
+  const deletedFlag =
+    user?.isDeleted ??
+    user?.deleted ??
+    user?.isDelete ??
+    user?.is_deleted ??
+    user?.softDeleted;
 
   const isDeleted =
-    user?.isDeleted === true ||
+    toBoolean(deletedFlag) ||
     Boolean(user?.deletedAt) ||
-    status === 'deleted';
-  const isInactive = user?.isActive === false || status === 'inactive';
+    Boolean(user?.removedAt) ||
+    ['deleted', 'removed'].includes(status);
+
+  const isInactive =
+    activeFlag !== undefined
+      ? !toBoolean(activeFlag)
+      : [
+          'inactive',
+          'disabled',
+          'deactive',
+          'deactivated',
+          'suspended',
+          '0',
+          'false',
+        ].includes(status);
 
   if (isDeleted) {
     return 'Your account has been deleted. Please contact admin.';
@@ -66,14 +109,19 @@ export const authService = {
       credentials
     )) as any;
 
-    if (res.success) {
-      const token = res.data.token;
-      const user = res.data.user;
+    if (res?.success) {
+      const token = res?.data?.token ?? res?.token;
+      const user = res?.data?.user ?? res?.user;
       const blockedReason = getAccountBlockReason(user);
 
       if (blockedReason) {
         tokenStorage.clearAuth();
         throw new Error(blockedReason);
+      }
+
+      if (!token || !user) {
+        tokenStorage.clearAuth();
+        throw new Error('Invalid login response from server');
       }
 
       const response: LoginResponse = {

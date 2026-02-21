@@ -72,8 +72,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const response = (await authService.login(credentials)) as any;
+      if (!response?.user) {
+        throw new Error('Invalid credentials. Please try again.');
+      }
       setUser(response.user);
     } catch (error) {
+      tokenStorage.clearAuth();
+      setUser(null);
       console.error('Login failed:', error);
       throw error;
     } finally {

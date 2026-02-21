@@ -12,7 +12,6 @@ import {
   Typography,
   Drawer,
   Form,
-  Divider,
   Checkbox,
   Space,
   Modal,
@@ -55,7 +54,6 @@ const LeadsPage = () => {
   const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [form] = Form.useForm<LeadFormValues>();
   const [staffs, setStaffs] = useState([]);
-  const {} = usePermissions();
 
   const { creatLeads, getLeads, deleteLeads, updateLeads } = leadServices();
   const { getStaff } = staffService();
@@ -89,24 +87,21 @@ const LeadsPage = () => {
     }
   };
 
-  // dropdown add option state
-  const [statusOptions, setStatusOptions] = useState<LeadStatus[]>([
+  const statusOptions: LeadStatus[] = [
     'New',
     'Contacted',
     'Qualified',
     'Proposal',
     'Won',
     'Lost',
-  ]);
-  const [sourceOptions, setSourceOptions] = useState<LeadSource[]>([
+  ];
+  const sourceOptions: LeadSource[] = [
     'Facebook',
     'Referral',
     'Website',
     'Walk-in',
     'Instagram',
-  ]);
-  const [newStatus, setNewStatus] = useState('');
-  const [newSource, setNewSource] = useState('');
+  ];
 
   const filtered = useMemo(() => {
     return leads.filter((l) => {
@@ -157,7 +152,7 @@ const LeadsPage = () => {
       state: record.state,
       country: record.country,
       zip: record.zip,
-      language: record.language,
+      language: 'System Default',
       description: record.description,
       is_public: record.isPublic,
       contacted_today: !!record.lastContactedAt,
@@ -279,9 +274,11 @@ const LeadsPage = () => {
       title: 'Tags',
       dataIndex: 'tags',
       key: 'tags',
-      render: (v: any) => (
+      render: (v: string[] | undefined) => (
         <Flex gap={2}>
-          {v.length && v.map((tag: any) => <Tag key={tag}>{tag}</Tag>)}
+          {(v ?? []).map((tag) => (
+            <Tag key={tag}>{tag}</Tag>
+          ))}
         </Flex>
       ),
     },
@@ -308,14 +305,14 @@ const LeadsPage = () => {
             icon={<EyeOutlined />}
             onClick={() => setViewLead(record)}
           />
-          {canUpdate('leads.update') && (
+          {canUpdate('leads') && (
             <Button
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
             />
           )}
-          {canDelete('leads.delete') && (
+          {canDelete('leads') && (
             <Button
               size="small"
               danger
@@ -340,7 +337,7 @@ const LeadsPage = () => {
           <Card
             title="Leads"
             extra={
-              canCreate('leads.create') && (
+              canCreate('leads') && (
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
@@ -385,11 +382,11 @@ const LeadsPage = () => {
             </Row>
 
             <Table
-              rowKey="id"
+              rowKey="_id"
               columns={columns}
               dataSource={filtered}
               pagination={{ pageSize: 8 }}
-              className="overflow-scroll"
+              scroll={{ x: 'max-content' }}
               rowHoverable={false}
             />
           </Card>
@@ -439,34 +436,6 @@ const LeadsPage = () => {
                 <Select
                   placeholder="Nothing selected"
                   options={statusOptions.map((s) => ({ value: s, label: s }))}
-                  dropdownRender={(menu) => (
-                    <div>
-                      {menu}
-                      <Divider style={{ margin: '8px 0' }} />
-                      <Flex gap={8} style={{ padding: 8 }}>
-                        <Input
-                          placeholder="Add new status"
-                          value={newStatus}
-                          onChange={(e) => setNewStatus(e.target.value)}
-                        />
-                        <Button
-                          icon={<PlusOutlined />}
-                          onClick={() => {
-                            const v = newStatus.trim();
-                            if (!v) return;
-                            if (!statusOptions.includes(v as LeadStatus)) {
-                              setStatusOptions((prev) => [
-                                ...prev,
-                                v as LeadStatus,
-                              ]);
-                            }
-                            form.setFieldValue('status', v as LeadStatus);
-                            setNewStatus('');
-                          }}
-                        />
-                      </Flex>
-                    </div>
-                  )}
                 />
               </Form.Item>
             </Col>
@@ -484,34 +453,6 @@ const LeadsPage = () => {
                 <Select
                   placeholder="Nothing selected"
                   options={sourceOptions.map((s) => ({ value: s, label: s }))}
-                  dropdownRender={(menu) => (
-                    <div>
-                      {menu}
-                      <Divider style={{ margin: '8px 0' }} />
-                      <Flex gap={8} style={{ padding: 8 }}>
-                        <Input
-                          placeholder="Add new source"
-                          value={newSource}
-                          onChange={(e) => setNewSource(e.target.value)}
-                        />
-                        <Button
-                          icon={<PlusOutlined />}
-                          onClick={() => {
-                            const v = newSource.trim();
-                            if (!v) return;
-                            if (!sourceOptions.includes(v as LeadSource)) {
-                              setSourceOptions((prev) => [
-                                ...prev,
-                                v as LeadSource,
-                              ]);
-                            }
-                            form.setFieldValue('source', v as LeadSource);
-                            setNewSource('');
-                          }}
-                        />
-                      </Flex>
-                    </div>
-                  )}
                 />
               </Form.Item>
             </Col>
@@ -624,11 +565,7 @@ const LeadsPage = () => {
 
               <Form.Item name="language" label="Default Language">
                 <Select
-                  options={[
-                    { value: 'System Default', label: 'System Default' },
-                    { value: 'English', label: 'English' },
-                    { value: 'Hindi', label: 'Hindi' },
-                  ]}
+                  options={[{ value: 'System Default', label: 'System Default' }]}
                 />
               </Form.Item>
             </Col>
