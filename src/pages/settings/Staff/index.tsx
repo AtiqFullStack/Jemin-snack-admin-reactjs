@@ -231,7 +231,15 @@ const StaffPage = () => {
       dataIndex: 'roleId',
       key: 'roleId',
       render: (roleId: any) => {
-        return <Tag color="blue">{roleId?.name ?? 'Unknown'}</Tag>;
+        return (
+          <>
+            {roleId ? (
+              <Tag color="blue">{roleId?.name ?? 'Unknown'}</Tag>
+            ) : (
+              <Tag color="red">{roleId?.name ?? 'Not Assigned'}</Tag>
+            )}
+          </>
+        );
       },
     },
     {
