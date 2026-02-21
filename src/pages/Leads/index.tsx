@@ -152,7 +152,7 @@ const LeadsPage = () => {
       state: record.state,
       country: record.country,
       zip: record.zip,
-      language: 'System Default',
+      language: 'English',
       description: record.description,
       is_public: record.isPublic,
       contacted_today: !!record.lastContactedAt,
@@ -198,7 +198,7 @@ const LeadsPage = () => {
       state: values.state,
       country: values.country,
       zip: values.zip,
-      language: values.language,
+      language: 'English',
       description: values.description,
       isPublic: values.is_public,
       contacted_today: values.contacted_today,
@@ -524,17 +524,9 @@ const LeadsPage = () => {
               <Form.Item name="lead_value" label="Lead value">
                 <Input type="number" addonAfter="$" placeholder="" />
               </Form.Item>
-
-              <Form.Item name="company" label="Company">
-                <Input placeholder="" />
-              </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="address" label="Address">
-                <Input.TextArea rows={2} placeholder="" />
-              </Form.Item>
-
               <Form.Item name="city" label="City">
                 <Input placeholder="" />
               </Form.Item>
@@ -563,10 +555,15 @@ const LeadsPage = () => {
                 <Input placeholder="" />
               </Form.Item>
 
-              <Form.Item name="language" label="Default Language">
+              {/* <Form.Item name="language" label="Default Language">
                 <Select
                   options={[{ value: 'System Default', label: 'System Default' }]}
                 />
+                
+              </Form.Item> */}
+
+              <Form.Item name="address" label="Address">
+                <Input.TextArea rows={2} placeholder="" />
               </Form.Item>
             </Col>
           </Row>
