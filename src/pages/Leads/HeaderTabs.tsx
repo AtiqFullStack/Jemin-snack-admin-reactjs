@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { UserOutlined, BarChartOutlined } from '@ant-design/icons';
+import {
+  UserOutlined,
+  BarChartOutlined,
+  CheckCircleOutlined,
+} from '@ant-design/icons';
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Lead } from '../../types/leads';
@@ -21,6 +25,7 @@ import {
   EnvironmentOutlined,
 } from '@ant-design/icons';
 import ActivityComp from './ActivityComp';
+import Tasks from './Tasks';
 
 type TabKey =
   | 'profile'
@@ -72,7 +77,7 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ lead }) => {
     () => [
       { key: 'profile', label: 'Profile', icon: <UserOutlined /> },
       // { key: "proposals", label: "Proposals", icon: <FileTextOutlined /> },
-      // { key: "tasks", label: "Tasks", icon: <CheckCircleOutlined /> },
+      { key: 'tasks', label: 'Tasks', icon: <CheckCircleOutlined /> },
       // { key: "attachments", label: "Attachments", icon: <PaperClipOutlined /> },
       // { key: "reminders", label: "Reminders", icon: <BellOutlined /> },
       // { key: "notes", label: "Notes", icon: <FileDoneOutlined /> },
@@ -312,7 +317,7 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ lead }) => {
       case 'proposals':
         return <div style={{ color: '#667085' }}>No proposals yet.</div>;
       case 'tasks':
-        return <div style={{ color: '#667085' }}>No tasks yet.</div>;
+        return <Tasks lead={lead} />;
       case 'attachments':
         return <div style={{ color: '#667085' }}>No attachments yet.</div>;
       case 'reminders':

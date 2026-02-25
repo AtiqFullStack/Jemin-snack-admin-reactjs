@@ -108,10 +108,10 @@ const LeadsPage = () => {
       const search = q.trim().toLowerCase();
       const matchesSearch =
         !search ||
-        l.name.toLowerCase().includes(search) ||
-        l.company.toLowerCase().includes(search) ||
-        l.email.toLowerCase().includes(search) ||
-        l.phone.toLowerCase().includes(search);
+        l?.name?.toLowerCase().includes(search) ||
+        l?.company?.toLowerCase().includes(search) ||
+        l?.email?.toLowerCase().includes(search) ||
+        l?.phone?.toLowerCase().includes(search);
 
       const matchesStage = !stage || l.status === stage;
       const matchesSource = !source || l.source === source;

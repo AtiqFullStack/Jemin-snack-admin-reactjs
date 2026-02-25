@@ -54,6 +54,14 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/activityLogs/${id}`,
   },
 
+  //=========================TASKS===========================
+
+  TASK: {
+    LIST: '/task',
+    CREATE: '/task/create',
+    GET_BY_LEAD_ID: (id: string) => `/task/byLeadId/${id}`,
+  },
+
   // ==================== USER PROFILE ====================
   PROFILE: {
     GET: '/profile',
