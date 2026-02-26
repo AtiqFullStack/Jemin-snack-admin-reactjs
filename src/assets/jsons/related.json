@@ -1,0 +1,47 @@
+[
+  {
+    "_id": "1",
+    "label": "Project",
+    "value": "project"
+  },
+  {
+    "_id": "2",
+    "label": "Invoice",
+    "value": "invoice"
+  },
+  {
+    "_id": "3",
+    "label": "Customer",
+    "value": "customer"
+  },
+  {
+    "_id": "4",
+    "label": "Estimate",
+    "value": "estimate"
+  },
+  {
+    "_id": "5",
+    "label": "Contract",
+    "value": "contract"
+  },
+  {
+    "_id": "6",
+    "label": "Ticket",
+    "value": "ticket"
+  },
+  {
+    "_id": "7",
+    "label": "Expense",
+    "value": "expense"
+  },
+  {
+    "_id": "8",
+    "label": "Lead",
+    "value": "lead"
+  },
+  {
+    "_id": "9",
+    "label": "Proposal",
+    "value": "proposal"
+  }
+]

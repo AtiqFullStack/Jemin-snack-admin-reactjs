@@ -40,10 +40,22 @@ const taskService = () => {
     }
   };
 
+  const getById = async (id: any) => {
+    try {
+      const response = await apiRequest.get(API_ENDPOINTS.TASK.GET_BY_ID(id));
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error('Error fetching activityLogs:', error);
+      throw error;
+    }
+  };
+
   return {
     getTasksList,
     getByLeadId,
     createTask,
+    getById,
   };
 };
 

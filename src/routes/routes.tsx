@@ -54,6 +54,8 @@ import ContractPage from '../pages/Contract/index.tsx';
 import CustomerPage from '../pages/customer';
 import StaffPage from '../pages/settings/Staff/index.tsx';
 import RolesPage from '../pages/settings/roles';
+import Tasks from '../pages/activities/Tasks.tsx';
+import SingleTask from '../pages/activities/SingleTask.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -188,6 +190,14 @@ const router = createBrowserRouter([
         path: 'settings/roles',
         element: <RolesPage />,
       },
+      {
+        path: 'activities/tasks',
+        element: <Tasks />,
+      },
+      {
+        path: 'activities/tasks/:taskId',
+        element: <SingleTask />,
+      },
     ],
   },
 
@@ -312,6 +322,7 @@ const router = createBrowserRouter([
       },
     ],
   },
+
   {
     path: 'errors',
     element: <Outlet />,

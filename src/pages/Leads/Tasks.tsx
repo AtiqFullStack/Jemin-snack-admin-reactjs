@@ -14,10 +14,13 @@ import {
   Switch,
   InputNumber,
   Upload,
-  Badge,
 } from 'antd';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/index';
+import RelatedToList from '../../assets/jsons/related.json';
+import leadServices from '../../services/leadServices';
+import { apiRequest } from '../../services/api/apiClient';
+import { API_ENDPOINTS } from '../../services/api/endpoints';
 import {
   PlusOutlined,
   SearchOutlined,
@@ -30,7 +33,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import staffService from '../../services/staffService';
 import taskService from '../../services/taskService';
-import { set } from 'lodash';
+import { useNavigate } from 'react-router-dom';
 
 interface Task {
   _id: string;
@@ -52,21 +55,25 @@ interface Task {
   createdAt: string;
 }
 
-const Tasks = ({ lead }: any) => {
+const Tasks = ({ lead }: { lead?: any }) => {
   const { isLoading } = useAuth();
-  const { createTask, getByLeadId } = taskService();
+  const { createTask, getByLeadId, getTasksList } = taskService();
 
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState('');
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
   const [filterPriority, setFilterPriority] = useState<string | undefined>();
   const [staff, setStaffs] = useState([]);
-  console.log(lead);
+  const [relatedType, setRelatedType] = useState<string>('Lead');
+  const [leads, setLeads] = useState([]);
+  const [searchLeadText, setSearchLeadText] = useState('');
+  const navigate = useNavigate();
 
   const { getStaff } = staffService();
+  const { getLeads } = leadServices();
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -87,6 +94,18 @@ const Tasks = ({ lead }: any) => {
       }
     };
     fetchStaff();
+
+    const fetchLeads = async () => {
+      try {
+        const response = (await getLeads()) as any;
+        if (response.success) {
+          setLeads(response.data.items || response.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchLeads();
   }, []);
   useEffect(() => {
     if (lead) {
@@ -97,6 +116,12 @@ const Tasks = ({ lead }: any) => {
           }
         })
         .catch((err) => console.log(err));
+    } else {
+      getTasksList().then((res: any) => {
+        if (res.success) {
+          setTasks(res.data);
+        }
+      });
     }
   }, [lead]);
   console.log(staff);
@@ -116,6 +141,25 @@ const Tasks = ({ lead }: any) => {
   };
 
   const columns: ColumnsType<Task> = [
+    {
+      title: 'Related To',
+      dataIndex: 'relatedTo',
+      key: 'relatedTo',
+      width: 200,
+      render: (relatedTo) => (
+        <div>
+          <Tag color="cyan" style={{ marginBottom: 4 }}>
+            {relatedTo?.type || '-'}
+          </Tag>
+          {relatedTo?.id && (
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              <div style={{ fontWeight: 500 }}>{relatedTo.id.name}</div>
+              {relatedTo.id.email && <div>{relatedTo.id.email}</div>}
+            </div>
+          )}
+        </div>
+      ),
+    },
     {
       title: 'Subject',
       dataIndex: 'subject',
@@ -167,7 +211,6 @@ const Tasks = ({ lead }: any) => {
       width: 140,
       render: (date) => new Date(date).toLocaleDateString(),
     },
-
     {
       title: 'Action',
       key: 'action',
@@ -210,35 +253,37 @@ const Tasks = ({ lead }: any) => {
   ];
 
   const handleView = (record: Task) => {
-    Modal.info({
-      title: record.subject,
-      width: 600,
-      content: (
-        <div style={{ marginTop: 16 }}>
-          <p>
-            <strong>Assignee:</strong> {record.assignee?.firstName}{' '}
-            {record.assignee?.lastName}
-          </p>
-          <p>
-            <strong>Priority:</strong>{' '}
-            <Tag color={priorityColors[record.priority]}>{record.priority}</Tag>
-          </p>
-          <p>
-            <strong>Status:</strong>{' '}
-            <Tag color={statusColors[record.status]}>{record.status}</Tag>
-          </p>
-          <p>
-            <strong>Due Date:</strong>{' '}
-            {new Date(record.dueDate).toLocaleDateString()}
-          </p>
-          {record.description && (
-            <p>
-              <strong>Description:</strong> {record.description}
-            </p>
-          )}
-        </div>
-      ),
-    });
+    navigate(`/crm/activities/tasks/${record._id}`);
+
+    // Modal.info({
+    //   title: record.subject,
+    //   width: 600,
+    //   content: (
+    //     <div style={{ marginTop: 16 }}>
+    //       <p>
+    //         <strong>Assignee:</strong> {record.assignee?.firstName}{' '}
+    //         {record.assignee?.lastName}
+    //       </p>
+    //       <p>
+    //         <strong>Priority:</strong>{' '}
+    //         <Tag color={priorityColors[record.priority]}>{record.priority}</Tag>
+    //       </p>
+    //       <p>
+    //         <strong>Status:</strong>{' '}
+    //         <Tag color={statusColors[record.status]}>{record.status}</Tag>
+    //       </p>
+    //       <p>
+    //         <strong>Due Date:</strong>{' '}
+    //         {new Date(record.dueDate).toLocaleDateString()}
+    //       </p>
+    //       {record.description && (
+    //         <p>
+    //           <strong>Description:</strong> {record.description}
+    //         </p>
+    //       )}
+    //     </div>
+    //   ),
+    // });
   };
 
   const handleEdit = (record: Task) => {
@@ -249,13 +294,14 @@ const Tasks = ({ lead }: any) => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: any) => {
     Modal.confirm({
       title: 'Delete Task',
       content: 'Are you sure you want to delete this task?',
       okText: 'Delete',
       okType: 'danger',
       onOk: async () => {
+        console.log(id);
         try {
           // API call to delete
           message.success('Task deleted successfully');
@@ -267,38 +313,68 @@ const Tasks = ({ lead }: any) => {
     });
   };
 
+  const handleLeadSearch = async (value: string) => {
+    setSearchLeadText(value);
+    if (value.length > 2 || value === '') {
+      try {
+        const endpoint = value
+          ? `${API_ENDPOINTS.LEADS.LIST}?name=${value}`
+          : API_ENDPOINTS.LEADS.LIST;
+        const response = (await apiRequest.get(endpoint)) as any;
+        console.log(response);
+        if (response.success) {
+          setLeads(response.data.items || response.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
+
   const handleCreateTask = () => {
     form.resetFields();
-    form.setFieldsValue({
-      assignee: lead?.assignedTo?._id,
-      relatedTo: {
-        type: 'Lead',
-        id: lead._id,
-      },
-    });
-
+    if (lead) {
+      setRelatedType('Lead');
+      form.setFieldsValue({
+        assignee: lead?.assignedTo?._id,
+        relatedType: 'Lead',
+        relatedId: lead._id,
+      });
+    } else {
+      form.setFieldsValue({
+        relatedType: 'Lead',
+      });
+    }
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (values: any) => {
-    console.log(values);
     const payload = {
       ...values,
       relatedTo: {
-        type: 'Lead',
-        id: lead._id,
+        type: values.relatedType,
+        id: values.relatedId,
       },
     };
+    delete payload.relatedType;
+    delete payload.relatedId;
+
     try {
       const res = (await createTask(payload)) as any;
       if (res.success) {
         message.success('Task saved successfully');
         setIsModalOpen(false);
+        // Refresh tasks
+        if (lead) {
+          getByLeadId(lead._id).then((res: any) => {
+            if (res.success) setTasks(res.data);
+          });
+        } else {
+          getTasksList().then((res: any) => {
+            if (res.success) setTasks(res.data);
+          });
+        }
       }
-      // API call to create/update
-      // setIsModalOpen(false)
-      // form.resetFields()
-      // Refresh list
     } catch (error) {
       message.error('Failed to save task');
     }
@@ -320,6 +396,7 @@ const Tasks = ({ lead }: any) => {
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
             />
+
             <Select
               placeholder="Priority"
               style={{ width: 120 }}
@@ -473,6 +550,64 @@ const Tasks = ({ lead }: any) => {
           <Form.Item name="tags" label="Tags">
             <Select mode="tags" placeholder="Add tags (press enter to add)" />
           </Form.Item>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px',
+            }}
+          >
+            <Form.Item
+              name="relatedType"
+              label="Related Type"
+              initialValue="Lead"
+              rules={[{ required: true, message: 'Please select type' }]}
+            >
+              <Select
+                placeholder="Select Type"
+                disabled={!!lead}
+                onChange={(value) => {
+                  setRelatedType(value);
+                  form.setFieldsValue({ relatedId: undefined });
+                }}
+              >
+                {RelatedToList.map((item) => (
+                  <Select.Option key={item.value} value={item.label}>
+                    {item.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="relatedId"
+              label={`Select ${relatedType}`}
+              rules={[
+                { required: true, message: `Please select ${relatedType}` },
+              ]}
+            >
+              <Select
+                placeholder={`Search and select ${relatedType}`}
+                disabled={!!lead}
+                showSearch
+                onSearch={handleLeadSearch}
+                filterOption={false}
+                notFoundContent={
+                  searchLeadText.length > 0 && searchLeadText.length < 3
+                    ? 'Type at least 3 characters'
+                    : 'No results found'
+                }
+              >
+                {relatedType === 'Lead' &&
+                  leads.map((item: any) => (
+                    <Select.Option key={item._id} value={item._id}>
+                      {item.name} - {item.email}
+                    </Select.Option>
+                  ))}
+              </Select>
+            </Form.Item>
+          </div>
 
           <div
             style={{
