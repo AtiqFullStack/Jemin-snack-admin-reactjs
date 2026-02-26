@@ -61,6 +61,7 @@ export const API_ENDPOINTS = {
     CREATE: '/task/create',
     GET_BY_LEAD_ID: (id: string) => `/task/byLeadId/${id}`,
     GET_BY_ID: (id: string) => `/task/${id}`,
+    DELETE_BY_ID: (id: string) => `/task/${id}`,
   },
 
   // ==================== USER PROFILE ====================

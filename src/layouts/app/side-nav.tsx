@@ -237,12 +237,12 @@ const SideNav = ({ ...others }: SideNavProps) => {
 
   // Get user's role permissions from auth state
   // const user = useSelector((state: RootState) => state.auth?.user);
-  console.log(user);
+  // console.log(user);
 
   const userPermissions = user?.roleId?.permissions || [];
 
-  console.log('User:', user);
-  console.log('User Permissions:', userPermissions);
+  // console.log('User:', user);
+  // console.log('User Permissions:', userPermissions);
 
   const items = useMemo(
     () => filterMenuByRole(CRM_MENU_ITEMS, userPermissions),

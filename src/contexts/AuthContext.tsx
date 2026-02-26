@@ -26,6 +26,7 @@ interface AuthContextType {
   register: (userData: RegisterDto) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: UserProfileDto) => void;
+  isAdmin: any;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +38,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setisAdmin] = useState(false);
 
   // Initialize auth state from storage on mount
   useEffect(() => {
@@ -47,11 +49,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (isAuth) {
           const storedUser = authService.getCurrentUser();
           const blockedReason = authService.getAccountBlockReason(storedUser);
-          console.log(storedUser);
           if (blockedReason) {
             tokenStorage.clearAuth();
             setUser(null);
           } else {
+            if (storedUser?.roleId.name === 'super admin') {
+              setisAdmin(true);
+            }
+            console.log(storedUser);
             setUser(storedUser);
           }
         }
@@ -137,6 +142,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateUser,
+    isAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,115 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import { useEffect, useRef, useState } from 'react';
-import {
-  Card,
-  NotificationsCard,
-  PageHeader,
-  TasksChartCard,
-  TasksListCard,
-  WeeklyActivityCard,
-} from '../../components';
+import { useEffect, useState } from 'react';
+import { Card, PageHeader } from '../../components';
 import {
   Button,
-  Carousel,
-  CarouselProps,
   Col,
   DatePicker,
   Drawer,
   Flex,
   Row,
   Slider,
-  Statistic,
   Tag,
   Typography,
 } from 'antd';
-import {
-  HomeOutlined,
-  AppstoreOutlined,
-  FilterOutlined,
-  PhoneOutlined,
-  ThunderboltOutlined,
-  RiseOutlined,
-} from '@ant-design/icons';
+import { HomeOutlined, AppstoreOutlined } from '@ant-design/icons';
 import CountUp from 'react-countup';
 import { Helmet } from 'react-helmet-async';
 import dashboaradService from '../../services/dashboaradService';
-
-const CAROUSEL_PROPS: CarouselProps = {
-  slidesToShow: 1,
-  slidesToScroll: 1,
-};
-
-/* ===========================
-   STATIC DATA
-=========================== */
-
-const KPI_DATA = {
-  newLeads: 48,
-  openDeals: 21,
-  todayCalls: 17,
-  mtdRevenue: 325000,
-};
-
-const ACTIVITY_DATA = [
-  { day: 'Mon', value: 12 },
-  { day: 'Tue', value: 19 },
-  { day: 'Wed', value: 25 },
-  { day: 'Thu', value: 18 },
-  { day: 'Fri', value: 30 },
-  { day: 'Sat', value: 15 },
-  { day: 'Sun', value: 8 },
-];
-
-const PIPELINE_DATA = [
-  { day: 'Mon', value: 10, status: 'new' },
-  { day: 'Tue', value: 15, status: 'qualified' },
-  { day: 'Wed', value: 8, status: 'proposal' },
-  { day: 'Thu', value: 20, status: 'won' },
-  { day: 'Fri', value: 5, status: 'lost' },
-];
-
-const TASKS_DATA = [
-  {
-    id: '1',
-    title: 'Call ABC Pvt Ltd',
-    status: 'in progress',
-  },
-  {
-    id: '2',
-    title: 'Send proposal to TechNova',
-    status: 'new',
-  },
-  {
-    id: '3',
-    title: 'Follow up with referral lead',
-    status: 'new',
-  },
-];
-
-const HOT_LEADS = [
-  { id: '1', name: 'Ravi Kumar', company: 'ABC Pvt Ltd', score: 85 },
-  { id: '2', name: 'Anjali Singh', company: 'TechNova', score: 92 },
-  { id: '3', name: 'Mohit Jain', company: 'FinCorp', score: 78 },
-];
-
-const MEETINGS = [
-  { id: '1', title: 'Demo with ABC Pvt Ltd', time: 'Today 3:00 PM' },
-  { id: '2', title: 'Internal sales sync', time: 'Tomorrow 11:00 AM' },
-];
-const NOTIFICATIONS = [
-  {
-    id: '1',
-    title: 'New lead assigned',
-    message: 'Ravi Kumar assigned to you',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Deal moved to Proposal',
-    message: 'TechNova deal updated',
-    created_at: new Date().toISOString(),
-  },
-];
+import { useAuth } from '../../hooks';
+import { Column, Pie } from '@ant-design/plots';
+import { useNavigate } from 'react-router-dom';
 
 /* ===========================
    COMPONENT
@@ -117,14 +26,18 @@ const NOTIFICATIONS = [
 
 export const DefaultDashboardPage = () => {
   const { getDashboardStats } = dashboaradService();
-
-  const sliderRef1 = useRef<any>(null);
-  const sliderRef2 = useRef<any>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    getDashboardStats().then((res) => console.log(res));
+    getDashboardStats().then((res: any) => setStats(res.data));
   }, []);
+
+  const goto = (links: any) => {
+    navigate(links);
+  };
 
   return (
     <div>
@@ -133,16 +46,7 @@ export const DefaultDashboardPage = () => {
       </Helmet>
 
       <PageHeader
-        title="CRM Dashboard"
-        extra={[
-          <Button
-            key="filter"
-            icon={<FilterOutlined />}
-            onClick={() => setFilterOpen(true)}
-          >
-            Filters
-          </Button>,
-        ]}
+        title=""
         breadcrumbs={[
           {
             title: (
@@ -164,98 +68,207 @@ export const DefaultDashboardPage = () => {
 
       {/* KPI SECTION */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} md={12} lg={6}>
-          <Card>
-            <Typography.Text type="secondary">New Leads</Typography.Text>
+        {isAdmin && (
+          <Col xs={24} sm={12} md={8} lg={4}>
+            <Card>
+              <Typography.Text type="secondary">Total Users</Typography.Text>
+              <Typography.Title level={3}>
+                <CountUp end={stats?.totals?.totalUsers || 0} />
+              </Typography.Title>
+            </Card>
+          </Col>
+        )}
+
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card
+            style={{ cursor: 'pointer', transition: 'all 0.3s' }}
+            onClick={() => goto('/crm/leads')}
+            hoverable
+          >
+            <Typography.Text type="secondary">Total Leads</Typography.Text>
             <Typography.Title level={3}>
-              <CountUp end={KPI_DATA.newLeads} />
+              <CountUp end={stats?.totals?.totalLeads || 0} />
             </Typography.Title>
-            <ThunderboltOutlined />
           </Card>
         </Col>
 
-        <Col xs={24} md={12} lg={6}>
-          <Card>
-            <Typography.Text type="secondary">Open Deals</Typography.Text>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card
+            style={{ cursor: 'pointer', transition: 'all 0.3s' }}
+            onClick={() => goto('/crm/activities/tasks')}
+            hoverable
+          >
+            <Typography.Text type="secondary">Total Tasks</Typography.Text>
             <Typography.Title level={3}>
-              <CountUp end={KPI_DATA.openDeals} />
+              <CountUp end={stats?.totals?.totalTasks || 0} />
             </Typography.Title>
-            <RiseOutlined />
           </Card>
         </Col>
 
-        <Col xs={24} md={12} lg={6}>
-          <Card>
-            <Typography.Text type="secondary">Today Calls</Typography.Text>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card
+            style={{ cursor: 'pointer', transition: 'all 0.3s' }}
+            onClick={() => goto('/crm/activities/tasks?status=pending')}
+            hoverable
+          >
+            <Typography.Text type="secondary">Pending</Typography.Text>
             <Typography.Title level={3}>
-              <CountUp end={KPI_DATA.todayCalls} />
+              <CountUp end={stats?.tasks?.pending || 0} />
             </Typography.Title>
-            <PhoneOutlined />
           </Card>
         </Col>
 
-        <Col xs={24} md={12} lg={6}>
-          <Card>
-            <Typography.Text type="secondary">Revenue (MTD)</Typography.Text>
-            <Statistic value={KPI_DATA.mtdRevenue} prefix="₹" />
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card
+            style={{ cursor: 'pointer', transition: 'all 0.3s' }}
+            onClick={() => goto('/crm/activities/tasks?status=overdue')}
+            hoverable
+          >
+            <Typography.Text type="secondary">Overdue</Typography.Text>
+            <Typography.Title level={3} style={{ color: '#ff4d4f' }}>
+              <CountUp end={stats?.tasks?.overdue || 0} />
+            </Typography.Title>
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card
+            style={{ cursor: 'pointer', transition: 'all 0.3s' }}
+            onClick={() => goto('/crm/activities/tasks?status=completed')}
+            hoverable
+          >
+            <Typography.Text type="secondary">Completed</Typography.Text>
+            <Typography.Title level={3} style={{ color: '#52c41a' }}>
+              <CountUp end={stats?.tasks?.completed || 0} />
+            </Typography.Title>
           </Card>
         </Col>
       </Row>
 
       {/* MAIN GRID */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={24} lg={18}>
+        <Col xs={24} lg={16}>
           <Row gutter={[16, 16]}>
-            <Col xs={24} lg={12}>
-              <WeeklyActivityCard data={ACTIVITY_DATA} />
+            <Col xs={24} md={12}>
+              <Card title="Leads by Status">
+                <Column
+                  data={stats?.leads?.byStatus || []}
+                  xField="status"
+                  yField="count"
+                  height={200}
+                  color="#1890ff"
+                />
+              </Card>
             </Col>
-            <Col xs={24} lg={12}>
-              <TasksChartCard data={PIPELINE_DATA} />
+            <Col xs={24} md={12}>
+              <Card title="Leads by Source">
+                <Pie
+                  data={stats?.leads?.bySource || []}
+                  angleField="count"
+                  colorField="source"
+                  height={200}
+                  radius={0.8}
+                  label={{ type: 'outer', content: '{name} {percentage}' }}
+                />
+              </Card>
             </Col>
-            <Col span={24}>
-              <TasksListCard data={TASKS_DATA as any} />
+            <Col xs={24} md={12}>
+              <Card title="Tasks by Status">
+                <Column
+                  data={stats?.tasks?.byStatus || []}
+                  xField="status"
+                  yField="count"
+                  height={200}
+                  color="#faad14"
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={12}>
+              <Card title="Task Summary">
+                <div
+                  style={{
+                    marginBottom: '12px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Typography.Text>Due Today</Typography.Text>
+                  <Typography.Text strong>
+                    {stats?.tasks?.dueToday || 0}
+                  </Typography.Text>
+                </div>
+                <div
+                  style={{
+                    marginBottom: '12px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Typography.Text type="danger">Overdue</Typography.Text>
+                  <Typography.Text strong type="danger">
+                    {stats?.tasks?.overdue || 0}
+                  </Typography.Text>
+                </div>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between' }}
+                >
+                  <Typography.Text type="success">Completed</Typography.Text>
+                  <Typography.Text strong type="success">
+                    {stats?.tasks?.completed || 0}
+                  </Typography.Text>
+                </div>
+              </Card>
             </Col>
           </Row>
         </Col>
 
-        <Col xs={24} lg={6}>
-          <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Card title="Hot Leads">
-                <Carousel ref={sliderRef1} {...CAROUSEL_PROPS}>
-                  {HOT_LEADS.map((lead) => (
-                    <Card key={lead.id} size="small">
-                      <Typography.Text strong>{lead.name}</Typography.Text>
-                      <br />
-                      <Typography.Text type="secondary">
-                        {lead.company}
-                      </Typography.Text>
-                      <br />
-                      <Tag color="blue">Score {lead.score}</Tag>
-                    </Card>
-                  ))}
-                </Carousel>
-              </Card>
-            </Col>
-
-            <Col span={24}>
-              <Card title="Upcoming Meetings">
-                <Carousel ref={sliderRef2} {...CAROUSEL_PROPS}>
-                  {MEETINGS.map((meeting) => (
-                    <Card key={meeting.id} size="small">
-                      <Typography.Text strong>{meeting.title}</Typography.Text>
-                      <br />
-                      <Tag color="green">{meeting.time}</Tag>
-                    </Card>
-                  ))}
-                </Carousel>
-              </Card>
-            </Col>
-
-            <Col span={24}>
-              <NotificationsCard data={NOTIFICATIONS as any} />
-            </Col>
-          </Row>
+        <Col xs={24} lg={8}>
+          <Card
+            title="Recent Tasks"
+            style={{ height: '100%', maxHeight: '500px', overflow: 'hidden' }}
+          >
+            <div
+              style={{
+                height: '400px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              {stats?.tasks?.recentTasks?.map((task: any) => (
+                <Card
+                  key={task._id}
+                  size="small"
+                  style={{ marginBottom: '12px', cursor: 'pointer' }}
+                  onClick={() => goto(`/activities/tasks/${task._id}`)}
+                  hoverable
+                >
+                  <Typography.Text strong>{task.subject}</Typography.Text>
+                  <br />
+                  <Tag color="cyan" style={{ marginTop: '8px' }}>
+                    {task.relatedTo?.type}
+                  </Tag>
+                  <Tag color="blue">{task.status}</Tag>
+                  <Tag color="orange">{task.priority}</Tag>
+                  <br />
+                  <Typography.Text
+                    type="secondary"
+                    style={{ fontSize: '12px' }}
+                  >
+                    Assignee: {task.assignee?.firstName}{' '}
+                    {task.assignee?.lastName}
+                  </Typography.Text>
+                  <br />
+                  <Typography.Text
+                    type="secondary"
+                    style={{ fontSize: '12px' }}
+                  >
+                    Due: {new Date(task.dueDate).toLocaleDateString()}
+                  </Typography.Text>
+                </Card>
+              )) || []}
+            </div>
+          </Card>
         </Col>
       </Row>
 

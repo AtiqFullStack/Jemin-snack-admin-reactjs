@@ -57,7 +57,7 @@ interface Task {
 
 const Tasks = ({ lead }: { lead?: any }) => {
   const { isLoading } = useAuth();
-  const { createTask, getByLeadId, getTasksList } = taskService();
+  const { createTask, getByLeadId, getTasksList, deleteTasks } = taskService();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading] = useState(false);
@@ -74,6 +74,17 @@ const Tasks = ({ lead }: { lead?: any }) => {
 
   const { getStaff } = staffService();
   const { getLeads } = leadServices();
+
+  const fetchLeads = async () => {
+    try {
+      const response = (await getLeads()) as any;
+      if (response.success) {
+        setLeads(response.data.items || response.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -95,16 +106,6 @@ const Tasks = ({ lead }: { lead?: any }) => {
     };
     fetchStaff();
 
-    const fetchLeads = async () => {
-      try {
-        const response = (await getLeads()) as any;
-        if (response.success) {
-          setLeads(response.data.items || response.data);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchLeads();
   }, []);
   useEffect(() => {
@@ -199,10 +200,30 @@ const Tasks = ({ lead }: { lead?: any }) => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 140,
+      width: 180,
       filteredValue: filterStatus ? [filterStatus] : null,
       onFilter: (value, record) => record.status === value,
-      render: (status) => <Tag color={statusColors[status]}>{status}</Tag>,
+      render: (status, record) => (
+        <Select
+          value={status}
+          style={{ width: 150 }}
+          onChange={(value) => handleStatusChange(record._id, value)}
+          size="small"
+        >
+          <Select.Option value="Pending">
+            <Tag color={statusColors['Pending']}>Pending</Tag>
+          </Select.Option>
+          <Select.Option value="In Progress">
+            <Tag color={statusColors['In Progress']}>In Progress</Tag>
+          </Select.Option>
+          <Select.Option value="Completed">
+            <Tag color={statusColors['Completed']}>Completed</Tag>
+          </Select.Option>
+          <Select.Option value="Cancelled">
+            <Tag color={statusColors['Cancelled']}>Cancelled</Tag>
+          </Select.Option>
+        </Select>
+      ),
     },
     {
       title: 'Due Date',
@@ -303,8 +324,12 @@ const Tasks = ({ lead }: { lead?: any }) => {
       onOk: async () => {
         console.log(id);
         try {
+          const res = (await deleteTasks(id)) as any;
+          if (res.success) {
+            message.success('Task deleted successfully');
+            await fetchLeads();
+          }
           // API call to delete
-          message.success('Task deleted successfully');
           // Refresh list
         } catch (error) {
           message.error('Failed to delete task');
@@ -339,13 +364,33 @@ const Tasks = ({ lead }: { lead?: any }) => {
         assignee: lead?.assignedTo?._id,
         relatedType: 'Lead',
         relatedId: lead._id,
+        status: 'In Progress',
       });
     } else {
       form.setFieldsValue({
         relatedType: 'Lead',
+        status: 'In Progress',
       });
     }
     setIsModalOpen(true);
+  };
+
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    console.log(taskId, newStatus);
+    try {
+      // const response = await apiRequest.patch(
+      //   `${API_ENDPOINTS.TASKS.LIST}/${taskId}`,
+      //   { status: newStatus }
+      // ) as any;
+      // if (response.success) {
+      //   message.success('Status updated successfully');
+      //   setTasks(tasks.map(task =>
+      //     task._id === taskId ? { ...task, status: newStatus } : task
+      //   ));
+      // }
+    } catch (error) {
+      message.error('Failed to update status');
+    }
   };
 
   const handleSubmit = async (values: any) => {
@@ -361,6 +406,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
 
     try {
       const res = (await createTask(payload)) as any;
+      console.log(res);
       if (res.success) {
         message.success('Task saved successfully');
         setIsModalOpen(false);

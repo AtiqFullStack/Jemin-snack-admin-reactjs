@@ -42,7 +42,6 @@ const StaffPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const { canCreate, canUpdate, canDelete } = usePermissions();
 
-  console.log(users);
   //  Services
   const { getStaff, createStaff, updateStaff, deleteStaff } = staffService();
   const { getRoles } = roleService();
