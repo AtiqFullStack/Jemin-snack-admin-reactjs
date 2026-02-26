@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -16,7 +16,6 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
   ArrowLeftOutlined,
-  EditOutlined,
 } from '@ant-design/icons';
 import taskService from '../../services/taskService';
 

@@ -114,6 +114,8 @@ export const API_ENDPOINTS = {
 
   // ==================== DASHBOARD ====================
   DASHBOARD: {
+    // stats
+    GET_STATS: '/auth/getDashBoardStats',
     // Products
     PRODUCTS: {
       LIST: '/antd/products',

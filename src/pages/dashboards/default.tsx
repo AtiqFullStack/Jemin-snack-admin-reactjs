@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Card,
   NotificationsCard,
@@ -32,6 +32,7 @@ import {
 } from '@ant-design/icons';
 import CountUp from 'react-countup';
 import { Helmet } from 'react-helmet-async';
+import dashboaradService from '../../services/dashboaradService';
 
 const CAROUSEL_PROPS: CarouselProps = {
   slidesToShow: 1,
@@ -115,9 +116,15 @@ const NOTIFICATIONS = [
 =========================== */
 
 export const DefaultDashboardPage = () => {
+  const { getDashboardStats } = dashboaradService();
+
   const sliderRef1 = useRef<any>(null);
   const sliderRef2 = useRef<any>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    getDashboardStats().then((res) => console.log(res));
+  }, []);
 
   return (
     <div>
