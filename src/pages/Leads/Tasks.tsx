@@ -59,8 +59,14 @@ interface Task {
 
 const Tasks = ({ lead }: { lead?: any }) => {
   const { isLoading } = useAuth();
-  const { createTask, getByLeadId, getTasksList, deleteTasks, updateTask } =
-    taskService();
+  const {
+    createTask,
+    getByLeadId,
+    getTasksList,
+    deleteTasks,
+    updateTask,
+    addAttachement,
+  } = taskService();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading] = useState(false);
@@ -120,22 +126,23 @@ const Tasks = ({ lead }: { lead?: any }) => {
     fetchLeads();
   }, []);
   useEffect(() => {
+    fetchTasks();
+  }, [lead, searchText, filterStatus, filterPriority]);
+
+  const fetchTasks = async () => {
     if (lead) {
-      getByLeadId(lead._id)
-        .then((res: any) => {
-          if (res.success) {
-            setTasks(res.data);
-          }
-        })
-        .catch((err) => console.log(err));
+      const res: any = await getByLeadId(lead._id);
+      if (res.success) setTasks(res.data);
     } else {
-      getTasksList().then((res: any) => {
-        if (res.success) {
-          setTasks(res.data);
-        }
-      });
+      const params: any = {};
+      if (searchText) params.name = searchText;
+      if (filterStatus) params.status = filterStatus;
+      if (filterPriority) params.priority = filterPriority;
+
+      const res: any = await getTasksList(params);
+      if (res.success) setTasks(res.data);
     }
-  }, [lead]);
+  };
   console.log(staff);
 
   const priorityColors: Record<string, string> = {
@@ -171,9 +178,6 @@ const Tasks = ({ lead }: { lead?: any }) => {
       dataIndex: 'subject',
       key: 'subject',
       width: 250,
-      filteredValue: searchText ? [searchText] : null,
-      onFilter: (value, record) =>
-        record.subject.toLowerCase().includes(value.toString().toLowerCase()),
       render: (text) => <span style={{ fontWeight: 500 }}>{text}</span>,
     },
     {
@@ -195,8 +199,6 @@ const Tasks = ({ lead }: { lead?: any }) => {
       dataIndex: 'priority',
       key: 'priority',
       width: 120,
-      filteredValue: filterPriority ? [filterPriority] : null,
-      onFilter: (value, record) => record.priority === value,
       render: (priority) => (
         <Tag color={priorityColors[priority]}>{priority}</Tag>
       ),
@@ -206,8 +208,6 @@ const Tasks = ({ lead }: { lead?: any }) => {
       dataIndex: 'status',
       key: 'status',
       width: 180,
-      filteredValue: filterStatus ? [filterStatus] : null,
-      onFilter: (value, record) => record.status === value,
       render: (status, record) => (
         <Select
           value={status}
@@ -216,7 +216,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
           size="small"
         >
           {taskStatus?.value?.map((stat: any) => (
-            <Select.Option value={stat.key}>
+            <Select.Option key={stat.value} value={stat.value}>
               <Tag color={stat.color}>{stat.label}</Tag>
             </Select.Option>
           ))}
@@ -275,7 +275,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
     navigate(`/crm/activities/tasks/${record._id}`);
   };
 
-  const handleEdit = (record: Task) => {
+  const handleEdit = (record: Task | any) => {
     setEditingTask(record);
     form.setFieldsValue({
       ...record,
@@ -339,12 +339,12 @@ const Tasks = ({ lead }: { lead?: any }) => {
         assignee: lead?.assignedTo?._id,
         relatedType: 'Lead',
         relatedId: lead._id,
-        status: 'In Progress',
+        status: 'inProgress',
       });
     } else {
       form.setFieldsValue({
         relatedType: 'Lead',
-        status: 'In Progress',
+        status: 'inProgress',
       });
     }
     setIsModalOpen(true);
@@ -352,10 +352,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
-      const response = (await apiRequest.patch(
-        `${API_ENDPOINTS.TASKS.LIST}/${taskId}`,
-        { status: newStatus }
-      )) as any;
+      const response = (await updateTask(taskId, { status: newStatus })) as any;
       if (response.success) {
         message.success('Status updated successfully');
         setTasks(
@@ -370,6 +367,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
   };
 
   const handleSubmit = async (values: any) => {
+    const attachments = values?.attachments?.fileList || [];
     const payload = {
       ...values,
       relatedTo: {
@@ -379,6 +377,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
     };
     delete payload.relatedType;
     delete payload.relatedId;
+    delete payload.attachments;
 
     try {
       let res;
@@ -389,6 +388,19 @@ const Tasks = ({ lead }: { lead?: any }) => {
       }
 
       if (res.success) {
+        const taskId = editingTask?._id || res?.data?._id || res?.data?.id;
+
+        if (taskId && attachments.length > 0) {
+          const formData = new FormData();
+          attachments.forEach((item: any) => {
+            const file = item?.originFileObj || item;
+            if (file) {
+              formData.append('taskAttachments', file);
+            }
+          });
+          await addAttachement(taskId, formData);
+        }
+
         message.success(
           `Task ${editingTask ? 'updated' : 'created'} successfully`
         );
@@ -444,7 +456,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
               allowClear
             >
               {taskStatus?.value?.map((stat: any) => (
-                <Select.Option value={stat.key}>
+                <Select.Option key={stat.value} value={stat.value}>
                   <Tag color={stat.color}>{stat.label}</Tag>
                 </Select.Option>
               ))}
@@ -559,7 +571,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
             >
               <Select placeholder="Select status">
                 {taskStatus?.value?.map((stat: any) => (
-                  <Select.Option value={stat.key}>
+                  <Select.Option key={stat.value} value={stat.value}>
                     <Tag color={stat.color}>{stat.label}</Tag>
                   </Select.Option>
                 ))}

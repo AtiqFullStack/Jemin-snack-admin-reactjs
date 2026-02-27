@@ -1,10 +1,23 @@
-import { apiRequest } from './api/apiClient';
+import apiClient, { apiRequest } from './api/apiClient';
 import { API_ENDPOINTS } from './api/endpoints';
 
 const taskService = () => {
-  const getTasksList = async () => {
+  const getTasksList = async (params?: any) => {
+    console.log(params);
     try {
-      const response = await apiRequest.get(API_ENDPOINTS.TASK.LIST);
+      const queryParams = new URLSearchParams();
+      if (params?.assignee) queryParams.append('assignee', params.assignee);
+      if (params?.status) queryParams.append('status', params.status);
+      if (params?.priority) queryParams.append('priority', params.priority);
+      if (params?.timeFilter)
+        queryParams.append('timeFilter', params.timeFilter);
+      if (params?.name) queryParams.append('name', params.name);
+
+      const url = queryParams.toString()
+        ? `${API_ENDPOINTS.TASK.LIST}?${queryParams.toString()}`
+        : API_ENDPOINTS.TASK.LIST;
+
+      const response = await apiRequest.get(url);
       console.log(response);
       return response;
     } catch (error) {
@@ -77,6 +90,19 @@ const taskService = () => {
     }
   };
 
+  const addAttachement = async (id: any, payload: any) => {
+    const res = await apiClient.put(
+      API_ENDPOINTS.TASK.ADD_ATTACHEMENTS(id),
+      payload,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return res.data;
+  };
+
   return {
     getTasksList,
     getByLeadId,
@@ -84,6 +110,7 @@ const taskService = () => {
     getById,
     deleteTasks,
     updateTask,
+    addAttachement,
   };
 };
 

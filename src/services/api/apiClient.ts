@@ -24,10 +24,12 @@ import { message } from 'antd';
 // DEBUG: Module loaded
 console.log('[API Client] Module loaded!');
 
+export const BASEURL = 'https://crm.jeminisnacks.com/backend';
+// const BASEURL='http://localhost:5025';
+
 // API Configuration
-const API_HOST =
-  import.meta.env.VITE_API_BASE_URL || 'https://crm.jeminisnacks.com/backend';
-// const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5025';
+// const API_HOST =import.meta.env.VITE_API_BASE_URL || 'https://crm.jeminisnacks.com/backend';
+const API_HOST = BASEURL;
 const API_BASE_URL = API_HOST.endsWith('/api') ? API_HOST : `${API_HOST}/api/`;
 
 console.log('[API Client] Configuration:', {

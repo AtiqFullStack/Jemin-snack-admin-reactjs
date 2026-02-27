@@ -2,9 +2,11 @@ import { apiRequest } from './api/apiClient';
 import { API_ENDPOINTS } from './api/endpoints';
 
 const activityLogservices = () => {
-  const getactivityLogs = async () => {
+  const getactivityLogs = async (params?: any) => {
     try {
-      const response = await apiRequest.get(API_ENDPOINTS.ACTIVITY_LOGS.LIST);
+      const response = await apiRequest.get(API_ENDPOINTS.ACTIVITY_LOGS.LIST, {
+        params: params,
+      });
       console.log(response);
       return response;
     } catch (error) {

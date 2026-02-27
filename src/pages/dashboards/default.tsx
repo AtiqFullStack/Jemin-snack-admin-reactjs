@@ -111,9 +111,9 @@ export const DefaultDashboardPage = () => {
             onClick={() => goto('/crm/activities/tasks?status=pending')}
             hoverable
           >
-            <Typography.Text type="secondary">Pending</Typography.Text>
+            <Typography.Text type="secondary">In Progress</Typography.Text>
             <Typography.Title level={3}>
-              <CountUp end={stats?.tasks?.pending || 0} />
+              <CountUp end={stats?.tasks?.inProgress || 0} />
             </Typography.Title>
           </Card>
         </Col>
@@ -156,7 +156,16 @@ export const DefaultDashboardPage = () => {
                   xField="status"
                   yField="count"
                   height={200}
-                  color="#1890ff"
+                  color={({ status }) => {
+                    const colors: any = {
+                      New: '#1890ff',
+                      Contacted: '#52c41a',
+                      Qualified: '#722ed1',
+                      Lost: '#ff4d4f',
+                      Converted: '#13c2c2',
+                    };
+                    return colors[status] || '#1890ff';
+                  }}
                 />
               </Card>
             </Col>
@@ -179,7 +188,16 @@ export const DefaultDashboardPage = () => {
                   xField="status"
                   yField="count"
                   height={200}
-                  color="#faad14"
+                  color={({ status }) => {
+                    const colors: any = {
+                      notStarted: '#8c8c8c',
+                      inProgress: '#1890ff',
+                      testing: '#faad14',
+                      awaitingFeedback: '#fa8c16',
+                      completed: '#52c41a',
+                    };
+                    return colors[status] || '#1890ff';
+                  }}
                 />
               </Card>
             </Col>

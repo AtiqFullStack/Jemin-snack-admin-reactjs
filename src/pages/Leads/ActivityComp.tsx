@@ -9,6 +9,7 @@ import {
   message,
   Popconfirm,
   Space,
+  Tag,
   Timeline,
   Typography,
 } from 'antd';
@@ -105,7 +106,8 @@ const ActivityComp = (props: any) => {
   };
 
   const timelineItems = useMemo(() => {
-    return allActivity.map((a) => {
+    return allActivity.map((a: any) => {
+      console.log(a);
       const fullName =
         [a.createdBy?.firstName, a.createdBy?.lastName]
           .filter(Boolean)
@@ -127,6 +129,7 @@ const ActivityComp = (props: any) => {
                   <div>
                     <Space size={6}>
                       <Text strong>{fullName}</Text>
+                      <Tag color={'green'}>{a?.taskId?.subject}</Tag>
                     </Space>
                     <div>
                       <Text type="secondary" style={{ fontSize: 12 }}>
