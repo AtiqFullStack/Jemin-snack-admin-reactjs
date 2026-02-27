@@ -26,6 +26,19 @@ const taskService = () => {
       throw error;
     }
   };
+  const updateTask = async (id: any, payload: any) => {
+    try {
+      const response = await apiRequest.put(
+        API_ENDPOINTS.TASK.UPDATE_BY_ID(id),
+        payload
+      );
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error('Error creating Task:', error);
+      throw error;
+    }
+  };
 
   const getByLeadId = async (id: any) => {
     try {
@@ -50,6 +63,7 @@ const taskService = () => {
       throw error;
     }
   };
+
   const deleteTasks = async (id: any) => {
     try {
       const response = await apiRequest.delete(
@@ -69,6 +83,7 @@ const taskService = () => {
     createTask,
     getById,
     deleteTasks,
+    updateTask,
   };
 };
 
