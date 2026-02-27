@@ -18,7 +18,6 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  EyeOutlined,
   ExclamationOutlined,
   MailOutlined,
   MessageOutlined,
@@ -28,7 +27,6 @@ import {
   SendOutlined,
   UserOutlined,
   UploadOutlined,
-  CloseOutlined,
 } from '@ant-design/icons';
 import taskService from '../../services/taskService';
 import activityLogservices from '../../services/activityService';
