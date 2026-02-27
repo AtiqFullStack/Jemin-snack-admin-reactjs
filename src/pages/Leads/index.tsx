@@ -25,7 +25,7 @@ import {
   EyeOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { UserAvatar } from '../../components';
 import leadServices from '../../services/leadServices';
 import staffService from '../../services/staffService';
@@ -54,6 +54,7 @@ const LeadsPage = () => {
   const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [form] = Form.useForm<LeadFormValues>();
   const [staffs, setStaffs] = useState([]);
+  const [searchParams] = useSearchParams();
 
   const { creatLeads, getLeads, deleteLeads, updateLeads } = leadServices();
   const { getStaff } = staffService();
@@ -79,6 +80,16 @@ const LeadsPage = () => {
       }
     });
   }, [dispatch]);
+
+  useEffect(() => {
+    const leadId = searchParams.get('id');
+    if (leadId && leads.length > 0) {
+      const lead = leads.find((l) => l._id === leadId);
+      if (lead) {
+        setViewLead(lead);
+      }
+    }
+  }, [searchParams, leads]);
 
   const fetchLeads = async () => {
     const res = (await getLeads()) as any;

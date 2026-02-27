@@ -567,7 +567,15 @@ const SingleTask = () => {
               </div>
             </Space>
           </div>
-          <Button type="default" style={{ marginTop: 12, width: '100%' }}>
+          <Button
+            onClick={() =>
+              navigate(
+                `/crm/activities/tasks?lead=${task.relatedTo.id.name}&id=${task.relatedTo.id._id}`
+              )
+            }
+            type="default"
+            style={{ marginTop: 12, width: '100%' }}
+          >
             View Full Lead Detail
           </Button>
         </Card>
