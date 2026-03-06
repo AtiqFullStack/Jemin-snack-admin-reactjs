@@ -304,7 +304,12 @@ const LeadsPage = () => {
       title: 'Created',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (v: any) => timeConverter(v),
+      render: (v: any, row: Lead) => (
+        <Flex vertical gap={2}>
+          <Typography.Text>{timeConverter(v)}</Typography.Text>
+          <Tag color="blue">{row.createdBy?.name || '-'}</Tag>
+        </Flex>
+      ),
     },
     {
       title: 'Actions',

@@ -568,7 +568,7 @@ const SingleTask = () => {
           <Button
             onClick={() =>
               navigate(
-                `/crm/activities/tasks?lead=${task.relatedTo.id.name}&id=${task.relatedTo.id._id}`
+                `/crm/leads?lead=${task.relatedTo.id.name}&id=${task.relatedTo.id._id}`
               )
             }
             type="default"

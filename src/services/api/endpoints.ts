@@ -49,7 +49,7 @@ export const API_ENDPOINTS = {
     LIST: '/activityLogs/get',
     GET: (id: string) => `/activityLogs//${id}`,
     GET_BY_LEAD_ID: (id: string) => `/activityLogs/byLeadId/${id}`,
-    CREATE: '/activityLogs/create',
+    CREATE: '/activityLogs/createWithMedia',
     UPDATE: (id: string) => `/activityLogs/${id}`,
     DELETE: (id: string) => `/activityLogs/${id}`,
   },

@@ -71,4 +71,5 @@ export type Lead = {
   score: number;
   createdAt: string;
   updatedAt: string;
+  createdBy: any;
 };

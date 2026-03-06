@@ -19,7 +19,10 @@ const activityLogservices = () => {
     try {
       const response = await apiRequest.post(
         API_ENDPOINTS.ACTIVITY_LOGS.CREATE,
-        payload
+        payload,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
       );
       console.log(response);
       return response;

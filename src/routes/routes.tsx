@@ -56,6 +56,7 @@ import StaffPage from '../pages/settings/Staff/index.tsx';
 import RolesPage from '../pages/settings/roles';
 import Tasks from '../pages/activities/Tasks.tsx';
 import SingleTask from '../pages/activities/SingleTask.tsx';
+import PrivacyPolicy from '../pages/privacypolicy/PrivacyPolicy.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -359,6 +360,10 @@ const router = createBrowserRouter([
         index: true,
         element: <AboutPage />,
       },
+      {
+        path: 'privacy-policy',
+        element: <PrivacyPolicy />,
+      },
     ],
   },
   {
@@ -371,6 +376,10 @@ const router = createBrowserRouter([
         element: <GalleryPage />,
       },
     ],
+  },
+  {
+    path: '/privacy-policy',
+    element: <PrivacyPolicy />,
   },
 ]);
 

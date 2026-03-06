@@ -12,9 +12,16 @@ import {
   Tag,
   Timeline,
   Typography,
+  Upload,
 } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  PictureOutlined,
+  CloseOutlined,
+  SendOutlined,
+} from '@ant-design/icons';
 import activityLogservices from '../../services/activityService';
+import { getAttachmentUrl } from '../../utils/convertor';
 
 type Activity = {
   _id: string;
@@ -40,6 +47,7 @@ const ActivityComp = (props: any) => {
 
   const [note, setNote] = useState('');
   const [creating, setCreating] = useState(false);
+  const [fileList, setFileList] = useState<any[]>([]);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -55,6 +63,7 @@ const ActivityComp = (props: any) => {
       setLoading(false);
     }
   };
+  console.log(fileList);
 
   useEffect(() => {
     if (!leadId) return;
@@ -68,11 +77,18 @@ const ActivityComp = (props: any) => {
 
     try {
       setCreating(true);
-      const res: any = await creatactivityLogs({ leadId, content });
+      const payload = new FormData();
+      payload.append('leadId', leadId);
+      payload.append('content', content);
+      fileList.forEach((file) => {
+        payload.append('leadAttachments', file.originFileObj);
+      });
+      const res: any = await creatactivityLogs(payload);
 
       if (res?.success) {
         message.success('Activity added');
         setNote('');
+        setFileList([]);
         load();
       } else {
         message.error(res?.message || 'Failed to add activity');
@@ -158,6 +174,46 @@ const ActivityComp = (props: any) => {
                 <Paragraph style={{ marginTop: 6, marginBottom: 0 }}>
                   {a.content}
                 </Paragraph>
+                {a.attachments && a.attachments.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginTop: '12px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    {a.attachments.map((attachment: any, idx: number) => (
+                      <div
+                        key={idx}
+                        style={{
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          border: '1px solid #e8e8e8',
+                        }}
+                        onClick={() =>
+                          window.open(
+                            getAttachmentUrl(attachment.url),
+                            '_blank',
+                            'noopener,noreferrer'
+                          )
+                        }
+                      >
+                        <img
+                          src={getAttachmentUrl(attachment.url)}
+                          alt={attachment.name || 'attachment'}
+                          style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Flex>
           </Card>
@@ -182,26 +238,130 @@ const ActivityComp = (props: any) => {
       </Card>
 
       {/* Create new activity */}
-      <Flex
-        style={{ marginTop: 12, borderRadius: 12 }}
-        justify="space-between"
-        align="center"
-        gap={10}
+      <Card
+        style={{
+          marginTop: 16,
+          borderRadius: 16,
+          border: '1px solid #e8e8e8',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        }}
+        bodyStyle={{ padding: 20 }}
       >
-        <Input.TextArea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={1}
-          placeholder="Write a note... (e.g., Called customer, sent proposal, follow-up scheduled)"
-          style={{ marginTop: 10, borderRadius: 10, width: '90%' }}
-        />
+        <div
+          style={{
+            background: '#fafafa',
+            borderRadius: 12,
+            padding: 16,
+            border: '1px solid #e8e8e8',
+          }}
+        >
+          <Input.TextArea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={4}
+            placeholder="Write a note... (e.g., Called customer, sent proposal, follow-up scheduled)"
+            style={{
+              borderRadius: 8,
+              border: 'none',
+              background: '#fff',
+              fontSize: 14,
+            }}
+            autoSize={{ minRows: 4, maxRows: 8 }}
+          />
 
-        <Flex justify="flex-end" style={{ marginTop: 10 }}>
-          <Button type="primary" onClick={onCreate} loading={creating}>
-            Add
-          </Button>
-        </Flex>
-      </Flex>
+          {fileList.length > 0 && (
+            <div
+              style={{
+                marginTop: 16,
+                display: 'flex',
+                gap: 12,
+                flexWrap: 'wrap',
+                padding: 12,
+                background: '#fff',
+                borderRadius: 8,
+              }}
+            >
+              {fileList.map((file, index) => (
+                <div
+                  key={index}
+                  style={{
+                    position: 'relative',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    border: '2px solid #e8e8e8',
+                  }}
+                >
+                  <img
+                    src={URL.createObjectURL(file.originFileObj)}
+                    alt="preview"
+                    style={{
+                      width: 100,
+                      height: 100,
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                  />
+                  <Button
+                    type="primary"
+                    danger
+                    size="small"
+                    shape="circle"
+                    icon={<CloseOutlined />}
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }}
+                    onClick={() =>
+                      setFileList(fileList.filter((_, i) => i !== index))
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Flex
+            justify="space-between"
+            align="center"
+            style={{ marginTop: 16 }}
+          >
+            <Upload
+              fileList={fileList}
+              onChange={({ fileList }) => setFileList(fileList)}
+              beforeUpload={() => false}
+              multiple
+              showUploadList={false}
+              accept="image/*"
+            >
+              <Button
+                icon={<PictureOutlined />}
+                size="large"
+                style={{ borderRadius: 8 }}
+              >
+                Attach Images
+              </Button>
+            </Upload>
+
+            <Button
+              type="primary"
+              size="large"
+              icon={<SendOutlined />}
+              onClick={onCreate}
+              loading={creating}
+              disabled={!note.trim()}
+              style={{
+                borderRadius: 8,
+                paddingLeft: 24,
+                paddingRight: 24,
+              }}
+            >
+              Post Activity
+            </Button>
+          </Flex>
+        </div>
+      </Card>
     </div>
   );
 };
