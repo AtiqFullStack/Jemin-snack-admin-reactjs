@@ -101,10 +101,10 @@ const LeadsPage = () => {
   const statusOptions: LeadStatus[] = [
     'New',
     'Contacted',
-    'Qualified',
+    // 'Qualified',
     'Proposal',
-    'Won',
-    'Lost',
+    // 'Won',
+    // 'Lost',
   ];
   const sourceOptions: LeadSource[] = [
     'Facebook',
