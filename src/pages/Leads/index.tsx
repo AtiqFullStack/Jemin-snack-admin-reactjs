@@ -43,6 +43,7 @@ import {
 } from '../../types/leads';
 import LeadViewModal from './LeadViewModal';
 import { usePermissions } from '../../hooks/usePermissions';
+import configService from '../../services/configService';
 
 const LeadsPage = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -55,12 +56,16 @@ const LeadsPage = () => {
   const [form] = Form.useForm<LeadFormValues>();
   const [staffs, setStaffs] = useState([]);
   const [searchParams] = useSearchParams();
+  const { getConfig } = configService();
 
   const { creatLeads, getLeads, deleteLeads, updateLeads } = leadServices();
   const { getStaff } = staffService();
   const dispatch = useDispatch<AppDispatch>();
   const countries = useSelector((state: any) => state.countries.countries);
   const { canCreate, canUpdate, canDelete } = usePermissions();
+  const [LEADSTATUS, SETLEADSTATUS] = useState([]);
+  const [LEADSOURCE, SETLEADSOURCE] = useState([]);
+  const [PRIORITY, SETPRIORITY] = useState([]);
 
   useEffect(() => {
     fetchLeads();
@@ -91,28 +96,45 @@ const LeadsPage = () => {
     }
   }, [searchParams, leads]);
 
+  useEffect(() => {
+    getConfig('leadStatus,leadPriority,leadSource')
+      .then((res) => {
+        if (res.success) {
+          const leadStatus = res.data.find(
+            (item: any) => item.key === 'leadStatus'
+          );
+          console.log(leadStatus);
+          SETLEADSTATUS(leadStatus.value);
+          const leadSource = res.data.find(
+            (item: any) => item.key === 'leadSource'
+          );
+          SETLEADSOURCE(leadSource.value);
+
+          const leadPriority = res.data.find(
+            (item: any) => item.key === 'leadPriority'
+          );
+
+          SETPRIORITY(leadPriority.value);
+
+          console.log(res);
+          // SETLEADSTATUS(res.data.value)
+        }
+      })
+      .catch((err) => console.log(err));
+
+    // getConfig('leadSource').then((res) => {
+    //   if (res.success) {
+    //     SETLEADSOURCE(res.data.value)
+    //   }
+    // }).catch((err) => console.log(err))
+  }, []);
+
   const fetchLeads = async () => {
     const res = (await getLeads()) as any;
     if (res.success) {
       setLeads(res.data);
     }
   };
-
-  const statusOptions: LeadStatus[] = [
-    'New',
-    'Contacted',
-    // 'Qualified',
-    'Proposal',
-    // 'Won',
-    // 'Lost',
-  ];
-  const sourceOptions: LeadSource[] = [
-    'Facebook',
-    'Referral',
-    'Website',
-    'Walk-in',
-    'Instagram',
-  ];
 
   const filtered = useMemo(() => {
     return leads.filter((l) => {
@@ -162,6 +184,7 @@ const LeadsPage = () => {
       city: record.city,
       state: record.state,
       country: record.country,
+      priority: record.priority,
       zip: record.zip,
       language: 'English',
       description: record.description,
@@ -204,6 +227,7 @@ const LeadsPage = () => {
       leadValue: values.lead_value,
       company: values.company,
       tags: values.tags,
+      priority: values.priority,
       address: values.address,
       city: values.city,
       state: values.state,
@@ -381,7 +405,7 @@ const LeadsPage = () => {
                   allowClear
                   value={stage}
                   onChange={(v) => setStage(v)}
-                  options={statusOptions.map((s) => ({ value: s, label: s }))}
+                  options={LEADSTATUS}
                 />
               </Col>
 
@@ -392,7 +416,7 @@ const LeadsPage = () => {
                   allowClear
                   value={source}
                   onChange={(v) => setSource(v)}
-                  options={sourceOptions.map((s) => ({ value: s, label: s }))}
+                  options={LEADSOURCE}
                 />
               </Col>
             </Row>
@@ -449,10 +473,7 @@ const LeadsPage = () => {
                 }
                 rules={[{ required: true, message: 'Status required' }]}
               >
-                <Select
-                  placeholder="Nothing selected"
-                  options={statusOptions.map((s) => ({ value: s, label: s }))}
-                />
+                <Select placeholder="Nothing selected" options={LEADSTATUS} />
               </Form.Item>
             </Col>
 
@@ -466,10 +487,7 @@ const LeadsPage = () => {
                 }
                 rules={[{ required: true, message: 'Source required' }]}
               >
-                <Select
-                  placeholder="Nothing selected"
-                  options={sourceOptions.map((s) => ({ value: s, label: s }))}
-                />
+                <Select placeholder="Nothing selected" options={LEADSOURCE} />
               </Form.Item>
             </Col>
 
@@ -484,9 +502,19 @@ const LeadsPage = () => {
             </Col>
           </Row>
 
-          {/* Tags */}
           <Row gutter={[12, 12]}>
-            <Col span={24}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="priority"
+                label="Priority"
+                rules={[{ required: true }]}
+              >
+                <Select options={PRIORITY} />
+              </Form.Item>
+            </Col>
+            {/* Tags */}
+
+            <Col xs={24} md={12}>
               <Form.Item name="tags" label="Tags">
                 <Select
                   mode="tags"

@@ -77,6 +77,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const response = (await authService.login(credentials)) as any;
+      const user = response?.user;
+      console.log(user);
+      if (!user?.roleId) {
+        throw new Error('Please contact with Admin.');
+      }
+      if (user.isDeleted) {
+        throw new Error('Invalid credentials. Please try again.');
+      }
+      // return
       if (!response?.user) {
         throw new Error('Invalid credentials. Please try again.');
       }

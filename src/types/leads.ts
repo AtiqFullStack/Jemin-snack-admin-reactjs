@@ -44,6 +44,7 @@ export type LeadFormValues = {
   description?: string;
   is_public?: boolean;
   contacted_today?: boolean;
+  priority?: any;
 };
 
 export type Lead = {
@@ -72,4 +73,5 @@ export type Lead = {
   createdAt: string;
   updatedAt: string;
   createdBy: any;
+  priority: any;
 };
