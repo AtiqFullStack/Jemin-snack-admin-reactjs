@@ -34,13 +34,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch } from '../../redux/store';
 import { fetchCountries } from '../../redux/countriesSlice';
 
-import {
-  LeadStage,
-  LeadSource,
-  LeadStatus,
-  LeadFormValues,
-  Lead,
-} from '../../types/leads';
+import { LeadStage, LeadSource, LeadFormValues, Lead } from '../../types/leads';
 import LeadViewModal from './LeadViewModal';
 import { usePermissions } from '../../hooks/usePermissions';
 import configService from '../../services/configService';

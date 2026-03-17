@@ -57,6 +57,7 @@ import RolesPage from '../pages/settings/roles';
 import Tasks from '../pages/activities/Tasks.tsx';
 import SingleTask from '../pages/activities/SingleTask.tsx';
 import PrivacyPolicy from '../pages/privacypolicy/PrivacyPolicy.tsx';
+import CallLogs from '../pages/Call/CallLogs.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -198,6 +199,10 @@ const router = createBrowserRouter([
       {
         path: 'activities/tasks/:taskId',
         element: <SingleTask />,
+      },
+      {
+        path: 'calls',
+        element: <CallLogs />,
       },
     ],
   },

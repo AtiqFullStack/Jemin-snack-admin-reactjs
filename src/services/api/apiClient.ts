@@ -25,7 +25,7 @@ import { message } from 'antd';
 console.log('[API Client] Module loaded!');
 
 export const BASEURL = 'https://crm.jeminisnacks.com/backend';
-// const BASEURL='http://localhost:5025';
+// export const BASEURL='http://localhost:5025';
 
 // API Configuration
 // const API_HOST =import.meta.env.VITE_API_BASE_URL || 'https://crm.jeminisnacks.com/backend';
