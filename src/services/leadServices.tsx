@@ -63,7 +63,26 @@ const leadServices = () => {
     }
   };
 
-  return { creatLeads, getLeads, updateLeads, getById, deleteLeads };
+  const bulkCreateLeads = async (leads: any[]) => {
+    try {
+      const response = await apiRequest.post(API_ENDPOINTS.LEADS.BULK_CREATE, {
+        leads,
+      });
+      return response;
+    } catch (error) {
+      console.error('Error bulk importing leads:', error);
+      throw error;
+    }
+  };
+
+  return {
+    creatLeads,
+    getLeads,
+    updateLeads,
+    getById,
+    deleteLeads,
+    bulkCreateLeads,
+  };
 };
 
 export default leadServices;

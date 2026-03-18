@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
     LIST: '/leads',
     GET: (id: string) => `/leads/${id}`,
     CREATE: '/leads',
+    BULK_CREATE: '/leads/bulk',
     UPDATE: (id: string) => `/leads/${id}`,
     DELETE: (id: string) => `/leads/${id}`,
   },

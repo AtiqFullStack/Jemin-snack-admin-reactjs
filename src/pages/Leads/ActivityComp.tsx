@@ -15,6 +15,9 @@ import {
   Upload,
 } from 'antd';
 import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  ClockCircleOutlined,
   DeleteOutlined,
   PictureOutlined,
   CloseOutlined,
@@ -26,6 +29,21 @@ import { getAttachmentUrl } from '../../utils/convertor';
 type Activity = {
   _id: string;
   content: string;
+  attachments?: Array<{
+    url: string;
+    name?: string;
+    type?: string;
+    size?: number;
+  }>;
+  callData?: {
+    _id?: string;
+    direction?: 'incoming' | 'outgoing' | string;
+    status?: string;
+    duration?: number;
+  };
+  taskId?: {
+    subject?: string;
+  };
   createdBy?: {
     _id: string;
     firstName?: string;
@@ -38,6 +56,29 @@ type Activity = {
 };
 
 const { Text, Paragraph } = Typography;
+
+const formatCallDuration = (duration?: number) => {
+  if (duration === undefined || duration === null) return '0s';
+  if (duration < 60) return `${duration}s`;
+
+  const minutes = Math.floor(duration / 60);
+  const seconds = duration % 60;
+  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
+};
+
+const getCallStatusColor = (status?: string) => {
+  switch ((status || '').toLowerCase()) {
+    case 'completed':
+      return 'success';
+    case 'failed':
+    case 'missed':
+    case 'no-answer':
+    case 'busy':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
 
 const ActivityComp = (props: any) => {
   const { id: leadId } = props;
@@ -63,7 +104,6 @@ const ActivityComp = (props: any) => {
       setLoading(false);
     }
   };
-  console.log(fileList);
 
   useEffect(() => {
     if (!leadId) return;
@@ -122,8 +162,7 @@ const ActivityComp = (props: any) => {
   };
 
   const timelineItems = useMemo(() => {
-    return allActivity.map((a: any) => {
-      console.log(a);
+    return allActivity.map((a: Activity) => {
       const fullName =
         [a.createdBy?.firstName, a.createdBy?.lastName]
           .filter(Boolean)
@@ -174,6 +213,38 @@ const ActivityComp = (props: any) => {
                 <Paragraph style={{ marginTop: 6, marginBottom: 0 }}>
                   {a.content}
                 </Paragraph>
+                {a.callData && (
+                  <Space
+                    size={[8, 8]}
+                    wrap
+                    style={{ marginTop: 12, display: 'flex' }}
+                  >
+                    <Tag
+                      icon={
+                        a.callData.direction === 'outgoing' ? (
+                          <ArrowUpOutlined />
+                        ) : (
+                          <ArrowDownOutlined />
+                        )
+                      }
+                      color={
+                        a.callData.direction === 'outgoing' ? 'green' : 'blue'
+                      }
+                      style={{ textTransform: 'capitalize' }}
+                    >
+                      {a.callData.direction || 'incoming'}
+                    </Tag>
+                    <Tag icon={<ClockCircleOutlined />} color="default">
+                      {formatCallDuration(a.callData.duration)}
+                    </Tag>
+                    <Tag
+                      color={getCallStatusColor(a.callData.status)}
+                      style={{ textTransform: 'capitalize' }}
+                    >
+                      {a.callData.status || 'unknown'}
+                    </Tag>
+                  </Space>
+                )}
                 {a.attachments && a.attachments.length > 0 && (
                   <div
                     style={{

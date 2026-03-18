@@ -1,5 +1,3 @@
-import React from 'react';
-
 const DeleteAccount = () => {
   return (
     <div style={styles.container}>
