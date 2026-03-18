@@ -57,6 +57,7 @@ import RolesPage from '../pages/settings/roles';
 import Tasks from '../pages/activities/Tasks.tsx';
 import SingleTask from '../pages/activities/SingleTask.tsx';
 import PrivacyPolicy from '../pages/privacypolicy/PrivacyPolicy.tsx';
+import DeleteAccount from '../pages/DeleteAccount';
 import CallLogs from '../pages/Call/CallLogs.tsx';
 
 // Custom scroll restoration function
@@ -369,6 +370,7 @@ const router = createBrowserRouter([
         path: 'privacy-policy',
         element: <PrivacyPolicy />,
       },
+      ,
     ],
   },
   {
@@ -385,6 +387,10 @@ const router = createBrowserRouter([
   {
     path: '/privacy-policy',
     element: <PrivacyPolicy />,
+  },
+  {
+    path: 'delete-account',
+    element: <DeleteAccount />,
   },
 ]);
 
