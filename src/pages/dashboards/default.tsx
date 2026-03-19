@@ -113,7 +113,7 @@ export const DefaultDashboardPage = () => {
         <Col xs={24} sm={12} md={8} lg={4}>
           <Card
             style={{ cursor: 'pointer', transition: 'all 0.3s' }}
-            onClick={() => goto('/crm/calls')}
+            onClick={() => goto('/crm/calls?today=true')}
             hoverable
           >
             <Typography.Text type="secondary">Today Calls</Typography.Text>
@@ -139,7 +139,7 @@ export const DefaultDashboardPage = () => {
         <Col xs={24} sm={12} md={8} lg={4}>
           <Card
             style={{ cursor: 'pointer', transition: 'all 0.3s' }}
-            onClick={() => goto('/crm/calls')}
+            onClick={() => goto('/crm/calls?status=completed')}
             hoverable
           >
             <Typography.Text type="secondary">Completed Calls</Typography.Text>
@@ -271,7 +271,7 @@ export const DefaultDashboardPage = () => {
         <Col xs={24} lg={8}>
           <Card
             title="Recent Calls"
-            style={{ height: '100%', maxHeight: '500px', overflow: 'hidden' }}
+            style={{ height: '100%', maxHeight: '600px', overflow: 'hidden' }}
           >
             <div
               style={{
@@ -286,7 +286,7 @@ export const DefaultDashboardPage = () => {
                   key={call._id}
                   size="small"
                   style={{ marginBottom: '12px', cursor: 'pointer' }}
-                  onClick={() => goto('/crm/calls')}
+                  onClick={() => goto(`/crm/calls?callSid=${call?.callSid}`)}
                   hoverable
                 >
                   <Typography.Text strong>

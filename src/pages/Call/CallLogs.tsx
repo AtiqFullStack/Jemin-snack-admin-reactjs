@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import useCallService from '../../services/useCallService';
 import { BASEURL } from '../../services/api/apiClient';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 type Lead = { _id: string; name: string; email: string; phone: string };
 type User = { _id: string; firstName: string; lastName: string; email: string };
@@ -167,7 +167,9 @@ const CallLogs = () => {
   const [tablePage, setTablePage] = useState(1);
   const [tableLimit, setTableLimit] = useState(20);
   const [showTotalFiltered, setShowTotalFiltered] = useState(true);
-  const loc = useLocation().pathname;
+  let [searchParams] = useSearchParams();
+  const _loc = useLocation();
+  const loc = _loc.pathname;
 
   const isRecordingPage = loc.includes('recordings');
 
@@ -180,6 +182,15 @@ const CallLogs = () => {
     if (isRecordingPage) {
       query.onlyRecording = true;
       setShowTotalFiltered(true);
+    }
+    if (searchParams.get('today')) {
+      query.today = searchParams.get('today');
+    }
+    if (searchParams.get('status')) {
+      query.status = searchParams.get('status');
+    }
+    if (searchParams.get('callSid')) {
+      query.callSid = searchParams.get('callSid');
     }
 
     setLoading(true);
