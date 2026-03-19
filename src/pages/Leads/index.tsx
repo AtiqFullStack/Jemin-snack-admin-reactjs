@@ -30,7 +30,7 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { UserAvatar } from '../../components';
 import leadServices from '../../services/leadServices';
 import staffService from '../../services/staffService';
@@ -57,6 +57,8 @@ const LeadsPage = () => {
   const [searchParams] = useSearchParams();
   const { getConfig } = configService();
 
+  const loc = useLocation().pathname;
+
   const { creatLeads, getLeads, deleteLeads, updateLeads, bulkCreateLeads } =
     leadServices();
   const { getStaff } = staffService();
@@ -70,6 +72,7 @@ const LeadsPage = () => {
   const [importRows, setImportRows] = useState<any[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState('');
+  const [activityPage, setActvityTab] = useState(false);
 
   useEffect(() => {
     fetchLeads();
@@ -90,6 +93,13 @@ const LeadsPage = () => {
     });
   }, [dispatch]);
 
+  useEffect(() => {
+    if (loc.includes('activities/leads')) {
+      setActvityTab(true);
+    } else {
+      setActvityTab(false);
+    }
+  }, [loc]);
   useEffect(() => {
     const leadId = searchParams.get('id');
     if (leadId && leads.length > 0) {
@@ -453,20 +463,24 @@ const LeadsPage = () => {
             icon={<EyeOutlined />}
             onClick={() => setViewLead(record)}
           />
-          {canUpdate('leads') && (
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record)}
-            />
-          )}
-          {canDelete('leads') && (
-            <Button
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record)}
-            />
+          {!activityPage && (
+            <>
+              {canUpdate('leads') && (
+                <Button
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record)}
+                />
+              )}
+              {canDelete('leads') && (
+                <Button
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDelete(record)}
+                />
+              )}
+            </>
           )}
         </Space>
       ),
@@ -479,6 +493,7 @@ const LeadsPage = () => {
         open={!!viewLead}
         lead={viewLead}
         onClose={() => setViewLead(null)}
+        activeTab={activityPage}
       />
       <Row gutter={[16, 16]}>
         <Col span={24}>
@@ -486,25 +501,29 @@ const LeadsPage = () => {
             title="Leads"
             extra={
               canCreate('leads') && (
-                <Space>
-                  <Button
-                    icon={<UploadOutlined />}
-                    onClick={() => {
-                      setImportRows([]);
-                      setImportError('');
-                      setImportModal(true);
-                    }}
-                  >
-                    Import Leads
-                  </Button>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleOpenDrawer}
-                  >
-                    Add Lead
-                  </Button>
-                </Space>
+                <>
+                  {!activityPage && (
+                    <Space>
+                      <Button
+                        icon={<UploadOutlined />}
+                        onClick={() => {
+                          setImportRows([]);
+                          setImportError('');
+                          setImportModal(true);
+                        }}
+                      >
+                        Import Leads
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleOpenDrawer}
+                      >
+                        Add Lead
+                      </Button>
+                    </Space>
+                  )}
+                </>
               )
             }
           >

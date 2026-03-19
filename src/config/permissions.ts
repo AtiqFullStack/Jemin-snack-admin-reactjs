@@ -21,6 +21,7 @@ export const PATH_CRM = {
   accounts: '/crm/accounts',
   deals: '/crm/deals',
   activities: {
+    leads: '/crm/activities/leads',
     tasks: '/crm/activities/tasks',
     meetings: '/crm/activities/meetings',
     calendar: '/crm/activities/calendar',

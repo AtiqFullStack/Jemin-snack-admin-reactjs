@@ -20,6 +20,11 @@ import { useAuth } from '../../hooks';
 import { Column, Pie } from '@ant-design/plots';
 import { useNavigate } from 'react-router-dom';
 
+const fmtDuration = (seconds: number) =>
+  `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, '0')}`;
+
 /* ===========================
    COMPONENT
 =========================== */
@@ -95,12 +100,12 @@ export const DefaultDashboardPage = () => {
         <Col xs={24} sm={12} md={8} lg={4}>
           <Card
             style={{ cursor: 'pointer', transition: 'all 0.3s' }}
-            onClick={() => goto('/crm/activities/tasks')}
+            onClick={() => goto('/crm/calls')}
             hoverable
           >
-            <Typography.Text type="secondary">Total Tasks</Typography.Text>
+            <Typography.Text type="secondary">Total Calls</Typography.Text>
             <Typography.Title level={3}>
-              <CountUp end={stats?.totals?.totalTasks || 0} />
+              <CountUp end={stats?.totals?.totalCalls || 0} />
             </Typography.Title>
           </Card>
         </Col>
@@ -108,12 +113,12 @@ export const DefaultDashboardPage = () => {
         <Col xs={24} sm={12} md={8} lg={4}>
           <Card
             style={{ cursor: 'pointer', transition: 'all 0.3s' }}
-            onClick={() => goto('/crm/activities/tasks?status=pending')}
+            onClick={() => goto('/crm/calls')}
             hoverable
           >
-            <Typography.Text type="secondary">In Progress</Typography.Text>
+            <Typography.Text type="secondary">Today Calls</Typography.Text>
             <Typography.Title level={3}>
-              <CountUp end={stats?.tasks?.inProgress || 0} />
+              <CountUp end={stats?.calls?.todayCalls || 0} />
             </Typography.Title>
           </Card>
         </Col>
@@ -121,12 +126,12 @@ export const DefaultDashboardPage = () => {
         <Col xs={24} sm={12} md={8} lg={4}>
           <Card
             style={{ cursor: 'pointer', transition: 'all 0.3s' }}
-            onClick={() => goto('/crm/activities/tasks?status=overdue')}
+            onClick={() => goto('/crm/recordings')}
             hoverable
           >
-            <Typography.Text type="secondary">Overdue</Typography.Text>
+            <Typography.Text type="secondary">Recordings</Typography.Text>
             <Typography.Title level={3} style={{ color: '#ff4d4f' }}>
-              <CountUp end={stats?.tasks?.overdue || 0} />
+              <CountUp end={stats?.calls?.recordingsAvailable || 0} />
             </Typography.Title>
           </Card>
         </Col>
@@ -134,12 +139,12 @@ export const DefaultDashboardPage = () => {
         <Col xs={24} sm={12} md={8} lg={4}>
           <Card
             style={{ cursor: 'pointer', transition: 'all 0.3s' }}
-            onClick={() => goto('/crm/activities/tasks?status=completed')}
+            onClick={() => goto('/crm/calls')}
             hoverable
           >
-            <Typography.Text type="secondary">Completed</Typography.Text>
+            <Typography.Text type="secondary">Completed Calls</Typography.Text>
             <Typography.Title level={3} style={{ color: '#52c41a' }}>
-              <CountUp end={stats?.tasks?.completed || 0} />
+              <CountUp end={stats?.calls?.completed || 0} />
             </Typography.Title>
           </Card>
         </Col>
@@ -182,19 +187,18 @@ export const DefaultDashboardPage = () => {
               </Card>
             </Col>
             <Col xs={24} md={12}>
-              <Card title="Tasks by Status">
+              <Card title="Calls by Status">
                 <Column
-                  data={stats?.tasks?.byStatus || []}
+                  data={stats?.calls?.byStatus || []}
                   xField="status"
                   yField="count"
                   height={200}
                   color={({ status }) => {
                     const colors: any = {
-                      notStarted: '#8c8c8c',
-                      inProgress: '#1890ff',
-                      testing: '#faad14',
-                      awaitingFeedback: '#fa8c16',
                       completed: '#52c41a',
+                      failed: '#ff4d4f',
+                      busy: '#fa8c16',
+                      'no-answer': '#8c8c8c',
                     };
                     return colors[status] || '#1890ff';
                   }}
@@ -202,7 +206,7 @@ export const DefaultDashboardPage = () => {
               </Card>
             </Col>
             <Col xs={24} md={12}>
-              <Card title="Task Summary">
+              <Card title="Call Summary">
                 <div
                   style={{
                     marginBottom: '12px',
@@ -210,9 +214,9 @@ export const DefaultDashboardPage = () => {
                     justifyContent: 'space-between',
                   }}
                 >
-                  <Typography.Text>Due Today</Typography.Text>
+                  <Typography.Text>Failed</Typography.Text>
                   <Typography.Text strong>
-                    {stats?.tasks?.dueToday || 0}
+                    {stats?.calls?.failed || 0}
                   </Typography.Text>
                 </div>
                 <div
@@ -222,17 +226,41 @@ export const DefaultDashboardPage = () => {
                     justifyContent: 'space-between',
                   }}
                 >
-                  <Typography.Text type="danger">Overdue</Typography.Text>
+                  <Typography.Text type="warning">No Answer</Typography.Text>
+                  <Typography.Text strong>
+                    {stats?.calls?.noAnswer || 0}
+                  </Typography.Text>
+                </div>
+                <div
+                  style={{
+                    marginBottom: '12px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Typography.Text type="danger">Busy</Typography.Text>
                   <Typography.Text strong type="danger">
-                    {stats?.tasks?.overdue || 0}
+                    {stats?.calls?.busy || 0}
+                  </Typography.Text>
+                </div>
+                <div
+                  style={{
+                    marginBottom: '12px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Typography.Text>Total Duration</Typography.Text>
+                  <Typography.Text strong>
+                    {fmtDuration(stats?.calls?.totalDuration || 0)}
                   </Typography.Text>
                 </div>
                 <div
                   style={{ display: 'flex', justifyContent: 'space-between' }}
                 >
-                  <Typography.Text type="success">Completed</Typography.Text>
+                  <Typography.Text type="success">Avg Duration</Typography.Text>
                   <Typography.Text strong type="success">
-                    {stats?.tasks?.completed || 0}
+                    {fmtDuration(stats?.calls?.avgDuration || 0)}
                   </Typography.Text>
                 </div>
               </Card>
@@ -242,7 +270,7 @@ export const DefaultDashboardPage = () => {
 
         <Col xs={24} lg={8}>
           <Card
-            title="Recent Tasks"
+            title="Recent Calls"
             style={{ height: '100%', maxHeight: '500px', overflow: 'hidden' }}
           >
             <div
@@ -253,35 +281,57 @@ export const DefaultDashboardPage = () => {
                 flexDirection: 'column',
               }}
             >
-              {stats?.tasks?.recentTasks?.map((task: any) => (
+              {stats?.calls?.recentCalls?.map((call: any) => (
                 <Card
-                  key={task._id}
+                  key={call._id}
                   size="small"
                   style={{ marginBottom: '12px', cursor: 'pointer' }}
-                  onClick={() => goto(`/activities/tasks/${task._id}`)}
+                  onClick={() => goto('/crm/calls')}
                   hoverable
                 >
-                  <Typography.Text strong>{task.subject}</Typography.Text>
+                  <Typography.Text strong>
+                    {call?.leadId?.name || 'Unknown Lead'}
+                  </Typography.Text>
                   <br />
-                  <Tag color="cyan" style={{ marginTop: '8px' }}>
-                    {task.relatedTo?.type}
+                  <Tag
+                    color={call?.direction === 'outgoing' ? 'blue' : 'green'}
+                    style={{ marginTop: '8px' }}
+                  >
+                    {call?.direction}
                   </Tag>
-                  <Tag color="blue">{task.status}</Tag>
-                  <Tag color="orange">{task.priority}</Tag>
+                  <Tag
+                    color={
+                      call?.status === 'completed'
+                        ? 'success'
+                        : call?.status === 'failed'
+                          ? 'error'
+                          : 'default'
+                    }
+                  >
+                    {call?.status}
+                  </Tag>
+                  <Tag color="purple">{call?.callType}</Tag>
                   <br />
                   <Typography.Text
                     type="secondary"
                     style={{ fontSize: '12px' }}
                   >
-                    Assignee: {task.assignee?.firstName}{' '}
-                    {task.assignee?.lastName}
+                    Agent: {call?.userId?.firstName} {call?.userId?.lastName}
                   </Typography.Text>
                   <br />
                   <Typography.Text
                     type="secondary"
                     style={{ fontSize: '12px' }}
                   >
-                    Due: {new Date(task.dueDate).toLocaleDateString()}
+                    {call?.from} to {call?.to}
+                  </Typography.Text>
+                  <br />
+                  <Typography.Text
+                    type="secondary"
+                    style={{ fontSize: '12px' }}
+                  >
+                    Duration: {fmtDuration(call?.duration || 0)} | Lead Status:{' '}
+                    {call?.leadId?.status || 'N/A'}
                   </Typography.Text>
                 </Card>
               )) || []}

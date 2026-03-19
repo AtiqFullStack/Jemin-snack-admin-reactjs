@@ -12,11 +12,9 @@ const useCallService = () => {
   //     }
   // };
 
-  const getCallHistoryApi = async (limit = 50, leadId?: any) => {
-    const res = await apiClient.get(`/call/getAll?limit=${limit}`, {
-      params: {
-        leadId,
-      },
+  const getCallHistoryApi = async (query: any) => {
+    const res = await apiClient.get(`/call/getAll`, {
+      params: query,
     });
     return res;
   };

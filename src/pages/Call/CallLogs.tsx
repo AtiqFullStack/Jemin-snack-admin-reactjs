@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Table,
   Tag,
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import useCallService from '../../services/useCallService';
 import { BASEURL } from '../../services/api/apiClient';
+import { useLocation } from 'react-router-dom';
 
 type Lead = { _id: string; name: string; email: string; phone: string };
 type User = { _id: string; firstName: string; lastName: string; email: string };
@@ -37,6 +38,28 @@ type Call = {
   startedAt: string;
   duration: number;
   recordingUrl?: string;
+};
+
+type CallStats = {
+  totalAll?: number;
+  totalFiltered?: number;
+  totalOnPage?: number;
+  statusStats?: Array<{ status: string; count: number }>;
+  directionStats?: Array<{ direction: string; count: number }>;
+  recordingStats?: Array<{ recordingStatus: string; count: number }>;
+  duration?: {
+    totalDuration?: number;
+    avgDuration?: number;
+    maxDuration?: number;
+    minDuration?: number;
+  };
+};
+
+type Pagination = {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 };
 
 const fmt = (s: number) =>
@@ -58,6 +81,11 @@ const statusColor: Record<string, string> = {
   busy: 'error',
   'no-answer': 'default',
 };
+
+const getCountByStatus = (
+  statusStats: Array<{ status: string; count: number }> = [],
+  status: string
+) => statusStats.find((item) => item.status === status)?.count || 0;
 
 function AudioPlayer({ url }: { url: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -129,19 +157,68 @@ function AudioPlayer({ url }: { url: string }) {
 const CallLogs = () => {
   const { getCallHistoryApi } = useCallService();
   const [calls, setCalls] = useState<Call[]>([]);
+  const [stats, setStats] = useState<CallStats | null>(null);
+  const [pagination, setPagination] = useState<Pagination>({
+    total: 0,
+    page: 1,
+    limit: 20,
+    pages: 0,
+  });
   const [loading, setLoading] = useState(true);
+  const [tablePage, setTablePage] = useState(1);
+  const [tableLimit, setTableLimit] = useState(20);
+  const [showTotalFiltered, setShowTotalFiltered] = useState(true);
+  const loc = useLocation().pathname;
+
+  const isRecordingPage = loc.includes('recordings');
 
   useEffect(() => {
-    getCallHistoryApi()
+    const query: any = {
+      page: tablePage,
+      limit: tableLimit,
+    };
+
+    if (isRecordingPage) {
+      query.onlyRecording = true;
+      setShowTotalFiltered(true);
+    }
+
+    setLoading(true);
+
+    getCallHistoryApi(query)
       .then((res: any) => {
-        if (res?.data?.success) setCalls(res.data.data.calls);
+        if (res?.data?.success) {
+          setCalls(res.data.data.calls || []);
+          setStats(res.data.data.stats || null);
+          setPagination(
+            res.data.data.pagination || {
+              total: 0,
+              page: 1,
+              limit: 20,
+              pages: 0,
+            }
+          );
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [isRecordingPage, tableLimit, tablePage]);
 
-  const totalDuration = calls.reduce((a, c) => a + c.duration, 0);
-  const completed = calls.filter((c) => c.status === 'completed').length;
+  const statsSummary = useMemo(() => {
+    const statusStats = stats?.statusStats || [];
+    const durationStats = stats?.duration || {};
+
+    return {
+      totalCalls: showTotalFiltered
+        ? stats?.totalFiltered
+        : stats?.totalAll ?? pagination.total ?? calls.length,
+      completed: getCountByStatus(statusStats, 'completed'),
+      totalDuration:
+        durationStats.totalDuration ??
+        calls.reduce((a, c) => a + c.duration, 0),
+      // agents: new Set(calls.map((c) => c.userId?._id).filter(Boolean)).size,
+    };
+  }, [stats, pagination.total, calls]);
 
   const columns = [
     {
@@ -241,28 +318,28 @@ const CallLogs = () => {
         {[
           {
             title: 'Total Calls',
-            value: calls.length,
+            value: statsSummary.totalCalls,
             icon: <Phone size={20} />,
             color: '#1677ff',
           },
           {
             title: 'Completed',
-            value: completed,
+            value: statsSummary.completed,
             icon: <TrendingUp size={20} />,
             color: '#52c41a',
           },
           {
             title: 'Total Duration',
-            value: fmt(totalDuration),
+            value: fmt(statsSummary.totalDuration),
             icon: <Clock size={20} />,
             color: '#13c2c2',
           },
-          {
-            title: 'Agents',
-            value: new Set(calls.map((c) => c.userId?._id)).size,
-            icon: <Users size={20} />,
-            color: '#faad14',
-          },
+          // {
+          //   title: 'Agents',
+          //   value: statsSummary.agents,
+          //   icon: <Users size={20} />,
+          //   color: '#faad14',
+          // },
         ].map((s, i) => (
           <Col xs={12} md={6} key={i}>
             <Card
@@ -302,7 +379,19 @@ const CallLogs = () => {
           columns={columns}
           rowKey="_id"
           loading={loading}
-          pagination={{ pageSize: 20, showSizeChanger: true }}
+          pagination={{
+            current: pagination.page,
+            pageSize: pagination.limit,
+            total: pagination.total,
+            showSizeChanger: true,
+            onChange: (page, pageSize) => {
+              setTablePage(page);
+              if (pageSize !== tableLimit) {
+                setTableLimit(pageSize);
+                setTablePage(1);
+              }
+            },
+          }}
           scroll={{ x: 1000 }}
           rowHoverable={false}
         />

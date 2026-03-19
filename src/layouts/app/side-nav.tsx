@@ -78,17 +78,21 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
 
   getItem('Activities', 'submenu-activities', <CalendarOutlined />, [
     getItem(
-      <Link to={PATH_CRM.activities.tasks}>Tasks</Link>,
+      <Link to={PATH_CRM.activities.leads}>Leads</Link>,
       PATH_CRM.activities.tasks
     ),
     getItem(
-      <Link to={PATH_CRM.activities.meetings}>Meetings</Link>,
-      PATH_CRM.activities.meetings
+      <Link to={PATH_CRM.activities.tasks}>Tasks</Link>,
+      PATH_CRM.activities.tasks
     ),
-    getItem(
-      <Link to={PATH_CRM.activities.calendar}>Calendar</Link>,
-      PATH_CRM.activities.calendar
-    ),
+    // getItem(
+    //   <Link to={PATH_CRM.activities.meetings}>Meetings</Link>,
+    //   PATH_CRM.activities.meetings
+    // ),
+    // getItem(
+    //   <Link to={PATH_CRM.activities.calendar}>Calendar</Link>,
+    //   PATH_CRM.activities.calendar
+    // ),
   ]),
 
   getItem('Calls', 'submenu-calls', <PhoneOutlined />, [

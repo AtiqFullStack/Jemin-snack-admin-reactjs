@@ -7,9 +7,15 @@ interface LeadViewModalProps {
   open: boolean;
   lead: Lead | null;
   onClose: () => void;
+  activeTab?: any;
 }
 
-const LeadViewModal = ({ open, lead, onClose }: LeadViewModalProps) => {
+const LeadViewModal = ({
+  activeTab,
+  open,
+  lead,
+  onClose,
+}: LeadViewModalProps) => {
   if (!lead) return null;
 
   return (
@@ -34,7 +40,7 @@ const LeadViewModal = ({ open, lead, onClose }: LeadViewModalProps) => {
         xs: '100%',
       }}
     >
-      <HeaderTabs lead={lead} />
+      <HeaderTabs activeTab={activeTab} lead={lead} />
     </Modal>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   UserOutlined,
   BarChartOutlined,
@@ -38,9 +38,10 @@ type TabKey =
 
 interface HeaderTabsProps {
   lead: Lead;
+  activeTab?: boolean;
 }
 
-const HeaderTabs: React.FC<HeaderTabsProps> = ({ lead }) => {
+const HeaderTabs: React.FC<HeaderTabsProps> = ({ activeTab, lead }) => {
   const displayText = (value?: string | number | null) => {
     if (value === null || value === undefined) return '-';
     if (typeof value === 'string') {
@@ -91,6 +92,11 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ lead }) => {
   const [activeKey, setActiveKey] = useState<TabKey>('profile');
   const [direction, setDirection] = useState<1 | -1>(1);
 
+  useEffect(() => {
+    if (activeTab) {
+      setActiveKey('activity');
+    }
+  }, [activeTab]);
   const onChange = (nextKey: string) => {
     const prevIndex = order.indexOf(activeKey);
     const nextIndex = order.indexOf(nextKey);

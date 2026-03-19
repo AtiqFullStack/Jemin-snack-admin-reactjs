@@ -198,11 +198,19 @@ const router = createBrowserRouter([
         element: <Tasks />,
       },
       {
+        path: 'activities/leads',
+        element: <LeadsPage />,
+      },
+      {
         path: 'activities/tasks/:taskId',
         element: <SingleTask />,
       },
       {
         path: 'calls',
+        element: <CallLogs />,
+      },
+      {
+        path: 'recordings',
         element: <CallLogs />,
       },
     ],
