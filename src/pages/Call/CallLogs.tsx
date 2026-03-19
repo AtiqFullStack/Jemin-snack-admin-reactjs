@@ -18,7 +18,6 @@ import {
   Play,
   Pause,
   Download,
-  Users,
   TrendingUp,
 } from 'lucide-react';
 import useCallService from '../../services/useCallService';
