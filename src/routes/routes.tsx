@@ -59,6 +59,7 @@ import SingleTask from '../pages/activities/SingleTask.tsx';
 import PrivacyPolicy from '../pages/privacypolicy/PrivacyPolicy.tsx';
 import DeleteAccount from '../pages/DeleteAccount';
 import CallLogs from '../pages/Call/CallLogs.tsx';
+import Attendance from '../HumanResource/Attendance.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -212,6 +213,17 @@ const router = createBrowserRouter([
       {
         path: 'recordings',
         element: <CallLogs />,
+      },
+    ],
+  },
+  {
+    path: '/hrms',
+    element: <PageWrapper children={<DashboardLayout />} />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        path: 'employeee/attendance',
+        element: <Attendance />,
       },
     ],
   },

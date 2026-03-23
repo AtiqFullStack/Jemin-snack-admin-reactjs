@@ -33,6 +33,16 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/staff/${id}`,
   },
 
+  ATTENDANCE: {
+    LIST: '/attendance',
+    SUMMARY: '/attendance/summary',
+    GET: (id: string) => `/attendance/${id}`,
+    CREATE: '/attendance',
+    UPDATE: (id: string) => `/attendance/${id}`,
+    DELETE: (id: string) => `/attendance/${id}`,
+    BY_EMPLOYEE: (employeeId: string) => `/attendance/employee/${employeeId}`,
+  },
+
   //=========================LEADS===========================
 
   LEADS: {
@@ -69,7 +79,7 @@ export const API_ENDPOINTS = {
 
   // ==================== USER PROFILE ====================
   PROFILE: {
-    GET: '/profile',
+    GET: '/auth/profile',
     UPDATE: '/profile',
     CHANGE_PASSWORD: '/profile/change-password',
   },

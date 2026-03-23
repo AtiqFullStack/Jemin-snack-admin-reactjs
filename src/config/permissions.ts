@@ -26,6 +26,9 @@ export const PATH_CRM = {
     meetings: '/crm/activities/meetings',
     calendar: '/crm/activities/calendar',
   },
+  hr: {
+    Attendance: '/hrms/employeee/attendance',
+  },
   calls: '/crm/calls',
   recordings: '/crm/recordings',
   vendors: '/crm/vendors',
@@ -85,6 +88,12 @@ export const PERMISSIONS = {
   'activities.create': 'Create Activities',
   'activities.update': 'Update Activities',
   'activities.delete': 'Delete Activities',
+
+  // human resources
+  'timesheet.create': 'Create Attendance',
+  'timesheet.read': 'Read Attendance',
+  'timesheet.update': 'Update Attendance',
+  'timesheet.delete': 'Delete Attendance',
 
   // Calls
   'calls.read': 'View Calls',

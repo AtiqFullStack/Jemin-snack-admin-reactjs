@@ -138,6 +138,12 @@ export const authService = {
     }
     return;
   },
+  getProfile: async () => {
+    const res = (await apiRequest.get(API_ENDPOINTS.PROFILE.GET)) as any;
+    if (res.success) {
+      return res.data;
+    }
+  },
 
   /**
    * Register a new user - DUMMY IMPLEMENTATION

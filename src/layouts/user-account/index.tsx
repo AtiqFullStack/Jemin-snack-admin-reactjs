@@ -1,4 +1,5 @@
-import { AppLayout } from '../app';
+import { useEffect, useMemo, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Col,
   ConfigProvider,
@@ -8,139 +9,223 @@ import {
   Row,
   Tabs,
   TabsProps,
+  Tag,
   theme,
   Typography,
 } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
+import { AppLayout } from '../app';
 import { Card } from '../../components';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { USER_PROFILE_ITEMS } from '../../constants';
 import { useStylesContext } from '../../context';
-
-const { Link } = Typography;
+import { authService } from '../../services/auth/authService';
 
 import './styles.css';
-import { useEffect, useState } from 'react';
 
-const DESCRIPTION_ITEMS: DescriptionsProps['items'] = [
-  {
-    key: 'full-name',
-    label: 'Name',
-    children: <span>Kelvin Kiptum Kiprop</span>,
-  },
-  {
-    key: 'job-title',
-    label: 'Job title',
-    children: <span>Software Engineer</span>,
-  },
-  {
-    key: 'email',
-    label: 'Email',
-    children: (
-      <Link href="mailto:kelvin.kiprop96@gmail.com">
-        kelvin.kiprop96@gmail.com
-      </Link>
-    ),
-  },
-  {
-    key: 'telephone',
-    label: 'Phone',
-    children: <Link href="tel:+254706094433">+254 706 094 4433</Link>,
-  },
-  {
-    key: 'github',
-    label: 'Github',
-    children: (
-      <Link href="https://github.com/kelvink96" target="_blank">
-        kelvink96
-      </Link>
-    ),
-  },
-  {
-    key: 'twitter',
-    label: 'Twitter',
-    children: (
-      <Link href="https://twitter.com/kelvink_96" target="_blank">
-        @kelvink_96
-      </Link>
-    ),
-  },
-];
+const { Link, Text } = Typography;
 
-const TAB_ITEMS: TabsProps['items'] = USER_PROFILE_ITEMS.map((u) => ({
-  key: u.title,
-  label: u.title,
+export type UserProfileData = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  name?: string;
+  email: string;
+  phone?: string;
+  status?: string;
+  position?: string;
+  department?: string;
+  avatar?: string;
+  lastLoginAt?: string | null;
+  createdAt?: string;
+  roleId?: {
+    _id?: string;
+    name?: string;
+    description?: string;
+    permissions?: string[];
+  } | null;
+};
+
+const TAB_ITEMS: TabsProps['items'] = USER_PROFILE_ITEMS.map((item) => ({
+  key: item.title,
+  label: item.title,
 }));
+
+const formatValue = (value?: string | null) => {
+  if (!value) {
+    return '-';
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? trimmed : '-';
+};
 
 export const UserAccountLayout = () => {
   const {
     token: { borderRadius },
   } = theme.useToken();
+
   const navigate = useNavigate();
-  const stylesContext = useStylesContext();
   const location = useLocation();
-  const [activeKey, setActiveKey] = useState(TAB_ITEMS[0].key);
+  const stylesContext = useStylesContext();
+  const [activeKey, setActiveKey] = useState(TAB_ITEMS[0]?.key ?? 'details');
+  const [user, setUser] = useState<UserProfileData | null>(null);
+
+  const descriptionItems = useMemo<DescriptionsProps['items']>(() => {
+    const fullName =
+      user?.name || `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+
+    return [
+      {
+        key: 'full-name',
+        label: 'Name',
+        children: <span>{formatValue(fullName)}</span>,
+      },
+      {
+        key: 'role',
+        label: 'Role',
+        children: user?.roleId?.name ? (
+          <Tag color="blue">{user.roleId.name}</Tag>
+        ) : (
+          <span>-</span>
+        ),
+      },
+      {
+        key: 'email',
+        label: 'Email',
+        children: user?.email ? (
+          <Link href={`mailto:${user.email}`}>{user.email}</Link>
+        ) : (
+          <span>-</span>
+        ),
+      },
+      {
+        key: 'phone',
+        label: 'Phone',
+        children: user?.phone ? (
+          <Link href={`tel:${user.phone}`}>{user.phone}</Link>
+        ) : (
+          <span>-</span>
+        ),
+      },
+      {
+        key: 'department',
+        label: 'Department',
+        children: <span>{formatValue(user?.department)}</span>,
+      },
+      {
+        key: 'position',
+        label: 'Position',
+        children: <span>{formatValue(user?.position)}</span>,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        children: (
+          <Tag color={user?.status === 'active' ? 'green' : 'default'}>
+            {formatValue(user?.status)}
+          </Tag>
+        ),
+      },
+      {
+        key: 'last-login',
+        label: 'Last Login',
+        children: (
+          <span>
+            {user?.lastLoginAt
+              ? new Date(user.lastLoginAt).toLocaleString()
+              : '-'}
+          </span>
+        ),
+      },
+    ];
+  }, [user]);
+
+  useEffect(() => {
+    const profileDetails = async () => {
+      const response = await authService.getProfile();
+      setUser(response ?? null);
+    };
+
+    profileDetails();
+  }, []);
+
+  useEffect(() => {
+    const key =
+      TAB_ITEMS.find((item) => location.pathname.includes(item.key))?.key ||
+      TAB_ITEMS[0]?.key ||
+      'details';
+
+    setActiveKey(key);
+  }, [location.pathname]);
 
   const onChange = (key: string) => {
     navigate(key);
   };
 
-  useEffect(() => {
-    console.log(location);
-    const k =
-      TAB_ITEMS.find((d) => location.pathname.includes(d.key))?.key || '';
-
-    console.log(k);
-    setActiveKey(k);
-  }, [location]);
-
   return (
-    <>
-      <AppLayout>
-        <Card
-          className="user-profile-card-nav card"
-          actions={[
-            <ConfigProvider
-              theme={{
-                components: {
-                  Tabs: {
-                    colorBorderSecondary: 'none',
-                  },
+    <AppLayout>
+      <Card
+        className="user-profile-card-nav card"
+        actions={[
+          <ConfigProvider
+            key="profile-tabs"
+            theme={{
+              components: {
+                Tabs: {
+                  colorBorderSecondary: 'none',
                 },
-              }}
-            >
-              <Tabs
-                defaultActiveKey={activeKey}
-                activeKey={activeKey}
-                items={TAB_ITEMS}
-                onChange={onChange}
-                style={{ textTransform: 'capitalize' }}
-              />
-            </ConfigProvider>,
-          ]}
-        >
-          <Row {...stylesContext?.rowProps}>
-            <Col xs={24} sm={8} lg={4}>
+              },
+            }}
+          >
+            <Tabs
+              activeKey={activeKey}
+              items={TAB_ITEMS}
+              onChange={onChange}
+              style={{ textTransform: 'capitalize' }}
+            />
+          </ConfigProvider>,
+        ]}
+      >
+        <Row {...stylesContext?.rowProps}>
+          <Col xs={24} sm={8} lg={4}>
+            {user?.avatar ? (
               <Image
-                src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dXNlcnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60"
+                src={user.avatar}
                 alt="user profile image"
                 height="100%"
                 width="100%"
                 style={{ borderRadius }}
               />
-            </Col>
-            <Col xs={24} sm={16} lg={20}>
-              <Descriptions
-                title="User Info"
-                items={DESCRIPTION_ITEMS}
-                column={{ xs: 1, sm: 2, md: 2, lg: 3, xl: 3, xxl: 4 }}
-              />
-            </Col>
-          </Row>
-        </Card>
-        <div style={{ marginTop: '1.5rem' }}>
-          <Outlet />
-        </div>
-      </AppLayout>
-    </>
+            ) : (
+              <div
+                style={{
+                  minHeight: 180,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius,
+                  background: '#f5f5f5',
+                }}
+              >
+                <Text type="secondary">
+                  <UserOutlined style={{ marginRight: 8 }} />
+                  No avatar
+                </Text>
+              </div>
+            )}
+          </Col>
+          <Col xs={24} sm={16} lg={20}>
+            <Descriptions
+              title="User Info"
+              items={descriptionItems}
+              column={{ xs: 1, sm: 2, md: 2, lg: 3, xl: 3, xxl: 4 }}
+            />
+          </Col>
+        </Row>
+      </Card>
+      <div style={{ marginTop: '1.5rem' }}>
+        <Outlet context={{ user }} />
+      </div>
+    </AppLayout>
   );
 };

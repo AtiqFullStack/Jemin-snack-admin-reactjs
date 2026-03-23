@@ -1,48 +1,66 @@
-import { Button, Col, Form, Input, Radio, Row, Select, Typography } from 'antd';
-import { Card } from '../../components';
+import { useEffect } from 'react';
+import { Button, Col, Form, Input, Radio, Row, Typography } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
+import { Card } from '../../components';
+import { useOutletContext } from 'react-router-dom';
+import type { UserProfileData } from '../../layouts/user-account';
 
 type FieldType = {
-  username?: string;
-  password?: string;
-  remember?: string;
-  firstName?: string;
-  middleName?: string;
-  lastName?: string;
-  company?: string;
-  email?: string;
-  subscription?: 'free' | 'pro' | 'enterprise' | 'custom';
   id?: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  department?: string;
+  position?: string;
+  role?: string;
   status?: 'active' | 'inactive';
 };
 
-export const UserProfileDetailsPage = () => {
-  const onFinish = (values: any) => {
-    console.log('Success:', values);
-  };
+type OutletContextType = {
+  user: UserProfileData | null;
+};
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log('Failed:', errorInfo);
+const formatValue = (value?: string | null) => {
+  if (!value) {
+    return '';
+  }
+
+  return value.trim();
+};
+
+export const UserProfileDetailsPage = () => {
+  const [form] = Form.useForm<FieldType>();
+  const { user } = useOutletContext<OutletContextType>();
+
+  useEffect(() => {
+    form.setFieldsValue({
+      id: user?._id ?? '',
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      fullName:
+        user?.name ?? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim(),
+      email: user?.email ?? '',
+      phone: user?.phone ?? '',
+      department: formatValue(user?.department),
+      position: formatValue(user?.position),
+      role: formatValue(user?.roleId?.name),
+      status: user?.status === 'inactive' ? 'inactive' : 'active',
+    });
+  }, [form, user]);
+
+  const onFinish = (values: FieldType) => {
+    console.log('Profile details form values:', values);
   };
 
   return (
     <Card>
       <Form
+        form={form}
         name="user-profile-details-form"
         layout="vertical"
-        initialValues={{
-          id: '474e2cd2-fc79-49b8-98fe-dab443facede',
-          username: 'kelvink96',
-          firstName: 'Kelvin',
-          middleName: 'Kiptum',
-          lastName: 'Kiprop',
-          company: 'Design Sparx',
-          email: 'kelvin.kiprop96@gmail.com',
-          subscription: 'pro',
-          status: 'active',
-        }}
         onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
         autoComplete="on"
         requiredMark={false}
       >
@@ -51,48 +69,44 @@ export const UserProfileDetailsPage = () => {
             <Form.Item<FieldType>
               label="User ID"
               name="id"
-              rules={[{ required: true, message: 'Please input your id!' }]}
+              rules={[{ required: true, message: 'User ID is required' }]}
             >
               <Input
-                readOnly={true}
+                readOnly
                 suffix={
-                  <Typography.Paragraph
-                    copyable={{ text: '474e2cd2-fc79-49b8-98fe-dab443facede' }}
-                    style={{ margin: 0 }}
-                  ></Typography.Paragraph>
+                  user?._id ? (
+                    <Typography.Paragraph
+                      copyable={{ text: user._id }}
+                      style={{ margin: 0 }}
+                    />
+                  ) : null
                 }
               />
             </Form.Item>
           </Col>
-          <Col sm={24} lg={8}>
+          <Col sm={24} lg={12}>
             <Form.Item<FieldType>
-              label="First name"
+              label="First Name"
               name="firstName"
-              rules={[
-                { required: true, message: 'Please input your first name!' },
-              ]}
+              rules={[{ required: true, message: 'First name is required' }]}
             >
               <Input />
             </Form.Item>
           </Col>
-          <Col sm={24} lg={8}>
+          <Col sm={24} lg={12}>
             <Form.Item<FieldType>
-              label="Middle name"
-              name="middleName"
-              rules={[
-                { required: true, message: 'Please input your middle name!' },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col sm={24} lg={8}>
-            <Form.Item<FieldType>
-              label="Last name"
+              label="Last Name"
               name="lastName"
-              rules={[
-                { required: true, message: 'Please input your last name!' },
-              ]}
+              rules={[{ required: true, message: 'Last name is required' }]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col sm={24} lg={12}>
+            <Form.Item<FieldType>
+              label="Full Name"
+              name="fullName"
+              rules={[{ required: true, message: 'Full name is required' }]}
             >
               <Input />
             </Form.Item>
@@ -101,58 +115,36 @@ export const UserProfileDetailsPage = () => {
             <Form.Item<FieldType>
               label="Email"
               name="email"
-              rules={[{ required: true, message: 'Please input your email!' }]}
+              rules={[{ required: true, message: 'Email is required' }]}
             >
               <Input />
             </Form.Item>
           </Col>
           <Col sm={24} lg={12}>
-            <Form.Item<FieldType>
-              label="Username"
-              name="username"
-              rules={[
-                { required: true, message: 'Please input your username!' },
-              ]}
-            >
+            <Form.Item<FieldType> label="Phone" name="phone">
               <Input />
             </Form.Item>
           </Col>
           <Col sm={24} lg={12}>
-            <Form.Item<FieldType>
-              label="Company"
-              name="company"
-              rules={[
-                { required: true, message: 'Please input your company!' },
-              ]}
-            >
+            <Form.Item<FieldType> label="Role" name="role">
+              <Input readOnly />
+            </Form.Item>
+          </Col>
+          <Col sm={24} lg={12}>
+            <Form.Item<FieldType> label="Department" name="department">
               <Input />
             </Form.Item>
           </Col>
           <Col sm={24} lg={12}>
-            <Form.Item<FieldType>
-              label="Subscription"
-              name="subscription"
-              rules={[
-                { required: true, message: 'Please select your subscription!' },
-              ]}
-            >
-              <Select
-                options={[
-                  { value: 'free', label: 'Free' },
-                  { value: 'pro', label: 'Pro' },
-                  { value: 'enterprise', label: 'Enterprise' },
-                  { value: 'custom', label: 'Custom', disabled: true },
-                ]}
-              />
+            <Form.Item<FieldType> label="Position" name="position">
+              <Input />
             </Form.Item>
           </Col>
           <Col span={24}>
             <Form.Item<FieldType>
               label="Status"
               name="status"
-              rules={[
-                { required: true, message: 'Please select your status!' },
-              ]}
+              rules={[{ required: true, message: 'Status is required' }]}
             >
               <Radio.Group>
                 <Radio value="active">Active</Radio>

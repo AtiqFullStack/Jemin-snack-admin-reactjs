@@ -103,17 +103,10 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
     ),
   ]),
 
-  getItem('Operations', 'group-ops', null, [], 'group'),
-
+  getItem('Human Resource', 'group-ops', null, [], 'group'),
   getItem(
-    <Link to={PATH_CRM.vendors}>Vendors</Link>,
-    PATH_CRM.vendors,
-    <ShoppingOutlined />
-  ),
-  getItem(
-    <Link to={PATH_CRM.products}>Products</Link>,
-    PATH_CRM.products,
-    <ShoppingOutlined />
+    <Link to={PATH_CRM.hr.Attendance}>Attendance</Link>,
+    PATH_CRM.hr.Attendance
   ),
 
   getItem('Reports', 'submenu-reports', <BarChartOutlined />, [

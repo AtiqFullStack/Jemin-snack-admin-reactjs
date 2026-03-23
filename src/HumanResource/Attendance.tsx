@@ -1,0 +1,779 @@
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Avatar,
+  Button,
+  Card,
+  Col,
+  DatePicker,
+  Drawer,
+  Flex,
+  Form,
+  Input,
+  Modal,
+  Progress,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Tag,
+  Typography,
+  message,
+} from 'antd';
+import {
+  CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
+  ReloadOutlined,
+  TeamOutlined,
+} from '@ant-design/icons';
+import dayjs, { Dayjs } from 'dayjs';
+import type { ColumnsType } from 'antd/es/table';
+import attendanceService from '../services/attendanceService';
+
+const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
+
+type ApiAttendanceStatus = 'present' | 'late' | 'absent' | 'half_day' | 'leave';
+
+type ApiAttendanceRecord = {
+  _id: string;
+  employeeId:
+    | {
+        _id: string;
+        firstName?: string;
+        lastName?: string;
+        name?: string;
+        email?: string;
+        phone?: string;
+        department?: string;
+        position?: string;
+      }
+    | string;
+  date: string;
+  checkIn?: {
+    time?: string;
+  };
+  checkOut?: {
+    time?: string;
+  };
+  totalBreakMinutes?: number;
+  totalHours?: number;
+  grossHours?: number;
+  status: ApiAttendanceStatus;
+  isLate?: boolean;
+  shift?: {
+    start?: string;
+    end?: string;
+  };
+  remarks?: string;
+};
+
+type AttendanceTableRecord = {
+  id: string;
+  employeeName: string;
+  employeeCode: string;
+  department: string;
+  designation: string;
+  shiftLabel: string;
+  shiftStart: string;
+  shiftEnd: string;
+  status: ApiAttendanceStatus;
+  checkIn: string;
+  checkOut: string;
+  workHours: string;
+  overtime: string;
+  date: string;
+  notes: string;
+  raw: ApiAttendanceRecord;
+};
+
+type AttendanceFormValues = {
+  status: ApiAttendanceStatus;
+  shiftStart: string;
+  shiftEnd: string;
+  notes: string;
+};
+
+const statusConfig: Record<
+  ApiAttendanceStatus,
+  { label: string; color: string }
+> = {
+  present: { label: 'Present', color: 'green' },
+  late: { label: 'Late', color: 'orange' },
+  absent: { label: 'Absent', color: 'red' },
+  half_day: { label: 'Half Day', color: 'gold' },
+  leave: { label: 'On Leave', color: 'blue' },
+};
+
+const getEmployeeName = (employee: ApiAttendanceRecord['employeeId']) => {
+  if (!employee || typeof employee === 'string') {
+    return 'Unknown Employee';
+  }
+
+  if (employee.name?.trim()) {
+    return employee.name.trim();
+  }
+
+  return (
+    `${employee.firstName ?? ''} ${employee.lastName ?? ''}`.trim() ||
+    'Unknown Employee'
+  );
+};
+
+const getEmployeeCode = (employee: ApiAttendanceRecord['employeeId']) => {
+  if (!employee || typeof employee === 'string') {
+    return '-';
+  }
+
+  return employee._id?.slice(-6).toUpperCase() || '-';
+};
+
+const formatClockTime = (value?: string) => {
+  if (!value) {
+    return '-';
+  }
+
+  const parsed = dayjs(value);
+  if (!parsed.isValid()) {
+    return '-';
+  }
+
+  return parsed.format('hh:mm A');
+};
+
+const formatHours = (value?: number) => `${Number(value ?? 0).toFixed(2)}h`;
+const formatDateLabel = (value?: string) =>
+  value && dayjs(value).isValid() ? dayjs(value).format('DD MMM YYYY') : '-';
+
+const Attendance = () => {
+  const [form] = Form.useForm<AttendanceFormValues>();
+  const { getAttendanceList, updateAttendance, deleteAttendance } =
+    attendanceService();
+  const [records, setRecords] = useState<AttendanceTableRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [datePreset, setDatePreset] = useState<'today' | 'month' | 'custom'>(
+    'today'
+  );
+  const [dateRange, setDateRange] = useState<
+    [Dayjs | null, Dayjs | null] | null
+  >([dayjs(), dayjs()]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingRecord, setEditingRecord] =
+    useState<AttendanceTableRecord | null>(null);
+
+  const fetchAttendance = async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, string> = {
+        page: '1',
+        limit: '200',
+      };
+
+      if (statusFilter !== 'All') {
+        params.status = statusFilter;
+      }
+
+      if (dateRange?.[0]) {
+        params.startDate = dateRange[0].format('YYYY-MM-DD');
+      }
+
+      if (dateRange?.[1]) {
+        params.endDate = dateRange[1].format('YYYY-MM-DD');
+      }
+
+      const response = (await getAttendanceList(params)) as {
+        success?: boolean;
+        data?: { items?: ApiAttendanceRecord[] };
+      };
+
+      const items = response?.data?.items ?? [];
+      const mappedRecords = items.map((item) => {
+        const employee = item.employeeId;
+        const shiftStart = item.shift?.start?.trim() || '-';
+        const shiftEnd = item.shift?.end?.trim() || '-';
+
+        return {
+          id: item._id,
+          employeeName: getEmployeeName(employee),
+          employeeCode: getEmployeeCode(employee),
+          department:
+            typeof employee === 'string'
+              ? '-'
+              : employee?.department?.trim() || '-',
+          designation:
+            typeof employee === 'string'
+              ? '-'
+              : employee?.position?.trim() || '-',
+          shiftLabel:
+            shiftStart === '-' && shiftEnd === '-'
+              ? '-'
+              : `${shiftStart} - ${shiftEnd}`,
+          shiftStart: item.shift?.start?.trim() || '',
+          shiftEnd: item.shift?.end?.trim() || '',
+          status: item.status,
+          checkIn: formatClockTime(item.checkIn?.time),
+          checkOut: formatClockTime(item.checkOut?.time),
+          workHours: formatHours(item.totalHours),
+          overtime: formatHours(
+            Math.max((item.grossHours ?? 0) - (item.totalHours ?? 0), 0)
+          ),
+          date: item.date,
+          notes: item.remarks?.trim() || '-',
+          raw: item,
+        };
+      });
+
+      setRecords(mappedRecords);
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+      message.error('Failed to fetch attendance records');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [statusFilter, dateRange]);
+
+  const departments = useMemo(
+    () => [
+      'All',
+      ...new Set(records.map((record) => record.department).filter(Boolean)),
+    ],
+    [records]
+  );
+
+  const filteredRecords = useMemo(() => {
+    return records.filter((record) => {
+      const query = searchText.trim().toLowerCase();
+      const matchesSearch =
+        !query ||
+        record.employeeName.toLowerCase().includes(query) ||
+        record.employeeCode.toLowerCase().includes(query) ||
+        record.designation.toLowerCase().includes(query);
+
+      const matchesDepartment =
+        departmentFilter === 'All' || record.department === departmentFilter;
+
+      return matchesSearch && matchesDepartment;
+    });
+  }, [records, searchText, departmentFilter]);
+
+  const summary = useMemo(() => {
+    const total = filteredRecords.length;
+    const presentCount = filteredRecords.filter(
+      (record) => record.status === 'present' || record.status === 'late'
+    ).length;
+    const absentCount = filteredRecords.filter(
+      (record) => record.status === 'absent'
+    ).length;
+    const leaveCount = filteredRecords.filter(
+      (record) => record.status === 'leave'
+    ).length;
+    const halfDayCount = filteredRecords.filter(
+      (record) => record.status === 'half_day'
+    ).length;
+
+    return {
+      total,
+      presentCount,
+      absentCount,
+      leaveCount,
+      halfDayCount,
+      rate: total ? Math.round((presentCount / total) * 100) : 0,
+    };
+  }, [filteredRecords]);
+
+  const openEditDrawer = (record: AttendanceTableRecord) => {
+    setEditingRecord(record);
+    form.setFieldsValue({
+      status: record.status,
+      shiftStart: record.shiftStart,
+      shiftEnd: record.shiftEnd,
+      notes: record.raw.remarks?.trim() || '',
+    });
+    setIsDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    setEditingRecord(null);
+    form.resetFields();
+  };
+
+  const applyTodayFilter = () => {
+    const today = dayjs();
+    setDatePreset('today');
+    setDateRange([today, today]);
+  };
+
+  const applyMonthFilter = () => {
+    const now = dayjs();
+    setDatePreset('month');
+    setDateRange([now.startOf('month'), now.endOf('month')]);
+  };
+
+  const handleSubmit = async () => {
+    if (!editingRecord) {
+      return;
+    }
+
+    try {
+      const values = await form.validateFields();
+      const response = (await updateAttendance(editingRecord.id, {
+        status: values.status,
+        shift: {
+          start: values.shiftStart?.trim() || '',
+          end: values.shiftEnd?.trim() || '',
+        },
+        remarks: values.notes?.trim() || '',
+      })) as { success?: boolean; message?: string };
+
+      if (response?.success) {
+        message.success(response.message || 'Attendance updated successfully');
+        closeDrawer();
+        await fetchAttendance();
+      }
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      message.error('Failed to update attendance');
+    }
+  };
+
+  const handleDelete = (record: AttendanceTableRecord) => {
+    Modal.confirm({
+      title: 'Delete attendance record?',
+      content: `This will remove ${record.employeeName}'s entry for ${dayjs(
+        record.date
+      ).format('DD MMM YYYY')}.`,
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          const response = (await deleteAttendance(record.id)) as {
+            success?: boolean;
+            message?: string;
+          };
+
+          if (response?.success) {
+            message.success(response.message || 'Attendance record deleted');
+            await fetchAttendance();
+          }
+        } catch (error) {
+          console.error('Error deleting attendance:', error);
+          message.error('Failed to delete attendance');
+        }
+      },
+    });
+  };
+
+  const handleExport = () => {
+    if (!filteredRecords.length) {
+      message.warning('No attendance records available for export');
+      return;
+    }
+
+    const header = [
+      'Employee Name',
+      'Employee Code',
+      'Department',
+      'Designation',
+      'Date',
+      'Shift',
+      'Status',
+      'Check In',
+      'Check Out',
+      'Work Hours',
+      'Overtime',
+      'Notes',
+    ];
+
+    const rows = filteredRecords.map((record) => [
+      record.employeeName,
+      record.employeeCode,
+      record.department,
+      record.designation,
+      dayjs(record.date).format('DD MMM YYYY'),
+      record.shiftLabel,
+      statusConfig[record.status].label,
+      record.checkIn,
+      record.checkOut,
+      record.workHours,
+      record.overtime,
+      record.notes,
+    ]);
+
+    const csv = [header, ...rows]
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+      )
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `attendance-report-${dayjs().format('YYYY-MM-DD')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    message.success('Attendance report exported');
+  };
+
+  const columns: ColumnsType<AttendanceTableRecord> = [
+    {
+      title: 'Employee',
+      key: 'employee',
+      width: 240,
+      render: (_, record) => (
+        <Space size={10}>
+          <Avatar
+            size={38}
+            style={{ backgroundColor: '#1677ff', fontWeight: 700 }}
+          >
+            {record.employeeName
+              .split(' ')
+              .map((part) => part[0])
+              .join('')
+              .slice(0, 2)}
+          </Avatar>
+          <div>
+            <Text strong>{record.employeeName}</Text>
+            <br />
+            <Text type="secondary">
+              {record.employeeCode} • {record.designation}
+            </Text>
+          </div>
+        </Space>
+      ),
+    },
+    {
+      title: 'Department',
+      dataIndex: 'department',
+      key: 'department',
+      width: 140,
+    },
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      width: 130,
+      render: (value: string) => formatDateLabel(value),
+    },
+    {
+      title: 'Shift',
+      dataIndex: 'shiftLabel',
+      key: 'shiftLabel',
+      width: 170,
+    },
+    {
+      title: 'Check In',
+      dataIndex: 'checkIn',
+      key: 'checkIn',
+      width: 110,
+    },
+    {
+      title: 'Check Out',
+      dataIndex: 'checkOut',
+      key: 'checkOut',
+      width: 110,
+    },
+    {
+      title: 'Hours',
+      dataIndex: 'workHours',
+      key: 'workHours',
+      width: 100,
+    },
+    {
+      title: 'OT',
+      dataIndex: 'overtime',
+      key: 'overtime',
+      width: 90,
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      render: (status: ApiAttendanceStatus) => (
+        <Tag color={statusConfig[status].color}>
+          {statusConfig[status].label}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Notes',
+      dataIndex: 'notes',
+      key: 'notes',
+      ellipsis: true,
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      //   fixed: 'right',
+      width: 170,
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => openEditDrawer(record)}
+          >
+            Edit
+          </Button>
+          <Button danger type="text" onClick={() => handleDelete(record)}>
+            Delete
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div
+      style={{
+        padding: 24,
+        minHeight: '100%',
+      }}
+    >
+      <Space
+        direction="vertical"
+        size={16}
+        style={{ display: 'flex', width: '100%' }}
+      >
+        <Card bordered={false}>
+          <Flex vertical gap={16}>
+            <Flex justify="space-between" align="center" wrap="wrap" gap={12}>
+              <div>
+                <Title level={4} style={{ margin: 0 }}>
+                  Attendance Register
+                </Title>
+                <Text type="secondary">
+                  {filteredRecords.length} records visible
+                </Text>
+              </div>
+              <Space wrap>
+                <Button
+                  type={datePreset === 'today' ? 'primary' : 'default'}
+                  onClick={applyTodayFilter}
+                >
+                  Today
+                </Button>
+                <Button
+                  type={datePreset === 'month' ? 'primary' : 'default'}
+                  onClick={applyMonthFilter}
+                >
+                  This Month
+                </Button>
+                <Button icon={<CalendarOutlined />} onClick={handleExport}>
+                  Export
+                </Button>
+                <Button icon={<ReloadOutlined />} onClick={fetchAttendance}>
+                  Refresh
+                </Button>
+              </Space>
+            </Flex>
+
+            <Row gutter={[12, 12]}>
+              {/* <Col xs={24} sm={12} lg={6}>
+                                <Card size="small" bordered={false} style={{ background: '#fafafa' }}>
+                                    <Text type="secondary">Attendance Rate</Text>
+                                    <div style={{ marginTop: 8 }}>
+                                        <Text strong style={{ fontSize: 22 }}>
+                                            {summary.rate}%
+                                        </Text>
+                                    </div>
+                                    <Progress
+                                        percent={summary.rate}
+                                        showInfo={false}
+                                        strokeColor="#52c41a"
+                                        style={{ marginTop: 10, marginBottom: 0 }}
+                                    />
+                                </Card>
+                            </Col> */}
+              <Col xs={24} sm={12} lg={6}>
+                <Card
+                  size="small"
+                  bordered={false}
+                  style={{ background: '#fafafa' }}
+                >
+                  <Text type="secondary">Present / Late</Text>
+                  <div style={{ marginTop: 8 }}>
+                    <Text strong style={{ fontSize: 22 }}>
+                      {summary.presentCount}
+                    </Text>
+                  </div>
+                </Card>
+              </Col>
+              {/* <Col xs={24} sm={12} lg={6}>
+                                <Card size="small" bordered={false} style={{ background: '#fafafa' }}>
+                                    <Text type="secondary">Absentees</Text>
+                                    <div style={{ marginTop: 8 }}>
+                                        <Text strong style={{ fontSize: 22 }}>
+                                            {summary.absentCount}
+                                        </Text>
+                                    </div>
+                                </Card>
+                            </Col> */}
+              <Col xs={24} sm={12} lg={6}>
+                <Card
+                  size="small"
+                  bordered={false}
+                  style={{ background: '#fafafa' }}
+                >
+                  <Text type="secondary">Leave / Half Day</Text>
+                  <div style={{ marginTop: 8 }}>
+                    <Text strong style={{ fontSize: 22 }}>
+                      {summary.leaveCount + summary.halfDayCount}
+                    </Text>
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+
+            <Row gutter={[12, 12]}>
+              <Col xs={24} md={8}>
+                <Input.Search
+                  allowClear
+                  placeholder="Search by employee, code, or designation"
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                />
+              </Col>
+              <Col xs={24} md={5}>
+                <Select
+                  style={{ width: '100%' }}
+                  value={departmentFilter}
+                  onChange={setDepartmentFilter}
+                  options={departments.map((department) => ({
+                    label: department,
+                    value: department,
+                  }))}
+                />
+              </Col>
+              <Col xs={24} md={5}>
+                <Select
+                  style={{ width: '100%' }}
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  options={[
+                    { label: 'All', value: 'All' },
+                    { label: 'Present', value: 'present' },
+                    { label: 'Late', value: 'late' },
+                    { label: 'Half Day', value: 'half_day' },
+                    { label: 'Absent', value: 'absent' },
+                    { label: 'On Leave', value: 'leave' },
+                  ]}
+                />
+              </Col>
+              <Col xs={24} md={6}>
+                <RangePicker
+                  style={{ width: '100%' }}
+                  value={dateRange}
+                  onChange={(value) => {
+                    setDatePreset('custom');
+                    setDateRange(value);
+                  }}
+                />
+              </Col>
+            </Row>
+          </Flex>
+        </Card>
+
+        <Card bordered={false}>
+          <Spin spinning={loading}>
+            <Table
+              rowKey="id"
+              columns={columns}
+              dataSource={filteredRecords}
+              size="small"
+              pagination={{ pageSize: 14 }}
+              scroll={{ x: 1250 }}
+              rowHoverable={false}
+            />
+          </Spin>
+        </Card>
+      </Space>
+
+      <Drawer
+        title={editingRecord ? 'Edit Attendance Entry' : 'Edit Attendance'}
+        width={480}
+        open={isDrawerOpen}
+        onClose={closeDrawer}
+        destroyOnClose
+        extra={
+          <Space>
+            <Button onClick={closeDrawer}>Cancel</Button>
+            <Button type="primary" onClick={handleSubmit}>
+              Update
+            </Button>
+          </Space>
+        }
+      >
+        <Form form={form} layout="vertical">
+          <Row gutter={16}>
+            <Col span={24}>
+              <Card
+                size="small"
+                bordered={false}
+                style={{ background: '#fafafa' }}
+              >
+                <Text strong>{editingRecord?.employeeName}</Text>
+                <br />
+                <Text type="secondary">
+                  {editingRecord?.employeeCode} • {editingRecord?.department}
+                </Text>
+              </Card>
+            </Col>
+            <Col span={24}>
+              <Form.Item
+                name="status"
+                label="Status"
+                rules={[{ required: true, message: 'Status is required' }]}
+              >
+                <Select
+                  options={[
+                    { label: 'Present', value: 'present' },
+                    { label: 'Late', value: 'late' },
+                    { label: 'Half Day', value: 'half_day' },
+                    { label: 'Absent', value: 'absent' },
+                    { label: 'On Leave', value: 'leave' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="shiftStart" label="Shift Start">
+                <Input placeholder="09:00 AM" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="shiftEnd" label="Shift End">
+                <Input placeholder="06:00 PM" />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item name="notes" label="Remarks / Notes">
+                <Input.TextArea
+                  rows={4}
+                  placeholder="Add manual correction reason or manager remark"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Drawer>
+    </div>
+  );
+};
+
+export default Attendance;

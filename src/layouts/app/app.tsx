@@ -79,18 +79,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       key: 'user-profile-link',
       label: 'profile',
       icon: <UserOutlined />,
+      onClick: () => navigate(PATH_USER_PROFILE.details),
     },
-    {
-      key: 'user-settings-link',
-      label: 'settings',
-      icon: <SettingOutlined />,
-      onClick: () => navigate(PATH_USER_PROFILE.settings),
-    },
-    {
-      key: 'user-help-link',
-      label: 'help center',
-      icon: <QuestionOutlined />,
-    },
+
     {
       type: 'divider',
     },
