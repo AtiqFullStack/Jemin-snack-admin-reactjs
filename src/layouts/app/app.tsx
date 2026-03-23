@@ -18,8 +18,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
-  QuestionOutlined,
-  SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import {

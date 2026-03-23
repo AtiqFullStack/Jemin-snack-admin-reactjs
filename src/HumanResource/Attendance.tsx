@@ -10,12 +10,10 @@ import {
   Form,
   Input,
   Modal,
-  Progress,
   Row,
   Select,
   Space,
   Spin,
-  Statistic,
   Table,
   Tag,
   Typography,
@@ -23,11 +21,8 @@ import {
 } from 'antd';
 import {
   CalendarOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
   EditOutlined,
   ReloadOutlined,
-  TeamOutlined,
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';

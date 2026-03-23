@@ -9,7 +9,6 @@ import {
   PhoneOutlined,
   SettingOutlined,
   ShopOutlined,
-  ShoppingOutlined,
   SolutionOutlined,
   TeamOutlined,
   UserOutlined,
