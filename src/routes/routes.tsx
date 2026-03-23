@@ -1,4 +1,9 @@
-import { createBrowserRouter, Outlet, useLocation } from 'react-router-dom';
+import {
+  Navigate,
+  createBrowserRouter,
+  Outlet,
+  useLocation,
+} from 'react-router-dom';
 import {
   AccountDeactivePage,
   BiddingDashboardPage,
@@ -60,7 +65,13 @@ import PrivacyPolicy from '../pages/privacypolicy/PrivacyPolicy.tsx';
 import DeleteAccount from '../pages/DeleteAccount';
 import CallLogs from '../pages/Call/CallLogs.tsx';
 import Attendance from '../HumanResource/Attendance.tsx';
-
+import HrSettings from '../HumanResource/HrSettings.tsx';
+import CompanySettingsTab from '../HumanResource/hr-settings/CompanySettingsTab.tsx';
+import HolidaysSettingsTab from '../HumanResource/hr-settings/HolidaysSettingsTab.tsx';
+import LeavePolicySettingsTab from '../HumanResource/hr-settings/LeavePolicySettingsTab.tsx';
+import SalaryRulesSettingsTab from '../HumanResource/hr-settings/SalaryRulesSettingsTab.tsx';
+import ShiftsSettingsTab from '../HumanResource/hr-settings/ShiftsSettingsTab.tsx';
+import WeeklyOffSettingsTab from '../HumanResource/hr-settings/WeeklyOffSettingsTab.tsx';
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -224,6 +235,40 @@ const router = createBrowserRouter([
       {
         path: 'employeee/attendance',
         element: <Attendance />,
+      },
+      {
+        path: 'setting/configuration',
+        element: <HrSettings />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to="company" replace />,
+          },
+          {
+            path: 'company',
+            element: <CompanySettingsTab />,
+          },
+          {
+            path: 'shifts',
+            element: <ShiftsSettingsTab />,
+          },
+          {
+            path: 'weekly-offs',
+            element: <WeeklyOffSettingsTab />,
+          },
+          {
+            path: 'holidays',
+            element: <HolidaysSettingsTab />,
+          },
+          {
+            path: 'salary-rules',
+            element: <SalaryRulesSettingsTab />,
+          },
+          {
+            path: 'leave-policy',
+            element: <LeavePolicySettingsTab />,
+          },
+        ],
       },
     ],
   },

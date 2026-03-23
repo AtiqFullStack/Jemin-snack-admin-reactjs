@@ -28,6 +28,7 @@ export const PATH_CRM = {
   },
   hr: {
     Attendance: '/hrms/employeee/attendance',
+    Settings: '/hrms/setting/configuration',
   },
   calls: '/crm/calls',
   recordings: '/crm/recordings',

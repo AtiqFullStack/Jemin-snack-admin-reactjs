@@ -6,6 +6,7 @@ import {
   CalendarOutlined,
   CustomerServiceOutlined,
   FileTextOutlined,
+  HistoryOutlined,
   PhoneOutlined,
   SettingOutlined,
   ShopOutlined,
@@ -103,9 +104,24 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
   ]),
 
   getItem('Human Resource', 'group-ops', null, [], 'group'),
+  //  getItem(
+  //   <Link to={PATH_CRM.customers}>Customers</Link>,
+  //   PATH_CRM.customers,
+  //   <HistoryOutlined />
+  // ),  //  getItem(
+  //   <Link to={PATH_CRM.customers}>Customers</Link>,
+  //   PATH_CRM.customers,
+  //   <HistoryOutlined />
+  // ),
   getItem(
     <Link to={PATH_CRM.hr.Attendance}>Attendance</Link>,
-    PATH_CRM.hr.Attendance
+    PATH_CRM.hr.Attendance,
+    <HistoryOutlined />
+  ),
+  getItem(
+    <Link to={PATH_CRM.hr.Settings}>Configuration</Link>,
+    PATH_CRM.hr.Settings,
+    <SettingOutlined />
   ),
 
   getItem('Reports', 'submenu-reports', <BarChartOutlined />, [
