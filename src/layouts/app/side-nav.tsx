@@ -119,6 +119,11 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
     <HistoryOutlined />
   ),
   getItem(
+    <Link to={PATH_CRM.hr.salarySetting}>Salary Setting</Link>,
+    PATH_CRM.hr.salarySetting,
+    <SettingOutlined />
+  ),
+  getItem(
     <Link to={PATH_CRM.hr.Settings}>Configuration</Link>,
     PATH_CRM.hr.Settings,
     <SettingOutlined />

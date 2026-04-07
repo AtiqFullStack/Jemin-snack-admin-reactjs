@@ -9,15 +9,15 @@ import {
   Row,
   Select,
   Space,
+  Tag,
   Typography,
 } from 'antd';
-import { useOutletContext } from 'react-router-dom';
 import {
   MONTHLY_OFF_WEEKS,
   WEEK_DAYS,
-  type HrSettingsContextValue,
   type HrMonthlyOffPattern,
 } from './types';
+import { useHrSettingsContext } from './context';
 
 const { Text } = Typography;
 
@@ -38,20 +38,48 @@ const WeeklyOffSettingsTab = () => {
     addMonthlyOffPattern,
     updateMonthlyOffPattern,
     removeMonthlyOffPattern,
-  } = useOutletContext<HrSettingsContextValue>();
+  } = useHrSettingsContext();
 
   return (
     <Space direction="vertical" size={16} style={{ display: 'flex' }}>
-      <Card bordered={false} title="Fixed Weekly Offs">
-        <Flex wrap="wrap" gap={16}>
+      <Card
+        bordered={false}
+        title="Fixed Weekly Offs"
+        extra={
+          <Tag color="blue">
+            {form.weeklyOffPolicy.fixedDays.length} selected
+          </Tag>
+        }
+      >
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          Pick the standard weekly off days that apply every week.
+        </Text>
+        <Flex wrap="wrap" gap={12}>
           {WEEK_DAYS.map((day) => (
-            <Checkbox
+            <Card
               key={day}
-              checked={form.weeklyOffPolicy.fixedDays.includes(day)}
-              onChange={() => toggleWeeklyOff(day)}
+              hoverable
+              size="small"
+              onClick={() => toggleWeeklyOff(day)}
+              style={{
+                width: 122,
+                cursor: 'pointer',
+                borderRadius: 14,
+                borderColor: form.weeklyOffPolicy.fixedDays.includes(day)
+                  ? '#1677ff'
+                  : '#f0f0f0',
+                background: form.weeklyOffPolicy.fixedDays.includes(day)
+                  ? '#f0f7ff'
+                  : '#fff',
+              }}
             >
-              {day}
-            </Checkbox>
+              <Checkbox
+                checked={form.weeklyOffPolicy.fixedDays.includes(day)}
+                onChange={() => toggleWeeklyOff(day)}
+              >
+                {day}
+              </Checkbox>
+            </Card>
           ))}
         </Flex>
       </Card>
@@ -61,7 +89,7 @@ const WeeklyOffSettingsTab = () => {
         title="Monthly Off Patterns"
         extra={
           <Button
-            type="dashed"
+            type="primary"
             icon={<PlusOutlined />}
             onClick={addMonthlyOffPattern}
           >
@@ -71,8 +99,8 @@ const WeeklyOffSettingsTab = () => {
       >
         <Space direction="vertical" size={12} style={{ display: 'flex' }}>
           <Text type="secondary">
-            Use this for rules like 2nd Saturday off, 4th Saturday off, or last
-            Friday off.
+            Use smart patterns for cases like 2nd Saturday off, 4th Saturday
+            off, or last Friday off.
           </Text>
 
           {form.weeklyOffPolicy.monthlyPatterns.length === 0 ? (
@@ -97,6 +125,12 @@ const WeeklyOffSettingsTab = () => {
             >
               <Row gutter={12} align="middle">
                 <Col xs={24} md={10}>
+                  <Text
+                    type="secondary"
+                    style={{ display: 'block', marginBottom: 6 }}
+                  >
+                    Week
+                  </Text>
                   <Select
                     style={{ width: '100%' }}
                     value={pattern.week}
@@ -111,6 +145,12 @@ const WeeklyOffSettingsTab = () => {
                   />
                 </Col>
                 <Col xs={24} md={10}>
+                  <Text
+                    type="secondary"
+                    style={{ display: 'block', marginBottom: 6 }}
+                  >
+                    Day
+                  </Text>
                   <Select
                     style={{ width: '100%' }}
                     value={pattern.day}
@@ -121,7 +161,7 @@ const WeeklyOffSettingsTab = () => {
                   />
                 </Col>
                 <Col xs={24} md={4}>
-                  <Text type="secondary">{index + 1}</Text>
+                  <Tag color="geekblue">Rule {index + 1}</Tag>
                 </Col>
               </Row>
             </Card>

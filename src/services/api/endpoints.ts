@@ -33,6 +33,30 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/staff/${id}`,
   },
 
+  // ================Salary==============
+
+  SALARY: {
+    LIST: '/staff/salary',
+    GET: (id: string) => `/staff/salary/getSalary/${id}`,
+    CREATE: '/staff/salary',
+    UPDATE: (staffId: string) => `/staff/salary/update/${staffId}`,
+    DELETE: (id: string) => `/salary/delete/${id}`,
+  },
+
+  HR_SETTINGS: {
+    GET: '/hr-settings',
+    CREATE: '/hr-settings',
+    UPDATE: '/hr-settings',
+    LEAVE_POLICIES: '/hr-settings/leave-policies',
+    LEAVE_POLICY_UPDATE: (id: string) => `/hr-settings/leave-policies/${id}`,
+    LEAVE_POLICY_DELETE: (id: string) => `/hr-settings/leave-policies/${id}`,
+    SHIFTS: '/hr-settings/shifts',
+    SHIFT_UPDATE: (id: string) => `/hr-settings/shifts/${id}`,
+    SHIFT_DELETE: (id: string) => `/hr-settings/shifts/${id}`,
+    WEEKLY_OFFS: '/hr-settings/weekly-offs',
+    WEEKLY_OFF_UPDATE: (id: string) => `/hr-settings/weekly-offs/${id}`,
+    WEEKLY_OFF_DELETE: (id: string) => `/hr-settings/weekly-offs/${id}`,
+  },
   ATTENDANCE: {
     LIST: '/attendance',
     SUMMARY: '/attendance/summary',

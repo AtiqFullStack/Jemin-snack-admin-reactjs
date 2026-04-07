@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      src: path.resolve(__dirname, './src'),
       '@mocks': path.resolve(__dirname, './public/mocks'),
     },
   },

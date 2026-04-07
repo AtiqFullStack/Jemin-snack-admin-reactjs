@@ -28,7 +28,8 @@ export const PATH_CRM = {
   },
   hr: {
     Attendance: '/hrms/employeee/attendance',
-    Settings: '/hrms/setting/configuration',
+    salarySetting: '/hrms/employeee/salarySetting',
+    Settings: '/hrms/setting',
   },
   calls: '/crm/calls',
   recordings: '/crm/recordings',
@@ -95,6 +96,11 @@ export const PERMISSIONS = {
   'timesheet.read': 'Read Attendance',
   'timesheet.update': 'Update Attendance',
   'timesheet.delete': 'Delete Attendance',
+
+  'salary.create': 'Create Salary',
+  'salary.read': 'Salary',
+  'salary.update': 'Update Salary',
+  'salary.delete': 'Delete Salary',
 
   // Calls
   'calls.read': 'View Calls',

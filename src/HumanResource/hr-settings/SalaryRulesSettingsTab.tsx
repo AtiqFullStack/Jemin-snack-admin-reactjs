@@ -1,9 +1,8 @@
 import { Card, Col, Form, InputNumber, Row } from 'antd';
-import { useOutletContext } from 'react-router-dom';
-import type { HrSettingsContextValue } from './types';
+import { useHrSettingsContext } from './context';
 
 const SalaryRulesSettingsTab = () => {
-  const { form, updateSalary } = useOutletContext<HrSettingsContextValue>();
+  const { form, updateSalary } = useHrSettingsContext();
 
   return (
     <Card bordered={false}>

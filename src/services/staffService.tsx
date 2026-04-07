@@ -2,9 +2,11 @@ import { apiRequest } from './api/apiClient';
 import { API_ENDPOINTS } from './api/endpoints';
 
 const staffService = () => {
-  const getStaff = async () => {
+  const getStaff = async (params?: Record<string, any>) => {
     try {
-      const response = await apiRequest.get(API_ENDPOINTS.STAFF.LIST);
+      const response = await apiRequest.get(API_ENDPOINTS.STAFF.LIST, {
+        params,
+      });
       console.log(response);
       return response;
     } catch (error) {

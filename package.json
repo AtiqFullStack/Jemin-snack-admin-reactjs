@@ -42,7 +42,8 @@
     "react-router-dom": "^6.30.3",
     "react-transition-group": "^4.4.5",
     "redux-persist": "^6.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.1",

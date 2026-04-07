@@ -1,6 +1,7 @@
 import type { TabsProps } from 'antd';
 
 export type HrShift = {
+  _id?: string;
   name: string;
   startTime: string;
   endTime: string;
@@ -25,21 +26,26 @@ export type HrSalaryRules = {
 };
 
 export type HrLeavePolicy = {
+  _id?: string;
+  name: string;
   casualLeaves: number;
   sickLeaves: number;
   paidLeaves: number;
+  applyToAllRoles: boolean;
+  assignedRoleIds: string[];
 };
 
 export type HrSettingsForm = {
   companyName: string;
   shifts: HrShift[];
   weeklyOffPolicy: {
+    _id?: string;
     fixedDays: string[];
     monthlyPatterns: HrMonthlyOffPattern[];
   };
   holidays: HrHoliday[];
   salaryRules: HrSalaryRules;
-  leavePolicy: HrLeavePolicy;
+  leavePolicies: HrLeavePolicy[];
 };
 
 export type HrSettingsContextValue = {
@@ -64,7 +70,13 @@ export type HrSettingsContextValue = {
   updateHoliday: (index: number, key: keyof HrHoliday, value: string) => void;
   removeHoliday: (index: number) => void;
   updateSalary: (key: keyof HrSalaryRules, value: number) => void;
-  updateLeave: (key: keyof HrLeavePolicy, value: number) => void;
+  addLeavePolicy: () => void;
+  updateLeavePolicyField: (
+    index: number,
+    key: keyof HrLeavePolicy,
+    value: string | number | boolean | string[]
+  ) => void;
+  removeLeavePolicy: (index: number) => void;
   handleSave: () => void;
 };
 
@@ -119,9 +131,14 @@ export const DEFAULT_HR_SETTINGS_FORM: HrSettingsForm = {
     overtimeRatePerHour: 100,
     latePenaltyPerMinute: 2,
   },
-  leavePolicy: {
-    casualLeaves: 12,
-    sickLeaves: 6,
-    paidLeaves: 12,
-  },
+  leavePolicies: [
+    {
+      name: 'Default Leave Policy',
+      casualLeaves: 12,
+      sickLeaves: 6,
+      paidLeaves: 12,
+      applyToAllRoles: true,
+      assignedRoleIds: [],
+    },
+  ],
 };

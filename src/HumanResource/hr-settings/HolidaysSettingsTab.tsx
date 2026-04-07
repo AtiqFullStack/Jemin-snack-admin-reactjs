@@ -1,76 +1,139 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import {
   Button,
+  Calendar,
   Card,
-  Col,
-  DatePicker,
   Empty,
-  Form,
+  Flex,
   Input,
-  Row,
   Space,
+  Tag,
+  Typography,
 } from 'antd';
-import dayjs from 'dayjs';
-import { useOutletContext } from 'react-router-dom';
-import type { HrSettingsContextValue } from './types';
+import dayjs, { Dayjs } from 'dayjs';
+import { useState } from 'react';
+import { useHrSettingsContext } from './context';
+
+const { Text } = Typography;
 
 const HolidaysSettingsTab = () => {
   const { form, addHoliday, updateHoliday, removeHoliday } =
-    useOutletContext<HrSettingsContextValue>();
+    useHrSettingsContext();
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+
+  const addHolidayFromCalendar = (value: Dayjs) => {
+    const date = value.format('YYYY-MM-DD');
+    const existingIndex = form.holidays.findIndex(
+      (holiday) => holiday.date === date
+    );
+
+    if (existingIndex >= 0) {
+      setSelectedDate(value);
+      return;
+    }
+
+    addHoliday();
+    const nextIndex = form.holidays.length;
+    updateHoliday(nextIndex, 'date', date);
+    updateHoliday(nextIndex, 'name', `${value.format('DD MMM')} Holiday`);
+    setSelectedDate(value);
+  };
 
   return (
     <Space direction="vertical" size={16} style={{ display: 'flex' }}>
-      <Button type="dashed" icon={<PlusOutlined />} onClick={addHoliday}>
-        Add Holiday
-      </Button>
+      <Card bordered={false}>
+        <Flex justify="space-between" align="center" wrap="wrap" gap={12}>
+          <div>
+            <Text strong style={{ display: 'block', fontSize: 16 }}>
+              Holiday Calendar
+            </Text>
+            <Text type="secondary">
+              Select dates directly from the calendar to create holidays, then
+              edit the holiday names from the side panel.
+            </Text>
+          </div>
+          <Tag color="purple">{form.holidays.length} holidays</Tag>
+        </Flex>
+      </Card>
 
-      {form.holidays.length === 0 ? (
-        <Empty description="No holidays added" />
-      ) : null}
-
-      {form.holidays.map((holiday, index) => (
+      <Flex gap={16} wrap="wrap" align="stretch">
         <Card
-          key={`${holiday.name || 'holiday'}-${index}`}
           bordered={false}
-          title={holiday.name || `Holiday ${index + 1}`}
-          extra={
-            <Button
-              danger
-              type="text"
-              icon={<DeleteOutlined />}
-              onClick={() => removeHoliday(index)}
-            >
-              Remove
-            </Button>
-          }
+          title="Pick Dates"
+          style={{ flex: 2, minWidth: 320 }}
+          bodyStyle={{ paddingTop: 8 }}
         >
-          <Form layout="vertical">
-            <Row gutter={16}>
-              <Col xs={24} md={14}>
-                <Form.Item label="Holiday Name">
+          <Calendar
+            value={selectedDate}
+            onSelect={(value) => addHolidayFromCalendar(value)}
+            fullscreen={false}
+            cellRender={(current) => {
+              const isHoliday = form.holidays.some(
+                (holiday) => holiday.date === current.format('YYYY-MM-DD')
+              );
+
+              return isHoliday ? (
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    margin: '0 auto',
+                    borderRadius: 999,
+                    background: '#ff4d4f',
+                  }}
+                />
+              ) : null;
+            }}
+          />
+        </Card>
+
+        <Card
+          bordered={false}
+          title="Selected Holidays"
+          style={{ flex: 1, minWidth: 320 }}
+        >
+          <Space direction="vertical" size={12} style={{ display: 'flex' }}>
+            {form.holidays.length === 0 ? (
+              <Empty description="Select a holiday from the calendar" />
+            ) : null}
+
+            {form.holidays.map((holiday, index) => (
+              <Card
+                key={`${holiday.date || 'holiday'}-${index}`}
+                size="small"
+                style={{ borderRadius: 14 }}
+                extra={
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => removeHoliday(index)}
+                  />
+                }
+              >
+                <Space
+                  direction="vertical"
+                  size={8}
+                  style={{ display: 'flex' }}
+                >
+                  <Tag color="red" style={{ width: 'fit-content', margin: 0 }}>
+                    {holiday.date
+                      ? dayjs(holiday.date).format('DD MMM YYYY')
+                      : 'No date'}
+                  </Tag>
                   <Input
+                    placeholder="Holiday name"
                     value={holiday.name}
                     onChange={(event) =>
                       updateHoliday(index, 'name', event.target.value)
                     }
                   />
-                </Form.Item>
-              </Col>
-              <Col xs={24} md={10}>
-                <Form.Item label="Date">
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    value={holiday.date ? dayjs(holiday.date) : null}
-                    onChange={(_, dateString) =>
-                      updateHoliday(index, 'date', String(dateString || ''))
-                    }
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
+                </Space>
+              </Card>
+            ))}
+          </Space>
         </Card>
-      ))}
+      </Flex>
     </Space>
   );
 };

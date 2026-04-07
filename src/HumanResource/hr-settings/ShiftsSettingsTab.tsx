@@ -4,26 +4,45 @@ import {
   Card,
   Col,
   Empty,
+  Flex,
   Form,
   Input,
   InputNumber,
   Row,
   Space,
   TimePicker,
+  Typography,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useOutletContext } from 'react-router-dom';
-import type { HrSettingsContextValue } from './types';
+import { useHrSettingsContext } from './context';
+
+const { Text } = Typography;
 
 const ShiftsSettingsTab = () => {
-  const { form, addShift, updateShift, removeShift } =
-    useOutletContext<HrSettingsContextValue>();
+  const { form, addShift, updateShift, removeShift } = useHrSettingsContext();
 
   return (
     <Space direction="vertical" size={16} style={{ display: 'flex' }}>
-      <Button type="dashed" icon={<PlusOutlined />} onClick={addShift}>
-        Add Shift
-      </Button>
+      <Card
+        bordered={false}
+        style={{ background: '#fcfcfc' }}
+        bodyStyle={{ paddingBottom: 12 }}
+      >
+        <Flex justify="space-between" align="center" wrap="wrap" gap={12}>
+          <div>
+            <Text strong style={{ display: 'block', fontSize: 16 }}>
+              Shift Templates
+            </Text>
+            <Text type="secondary">
+              Define reusable working-hour templates for teams, departments, or
+              role-based schedules.
+            </Text>
+          </div>
+          <Button type="primary" icon={<PlusOutlined />} onClick={addShift}>
+            New Shift
+          </Button>
+        </Flex>
+      </Card>
 
       {form.shifts.length === 0 ? (
         <Empty description="No shifts added" />
@@ -33,7 +52,15 @@ const ShiftsSettingsTab = () => {
         <Card
           key={`${shift.name || 'shift'}-${index}`}
           bordered={false}
-          title={shift.name || `Shift ${index + 1}`}
+          title={
+            <Flex vertical gap={2}>
+              <Text strong>{shift.name || `Shift ${index + 1}`}</Text>
+              <Text type="secondary">
+                {shift.startTime || '--:--'} to {shift.endTime || '--:--'} •
+                Break {shift.breakTimeMinutes} min
+              </Text>
+            </Flex>
+          }
           extra={
             <Button
               danger
@@ -44,12 +71,14 @@ const ShiftsSettingsTab = () => {
               Remove
             </Button>
           }
+          style={{ border: '1px solid #f0f0f0', borderRadius: 18 }}
         >
           <Form layout="vertical">
-            <Row gutter={16}>
-              <Col xs={24} md={8}>
+            <Row gutter={[16, 8]}>
+              <Col xs={24} lg={9}>
                 <Form.Item label="Shift Name">
                   <Input
+                    placeholder="Morning / Night / Sales Team"
                     value={shift.name}
                     onChange={(event) =>
                       updateShift(index, 'name', event.target.value)
@@ -57,7 +86,7 @@ const ShiftsSettingsTab = () => {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={5}>
+              <Col xs={24} sm={12} lg={5}>
                 <Form.Item label="Start Time">
                   <TimePicker
                     format="HH:mm"
@@ -71,7 +100,7 @@ const ShiftsSettingsTab = () => {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={5}>
+              <Col xs={24} sm={12} lg={5}>
                 <Form.Item label="End Time">
                   <TimePicker
                     format="HH:mm"
@@ -83,7 +112,7 @@ const ShiftsSettingsTab = () => {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={6}>
+              <Col xs={24} sm={12} lg={5}>
                 <Form.Item label="Break Minutes">
                   <InputNumber
                     min={0}
