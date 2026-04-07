@@ -125,6 +125,7 @@ const HrSettings = () => {
     hrSettings,
     shifts,
     weeklyOffs,
+    holidays,
     leavePolicies,
     loading,
     fetchAll,
@@ -134,6 +135,9 @@ const HrSettings = () => {
     deleteShift,
     createWeeklyOff,
     updateWeeklyOff,
+    createHoliday,
+    updateHoliday: updateHolidayApi,
+    deleteHoliday,
     createLeavePolicy,
     updateLeavePolicy,
     deleteLeavePolicy,
@@ -144,6 +148,7 @@ const HrSettings = () => {
   const [deletedLeavePolicyIds, setDeletedLeavePolicyIds] = useState<string[]>(
     []
   );
+  const [deletedHolidayIds, setDeletedHolidayIds] = useState<string[]>([]);
   const [savingProgress, setSavingProgress] = useState<number | null>(null);
   const activeSection = tabMeta[activeKey] ?? tabMeta.company;
 
@@ -260,6 +265,10 @@ const HrSettings = () => {
   };
 
   const removeHoliday = (index: number) => {
+    const holidayToRemove = form.holidays[index];
+    if (holidayToRemove?._id) {
+      setDeletedHolidayIds((prev) => [...prev, holidayToRemove._id as string]);
+    }
     setForm((prev) => ({
       ...prev,
       holidays: prev.holidays.filter(
@@ -458,8 +467,37 @@ const HrSettings = () => {
         }
 
         if (activeKey === 'holidays') {
-          message.info('Holiday API integration is not available yet.');
+          let completed = 0;
+          const total = deletedHolidayIds.length + form.holidays.length || 1;
+
+          for (const id of deletedHolidayIds) {
+            await deleteHoliday(id);
+            completed++;
+            setSavingProgress((completed / total) * 100);
+          }
+
+          for (const holiday of form.holidays) {
+            const payload = {
+              name: holiday.name || 'Company Holiday',
+              date: holiday.date,
+              isActive: true,
+            };
+
+            if (holiday._id) {
+              await updateHolidayApi(holiday._id, payload);
+            } else {
+              await createHoliday(payload);
+            }
+
+            completed++;
+            setSavingProgress((completed / total) * 100);
+          }
+
+          setDeletedHolidayIds([]);
+          await fetchAll();
+          message.success('Holiday calendar saved successfully.');
           setSavingProgress(null);
+          return;
         }
       } catch (error) {
         console.log(error);
@@ -533,6 +571,11 @@ const HrSettings = () => {
             ),
           }
         : prev.weeklyOffPolicy,
+      holidays: holidays.map((holiday) => ({
+        _id: holiday._id,
+        name: holiday.name,
+        date: holiday.date?.slice(0, 10) ?? '',
+      })),
       salaryRules: {
         workingDaysPerMonth:
           hrSettings?.workingDaysPerMonth ??
@@ -545,20 +588,19 @@ const HrSettings = () => {
           hrSettings?.latePenaltyPerMinute ??
           prev.salaryRules.latePenaltyPerMinute,
       },
-      leavePolicies:
-        leavePolicies.length > 0
-          ? leavePolicies.map((policy) => ({
-              _id: policy._id,
-              name: policy.name || 'Leave Policy',
-              casualLeaves: policy.casualLeave ?? 0,
-              sickLeaves: policy.sickLeave ?? 0,
-              paidLeaves: policy.paidLeave ?? 0,
-              applyToAllRoles: !policy.roleIds || policy.roleIds.length === 0,
-              assignedRoleIds: policy.roleIds ?? [],
-            }))
-          : prev.leavePolicies,
+      leavePolicies: leavePolicies.map((policy) => ({
+        _id: policy._id,
+        name: policy.name || 'Leave Policy',
+        casualLeaves: policy.casualLeave ?? 0,
+        sickLeaves: policy.sickLeave ?? 0,
+        paidLeaves: policy.paidLeave ?? 0,
+        applyToAllRoles: !policy.roleIds || policy.roleIds.length === 0,
+        assignedRoleIds: (policy.roleIds ?? []).map((role) =>
+          typeof role === 'string' ? role : role._id
+        ),
+      })),
     }));
-  }, [hrSettings, shifts, weeklyOffs, leavePolicies]);
+  }, [hrSettings, shifts, weeklyOffs, holidays, leavePolicies]);
 
   return (
     <HrSettingsContext.Provider value={contextValue}>

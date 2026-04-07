@@ -56,6 +56,9 @@ export const API_ENDPOINTS = {
     WEEKLY_OFFS: '/hr-settings/weekly-offs',
     WEEKLY_OFF_UPDATE: (id: string) => `/hr-settings/weekly-offs/${id}`,
     WEEKLY_OFF_DELETE: (id: string) => `/hr-settings/weekly-offs/${id}`,
+    HOLIDAYS: '/hr-settings/holidays',
+    HOLIDAY_UPDATE: (id: string) => `/hr-settings/holidays/${id}`,
+    HOLIDAY_DELETE: (id: string) => `/hr-settings/holidays/${id}`,
   },
   ATTENDANCE: {
     LIST: '/attendance',

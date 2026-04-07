@@ -9,6 +9,7 @@ export type HrShift = {
 };
 
 export type HrHoliday = {
+  _id?: string;
   name: string;
   date: string;
 };

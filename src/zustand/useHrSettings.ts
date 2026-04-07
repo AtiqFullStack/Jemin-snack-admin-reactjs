@@ -38,7 +38,7 @@ type WeeklyOffApi = {
 type LeavePolicyApi = {
   _id?: string;
   name?: string;
-  roleIds?: string[];
+  roleIds?: Array<string | { _id: string; name: string }>;
   casualLeave?: number;
   sickLeave?: number;
   paidLeave?: number;
@@ -48,10 +48,18 @@ type LeavePolicyApi = {
   isActive?: boolean;
 };
 
+type HolidayApi = {
+  _id?: string;
+  name: string;
+  date: string;
+  isActive?: boolean;
+};
+
 type UseHrSettingsState = {
   hrSettings: HrSettingsApi | null;
   shifts: ShiftApi[];
   weeklyOffs: WeeklyOffApi[];
+  holidays: HolidayApi[];
   leavePolicies: LeavePolicyApi[];
   loading: boolean;
   fetchAll: () => Promise<void>;
@@ -62,6 +70,9 @@ type UseHrSettingsState = {
   createWeeklyOff: (payload: WeeklyOffApi) => Promise<any>;
   updateWeeklyOff: (id: string, payload: WeeklyOffApi) => Promise<any>;
   deleteWeeklyOff: (id: string) => Promise<any>;
+  createHoliday: (payload: HolidayApi) => Promise<any>;
+  updateHoliday: (id: string, payload: HolidayApi) => Promise<any>;
+  deleteHoliday: (id: string) => Promise<any>;
   createLeavePolicy: (payload: LeavePolicyApi) => Promise<any>;
   updateLeavePolicy: (id: string, payload: LeavePolicyApi) => Promise<any>;
   deleteLeavePolicy: (id: string) => Promise<any>;
@@ -71,24 +82,32 @@ const useHrSettings = create<UseHrSettingsState>((set) => ({
   hrSettings: null,
   shifts: [],
   weeklyOffs: [],
+  holidays: [],
   leavePolicies: [],
   loading: false,
 
   fetchAll: async () => {
     set({ loading: true });
     try {
-      const [settingsRes, shiftsRes, weeklyOffsRes, leavePoliciesRes] =
-        await Promise.all([
-          apiClient.get(API_ENDPOINTS.HR_SETTINGS.GET),
-          apiClient.get(API_ENDPOINTS.HR_SETTINGS.SHIFTS),
-          apiClient.get(API_ENDPOINTS.HR_SETTINGS.WEEKLY_OFFS),
-          apiClient.get(API_ENDPOINTS.HR_SETTINGS.LEAVE_POLICIES),
-        ]);
+      const [
+        settingsRes,
+        shiftsRes,
+        weeklyOffsRes,
+        holidaysRes,
+        leavePoliciesRes,
+      ] = await Promise.all([
+        apiClient.get(API_ENDPOINTS.HR_SETTINGS.GET),
+        apiClient.get(API_ENDPOINTS.HR_SETTINGS.SHIFTS),
+        apiClient.get(API_ENDPOINTS.HR_SETTINGS.WEEKLY_OFFS),
+        apiClient.get(API_ENDPOINTS.HR_SETTINGS.HOLIDAYS),
+        apiClient.get(API_ENDPOINTS.HR_SETTINGS.LEAVE_POLICIES),
+      ]);
 
       set({
         hrSettings: settingsRes.data.data,
         shifts: shiftsRes.data.data ?? [],
         weeklyOffs: weeklyOffsRes.data.data ?? [],
+        holidays: holidaysRes.data.data ?? [],
         leavePolicies: leavePoliciesRes.data.data ?? [],
         loading: false,
       });
@@ -163,6 +182,40 @@ const useHrSettings = create<UseHrSettingsState>((set) => ({
     );
     set((state) => ({
       weeklyOffs: state.weeklyOffs.filter((item) => item._id !== id),
+    }));
+    return response.data;
+  },
+
+  createHoliday: async (payload) => {
+    const response = await apiClient.post(
+      API_ENDPOINTS.HR_SETTINGS.HOLIDAYS,
+      payload
+    );
+    set((state) => ({
+      holidays: [...state.holidays, response.data.data].sort((left, right) =>
+        left.date.localeCompare(right.date)
+      ),
+    }));
+    return response.data;
+  },
+  updateHoliday: async (id, payload) => {
+    const response = await apiClient.put(
+      API_ENDPOINTS.HR_SETTINGS.HOLIDAY_UPDATE(id),
+      payload
+    );
+    set((state) => ({
+      holidays: state.holidays
+        .map((item) => (item._id === id ? response.data.data : item))
+        .sort((left, right) => left.date.localeCompare(right.date)),
+    }));
+    return response.data;
+  },
+  deleteHoliday: async (id) => {
+    const response = await apiClient.delete(
+      API_ENDPOINTS.HR_SETTINGS.HOLIDAY_DELETE(id)
+    );
+    set((state) => ({
+      holidays: state.holidays.filter((item) => item._id !== id),
     }));
     return response.data;
   },
