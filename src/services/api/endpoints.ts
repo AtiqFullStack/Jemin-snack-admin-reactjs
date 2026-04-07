@@ -40,6 +40,8 @@ export const API_ENDPOINTS = {
     GET: (id: string) => `/staff/salary/getSalary/${id}`,
     CREATE: '/staff/salary',
     UPDATE: (staffId: string) => `/staff/salary/update/${staffId}`,
+    GENERATE_PAYSLIP: '/staff/salary/generatePayslip',
+    GENERATE_ALL_PAYSLIPS: '/staff/salary/generateAllPayslips',
     DELETE: (id: string) => `/salary/delete/${id}`,
   },
 
