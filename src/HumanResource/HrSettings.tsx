@@ -277,7 +277,7 @@ const HrSettings = () => {
     }));
   };
 
-  const updateSalary = (key: keyof HrSalaryRules, value: number) => {
+  const updateSalary = (key: keyof HrSalaryRules, value: number | string) => {
     setForm((prev) => ({
       ...prev,
       salaryRules: { ...prev.salaryRules, [key]: value },
@@ -340,6 +340,7 @@ const HrSettings = () => {
   };
 
   const handleSave = () => {
+    console.log(form);
     void (async () => {
       try {
         setSavingProgress(0);
@@ -348,6 +349,7 @@ const HrSettings = () => {
           await saveSettings({
             workingDaysPerMonth: form.salaryRules.workingDaysPerMonth,
             workingHoursPerDay: form.salaryRules.dailyWorkingHours,
+            salaryCalculationType: form.salaryRules.salaryCalculationType,
             overtimeEnabled: true,
             overtimeRate: form.salaryRules.overtimeRatePerHour,
             latePenaltyPerMinute: form.salaryRules.latePenaltyPerMinute,
@@ -587,6 +589,9 @@ const HrSettings = () => {
         latePenaltyPerMinute:
           hrSettings?.latePenaltyPerMinute ??
           prev.salaryRules.latePenaltyPerMinute,
+        salaryCalculationType:
+          hrSettings?.salaryCalculationType ??
+          prev.salaryRules.salaryCalculationType,
       },
       leavePolicies: leavePolicies.map((policy) => ({
         _id: policy._id,

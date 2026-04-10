@@ -15,11 +15,11 @@ export type Role = 'admin' | 'manager' | 'sales' | 'support';
 // CRM Routes
 export const PATH_CRM = {
   dashboard: '/dashboards/default',
-  customers: '/crm/customers',
+  // customers: '/crm/customers',
   leads: '/crm/leads',
-  contacts: '/crm/contacts',
-  accounts: '/crm/accounts',
-  deals: '/crm/deals',
+  // contacts: '/crm/contacts',
+  // accounts: '/crm/accounts',
+  // deals: '/crm/deals',
   activities: {
     leads: '/crm/activities/leads',
     tasks: '/crm/activities/tasks',
@@ -28,6 +28,7 @@ export const PATH_CRM = {
   },
   hr: {
     Attendance: '/hrms/employeee/attendance',
+    leave: '/hrms/employeee/leave',
     salarySetting: '/hrms/employeee/salarySetting',
     payslip: '/hrms/setting/payslip',
     Settings: '/hrms/setting',
@@ -209,11 +210,8 @@ export const ROLE_PERMISSIONS: Record<Role, (Permission | 'ALL')[]> = {
 // Route to permission mapping (make routes optional if no specific permission needed)
 export const ROUTE_PERMISSIONS: Record<string, Permission | null> = {
   [PATH_CRM.dashboard]: null, // Dashboard always accessible
-  [PATH_CRM.customers]: 'customers.read',
   [PATH_CRM.leads]: 'leads.read',
-  [PATH_CRM.contacts]: 'contacts.read',
-  [PATH_CRM.accounts]: 'accounts.read',
-  [PATH_CRM.deals]: 'deals.read',
+
   [PATH_CRM.activities.tasks]: 'activities.read',
   [PATH_CRM.activities.meetings]: 'activities.read',
   [PATH_CRM.activities.calendar]: 'activities.read',

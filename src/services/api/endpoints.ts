@@ -72,6 +72,11 @@ export const API_ENDPOINTS = {
     BY_EMPLOYEE: (employeeId: string) => `/attendance/employee/${employeeId}`,
   },
 
+  LEAVE: {
+    ALL: '/leave/all',
+    UPDATE_STATUS: (id: string) => `/leave/${id}/status`,
+  },
+
   //=========================LEADS===========================
 
   LEADS: {

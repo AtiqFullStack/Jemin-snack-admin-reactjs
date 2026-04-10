@@ -24,6 +24,7 @@ export type HrSalaryRules = {
   dailyWorkingHours: number;
   overtimeRatePerHour: number;
   latePenaltyPerMinute: number;
+  salaryCalculationType: 'FULL_MONTH' | 'WORKING_DAYS';
 };
 
 export type HrLeavePolicy = {
@@ -70,7 +71,7 @@ export type HrSettingsContextValue = {
   addHoliday: () => void;
   updateHoliday: (index: number, key: keyof HrHoliday, value: string) => void;
   removeHoliday: (index: number) => void;
-  updateSalary: (key: keyof HrSalaryRules, value: number) => void;
+  updateSalary: (key: keyof HrSalaryRules, value: number | string) => void;
   addLeavePolicy: () => void;
   updateLeavePolicyField: (
     index: number,
@@ -131,6 +132,7 @@ export const DEFAULT_HR_SETTINGS_FORM: HrSettingsForm = {
     dailyWorkingHours: 8,
     overtimeRatePerHour: 100,
     latePenaltyPerMinute: 2,
+    salaryCalculationType: 'WORKING_DAYS',
   },
   leavePolicies: [
     {

@@ -9,9 +9,7 @@ import {
   HistoryOutlined,
   PhoneOutlined,
   SettingOutlined,
-  ShopOutlined,
   SolutionOutlined,
-  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
@@ -51,29 +49,9 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
   getItem('Sales', 'group-sales', null, [], 'group'),
 
   getItem(
-    <Link to={PATH_CRM.customers}>Customers</Link>,
-    PATH_CRM.customers,
-    <UserOutlined />
-  ),
-  getItem(
     <Link to={PATH_CRM.leads}>Leads</Link>,
     PATH_CRM.leads,
     <SolutionOutlined />
-  ),
-  getItem(
-    <Link to={PATH_CRM.contacts}>Contacts</Link>,
-    PATH_CRM.contacts,
-    <TeamOutlined />
-  ),
-  getItem(
-    <Link to={PATH_CRM.accounts}>Accounts / Companies</Link>,
-    PATH_CRM.accounts,
-    <ShopOutlined />
-  ),
-  getItem(
-    <Link to={PATH_CRM.deals}>Deals / Opportunities</Link>,
-    PATH_CRM.deals,
-    <FileTextOutlined />
   ),
 
   getItem('Activities', 'submenu-activities', <CalendarOutlined />, [
@@ -116,6 +94,11 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
   getItem(
     <Link to={PATH_CRM.hr.Attendance}>Attendance</Link>,
     PATH_CRM.hr.Attendance,
+    <HistoryOutlined />
+  ),
+  getItem(
+    <Link to={PATH_CRM.hr.leave}>Leaves</Link>,
+    PATH_CRM.hr.leave,
     <HistoryOutlined />
   ),
   getItem(
