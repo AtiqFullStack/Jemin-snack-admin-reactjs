@@ -11,6 +11,7 @@ type HrSettingsApi = {
   latePenaltyPerMinute?: number;
   halfDayThreshold?: number;
   fullDayThreshold?: number;
+  salaryCalculationType?: 'FULL_MONTH' | 'WORKING_DAYS';
 };
 
 type ShiftApi = {
