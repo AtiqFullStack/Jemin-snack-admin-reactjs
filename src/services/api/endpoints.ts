@@ -36,7 +36,7 @@ export const API_ENDPOINTS = {
 
   CANDIDATES: {
     LIST: '/hr/candidates',
-    GET: (id: string) => `/hr/candidates/${id}`,
+    GET: (id: string) => `/hr/candidates/byId/${id}`,
     CREATE: '/hr/candidates',
     UPDATE: (id: string) => `/hr/candidates/${id}`,
     DELETE: (id: string) => `/hr/candidates/${id}`,

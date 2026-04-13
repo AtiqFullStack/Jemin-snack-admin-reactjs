@@ -1,19 +1,33 @@
-import React, { useState } from 'react';
-import { Tabs, Card, List, Tag, Button, Modal } from 'antd';
+import { useEffect, useState } from 'react';
+import { Tabs, Card, List, Tag, Button, Modal, Spin, Descriptions } from 'antd';
 import { BASEURL } from 'src/services/api/apiClient';
+import candidateService from 'src/services/candidateService';
+import { useParams } from 'react-router-dom';
 
 const { TabPane } = Tabs;
 
 const SigleCandidate = () => {
+  const { candidateId } = useParams<{ candidateId: string }>();
+  const { getById } = candidateService();
+  const [candidate, setCandidate] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState(null);
-
-  const [candidate] = useState({
-    name: 'Mohd Danish',
-    email: 'danish@mail.com',
-    mobile: '9876543210',
-    designation: 'Software Developer',
-  });
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  console.log('hii');
+  console.log(candidateId);
+  useEffect(() => {
+    if (!candidateId) {
+      setLoading(false);
+      return;
+    }
+    getById(candidateId)
+      .then((res: any) => {
+        if (res?.success) setCandidate(res.data);
+        else setCandidate(res?.data || null);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [candidateId]);
 
   const documents = [
     { title: 'Offer Letter', status: 'PENDING' },
@@ -21,34 +35,41 @@ const SigleCandidate = () => {
     { title: 'HR Policies', status: 'COMPLETED' },
     { title: 'Checklist', status: 'PENDING' },
   ];
-  console.log(selectedDoc);
-  // Open modal
-  const handleView = (doc) => {
+
+  const handleView = (doc: any) => {
     console.log(doc);
-    const url = `${BASEURL}/checklist?name=${candidate.name}&designation=${candidate.designation}`;
-    console.log(url);
-    setSelectedDoc({ ...doc, url: url });
+    const name = candidate?.name || '';
+    const designation = candidate?.designation || '';
+    let type = doc.title;
+    let end =
+      type == 'Offer Letter'
+        ? 'offer-letter'
+        : type == 'Employee Agreement'
+          ? 'agreement'
+          : type == 'HR Policies'
+            ? 'hr-policies'
+            : 'checklist';
+    console.log(end);
+    const url = `${BASEURL}/${end}?name=${encodeURIComponent(
+      name
+    )}&designation=${encodeURIComponent(designation)}`;
+    setSelectedDoc({ ...doc, url });
     setIsModalOpen(true);
   };
 
-  // Send action (dummy for now)
-  const handleSend = (doc) => {
-    console.log('Send document:', doc);
-  };
+  if (loading) return <Spin style={{ display: 'block', marginTop: 80 }} />;
+  if (!candidate) return <div style={{ padding: 20 }}>Candidate not found</div>;
 
   return (
     <div style={{ padding: 20 }}>
-      {/* Header */}
       <Card style={{ marginBottom: 20 }}>
         <h2>{candidate.name}</h2>
         <p>{candidate.email}</p>
-        <p>{candidate.mobile}</p>
+        <p>{candidate.mobile || candidate.phone}</p>
         <p>{candidate.designation}</p>
       </Card>
 
-      {/* Tabs */}
       <Tabs defaultActiveKey="1">
-        {/* Documents Tab */}
         <TabPane tab="Documents" key="1">
           <Card>
             <List
@@ -56,16 +77,11 @@ const SigleCandidate = () => {
               renderItem={(item) => (
                 <List.Item
                   actions={[
-                    item.status === 'COMPLETED' ? (
-                      <Tag color="green">Completed</Tag>
-                    ) : (
-                      <Tag color="orange">Pending</Tag>
-                    ),
+                    // item.status === 'COMPLETED'
+                    //   ? <Tag color="green">Completed</Tag>
+                    //   : <Tag color="orange">Pending</Tag>,
                     <Button type="link" onClick={() => handleView(item)}>
                       View
-                    </Button>,
-                    <Button type="link" onClick={() => handleSend(item)}>
-                      Send
                     </Button>,
                   ]}
                 >
@@ -79,37 +95,45 @@ const SigleCandidate = () => {
           </Card>
         </TabPane>
 
-        {/* Info Tab */}
         <TabPane tab="Details" key="2">
           <Card>
-            <p>
-              <b>Name:</b> {candidate.name}
-            </p>
-            <p>
-              <b>Email:</b> {candidate.email}
-            </p>
-            <p>
-              <b>Mobile:</b> {candidate.mobile}
-            </p>
-            <p>
-              <b>Designation:</b> {candidate.designation}
-            </p>
+            <Descriptions column={1} bordered size="small">
+              <Descriptions.Item label="Name">
+                {candidate.name}
+              </Descriptions.Item>
+              <Descriptions.Item label="Email">
+                {candidate.email}
+              </Descriptions.Item>
+              <Descriptions.Item label="Mobile">
+                {candidate.mobile || candidate.phone}
+              </Descriptions.Item>
+              <Descriptions.Item label="Designation">
+                {candidate.designation}
+              </Descriptions.Item>
+              {candidate.department && (
+                <Descriptions.Item label="Department">
+                  {candidate.department}
+                </Descriptions.Item>
+              )}
+              {candidate.status && (
+                <Descriptions.Item label="Status">
+                  <Tag>{candidate.status}</Tag>
+                </Descriptions.Item>
+              )}
+            </Descriptions>
           </Card>
         </TabPane>
 
-        {/* Actions Tab */}
         <TabPane tab="Actions" key="3">
           <Card>
-            <button style={{ padding: 10, marginRight: 10 }}>
+            <Button type="primary" style={{ marginRight: 10 }}>
               Send Offer Letter
-            </button>
-
-            <button style={{ padding: 10 }}>Convert to Staff</button>
+            </Button>
+            <Button>Convert to Staff</Button>
           </Card>
         </TabPane>
       </Tabs>
 
-      {/* Modal */}
       <Modal
         title={selectedDoc?.title}
         open={isModalOpen}
@@ -120,11 +144,7 @@ const SigleCandidate = () => {
         {selectedDoc && (
           <iframe
             src={selectedDoc.url}
-            style={{
-              width: '100%',
-              height: '70vh',
-              border: 'none',
-            }}
+            style={{ width: '100%', height: '75vh', border: 'none' }}
           />
         )}
       </Modal>

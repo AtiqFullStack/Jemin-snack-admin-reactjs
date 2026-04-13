@@ -240,7 +240,7 @@ const router = createBrowserRouter([
         element: <Leave />,
       },
       {
-        path: 'employeee/salarySettings',
+        path: 'employeee/salarySetting',
         element: <SalarySetting />,
       },
       {

@@ -57,7 +57,7 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
   getItem('Activities', 'submenu-activities', <CalendarOutlined />, [
     getItem(
       <Link to={PATH_CRM.activities.leads}>Leads</Link>,
-      PATH_CRM.activities.tasks
+      PATH_CRM.activities.leads
     ),
     getItem(
       <Link to={PATH_CRM.activities.tasks}>Tasks</Link>,
