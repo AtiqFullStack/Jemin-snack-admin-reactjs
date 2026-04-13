@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, Tag, Space } from 'antd';
 import candidateService from 'src/services/candidateService';
 import { Link } from 'react-router-dom';
@@ -12,8 +12,8 @@ const statusColors = {
 };
 
 const Candidate = () => {
-  const [candidates, setCandidates] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [form] = Form.useForm();
   const { getCandidates, createCandidates } = candidateService();
 
@@ -27,13 +27,13 @@ const Candidate = () => {
   }, []);
 
   // Add Candidate
-  const handleAdd = async (values) => {
+  const handleAdd = async (values: any) => {
     const newCandidate = {
       key: Date.now().toString(),
       ...values,
       status: 'PENDING',
     };
-    const response = await createCandidates(newCandidate);
+    const response = (await createCandidates(newCandidate)) as any;
     if (response) {
       setCandidates([...candidates, response.data]);
     }
@@ -61,11 +61,13 @@ const Candidate = () => {
     {
       title: 'Status',
       dataIndex: 'status',
-      render: (status) => <Tag color={statusColors[status]}>{status}</Tag>,
+      render: (status: keyof typeof statusColors) => (
+        <Tag color={statusColors[status]}>{status}</Tag>
+      ),
     },
     {
       title: 'Actions',
-      render: (_, record) => (
+      render: (_: any, record: any) => (
         <Space>
           <Button size="small" type="primary">
             Send Offer
