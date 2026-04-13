@@ -69,6 +69,8 @@ import HrSettings from '../HumanResource/HrSettings.tsx';
 import SalarySetting from '../HumanResource/SalarySetting.tsx';
 import SalarySlip from 'src/HumanResource/SalarySlip.tsx';
 import Leave from 'src/HumanResource/Leave.tsx';
+import Candidate from 'src/HumanResource/Candidate.tsx';
+import SigleCandidate from 'src/HumanResource/SigleCandidate.tsx';
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -238,8 +240,16 @@ const router = createBrowserRouter([
         element: <Leave />,
       },
       {
-        path: 'employeee/salarySetting',
+        path: 'employeee/salarySettings',
         element: <SalarySetting />,
+      },
+      {
+        path: 'candidate',
+        element: <Candidate />,
+      },
+      {
+        path: 'candidate/:candidateId',
+        element: <SigleCandidate />,
       },
       {
         path: 'setting',

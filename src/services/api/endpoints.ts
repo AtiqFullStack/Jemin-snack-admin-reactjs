@@ -32,6 +32,15 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/staff/${id}`,
     DELETE: (id: string) => `/staff/${id}`,
   },
+  //=========================Staff===========================
+
+  CANDIDATES: {
+    LIST: '/hr/candidates',
+    GET: (id: string) => `/hr/candidates/${id}`,
+    CREATE: '/hr/candidates',
+    UPDATE: (id: string) => `/hr/candidates/${id}`,
+    DELETE: (id: string) => `/hr/candidates/${id}`,
+  },
 
   // ================Salary==============
 

@@ -111,6 +111,14 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
     PATH_CRM.hr.payslip,
     <SettingOutlined />
   ),
+
+  //candidate
+  getItem('Candidates', 'submenu-candidate', <BarChartOutlined />, [
+    getItem(
+      <Link to={PATH_CRM.hr.candidate}>Candidates</Link>,
+      PATH_CRM.hr.candidate
+    ),
+  ]),
   getItem(
     <Link to={PATH_CRM.hr.Settings}>Configuration</Link>,
     PATH_CRM.hr.Settings,
@@ -259,6 +267,7 @@ const SideNav = ({ ...others }: SideNavProps) => {
     'submenu-activities',
     'submenu-calls',
     'submenu-reports',
+    'submenu-candidate',
     'submenu-settings',
   ];
 
@@ -289,6 +298,8 @@ const SideNav = ({ ...others }: SideNavProps) => {
       setOpenKeys(['submenu-reports']);
     else if (pathname.startsWith('/crm/settings'))
       setOpenKeys(['submenu-settings']);
+    else if (pathname.startsWith('/hrms/candidate'))
+      setOpenKeys(['submenu-candidate']);
     else setOpenKeys([]);
   }, [pathname]);
 
