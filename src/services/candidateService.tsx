@@ -109,7 +109,7 @@ const candidateService = () => {
 
       console.log('Final Response:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending email:', error?.response || error.message);
       throw error;
     }

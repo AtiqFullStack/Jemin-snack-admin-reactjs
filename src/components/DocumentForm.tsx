@@ -13,7 +13,7 @@ import {
   Button,
   Space,
 } from 'antd';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 const { Text } = Typography;
 

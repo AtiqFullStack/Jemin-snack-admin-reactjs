@@ -21,7 +21,7 @@ const configService = () => {
     }
   };
 
-  const updateConfig = async (id: string, data: any) => {
+  const updateConfig = async (id: any, data: any) => {
     try {
       const res = await apiClient.put(`/config/update/${id}`, data);
       return res.data;

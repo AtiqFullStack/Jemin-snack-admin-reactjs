@@ -6,8 +6,6 @@ import {
   Modal,
   Spin,
   Form,
-  Input,
-  InputNumber,
   Avatar,
   Flex,
   Typography,
@@ -29,10 +27,7 @@ import {
   PhoneOutlined,
   DownloadOutlined,
   CloseOutlined,
-  InfoCircleOutlined,
   PrinterOutlined,
-  PlusOutlined,
-  MinusCircleOutlined,
 } from '@ant-design/icons';
 import { BASEURL } from 'src/services/api/apiClient';
 import candidateService from 'src/services/candidateService';
@@ -179,6 +174,7 @@ const SigleCandidate = () => {
   const [salesTargets, setSalesTargets] = useState<any[]>([]);
   const [allowances, setAllowances] = useState<any[]>([]);
   const [requiredDocuments, setRequiredDocuments] = useState<any[]>([]);
+  console.log(salesTargets, requiredDocuments);
   const progress = (emailProgress: any) => {
     console.log(emailProgress);
   };

@@ -23,7 +23,7 @@ const ConfigManager = () => {
   const [configs, setConfigs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingConfig, setEditingConfig] = useState(null);
+  const [editingConfig, setEditingConfig] = useState<any>(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -74,7 +74,7 @@ const ConfigManager = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: any) => {
     try {
       await deleteConfig(id);
       message.success('Deleted successfully');
@@ -106,7 +106,7 @@ const ConfigManager = () => {
       </div>
 
       <Row gutter={[16, 16]}>
-        {configs.map((config) => (
+        {configs.map((config: any) => (
           <Col xs={24} md={12} lg={8} key={config._id}>
             <Card
               title={config.key}
@@ -125,8 +125,8 @@ const ConfigManager = () => {
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {config.value
-                  ?.sort((a, b) => a.order - b.order)
-                  .map((item, i) => (
+                  ?.sort((a: any, b: any) => a.order - b.order)
+                  .map((item: any, i: any) => (
                     <Tag
                       key={i}
                       color={item.color}

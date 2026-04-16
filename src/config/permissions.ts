@@ -1,5 +1,3 @@
-import { config } from 'react-transition-group';
-
 // Permission actions
 export type PermissionAction =
   | 'read'
