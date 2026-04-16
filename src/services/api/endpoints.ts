@@ -38,8 +38,12 @@ export const API_ENDPOINTS = {
     LIST: '/hr/candidates',
     GET: (id: string) => `/hr/candidates/byId/${id}`,
     CREATE: '/hr/candidates',
-    UPDATE: (id: string) => `/hr/candidates/${id}`,
+    UPDATE: (id: string) => `/hr/candidates/update/${id}`,
     DELETE: (id: string) => `/hr/candidates/${id}`,
+    DOWNLOAD: (id: string, doc: string) =>
+      `/generate-pdf?userId=${id}&document=${doc}`,
+    SEND_EMAIL: (id: string, doc: any) =>
+      `/sendEmail?userId=${id}&document=${doc}`,
   },
 
   // ================Salary==============

@@ -20,6 +20,7 @@ import {
   isMockOnlyEndpoint,
 } from './mockEndpointMapper';
 import { message } from 'antd';
+import { authService } from '../auth/authService';
 
 // DEBUG: Module loaded
 console.log('[API Client] Module loaded!');
@@ -181,6 +182,8 @@ apiClient.interceptors.response.use(
     // Handle 401 Unauthorized - Token expired
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+      console.log('retrying...');
+      await authService.logout();
 
       try {
         const refreshToken = tokenStorage.getRefreshToken();

@@ -1,7 +1,10 @@
-import { apiRequest } from './api/apiClient';
+import axios from 'axios';
+import { apiRequest, BASEURL } from './api/apiClient';
 import { API_ENDPOINTS } from './api/endpoints';
+import { useState } from 'react';
 
 const candidateService = () => {
+  const [downloading, setIsDownloading] = useState(false);
   const getCandidates = async (params?: any) => {
     try {
       const response = await apiRequest.get(API_ENDPOINTS.CANDIDATES.LIST, {
@@ -37,11 +40,70 @@ const candidateService = () => {
       throw error;
     }
   };
+  const updateCandidate = async (id?: any, payload?: any) => {
+    try {
+      const response = await apiRequest.patch(
+        API_ENDPOINTS.CANDIDATES.UPDATE(id),
+        payload
+      );
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error('Error fetching activityLogs:', error);
+      throw error;
+    }
+  };
+
+  const downloadPdf = async (id: any, doc: string) => {
+    setIsDownloading(true);
+    try {
+      const response = await axios.get(
+        `${BASEURL}${API_ENDPOINTS.CANDIDATES.DOWNLOAD(id, doc)}`,
+        {
+          responseType: 'blob', // 🔥 MOST IMPORTANT
+        }
+      );
+
+      const url = window.URL.createObjectURL(response.data);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `candidate_${id}.pdf`);
+
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const sendEmail = async (id: any, doc: any) => {
+    try {
+      const response = await axios.post(
+        `${BASEURL}${API_ENDPOINTS.CANDIDATES.SEND_EMAIL(id, doc)}`
+      );
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error('Error sending email:', error);
+      throw error;
+    }
+  };
 
   return {
     getCandidates,
     createCandidates,
     getById,
+    updateCandidate,
+    downloadPdf,
+    setIsDownloading,
+    downloading,
+    sendEmail,
   };
 };
 
