@@ -1,3 +1,5 @@
+import { config } from 'react-transition-group';
+
 // Permission actions
 export type PermissionAction =
   | 'read'
@@ -54,6 +56,7 @@ export const PATH_CRM = {
     integrations: '/crm/settings/integrations',
   },
   support: '/crm/support',
+  config: '/crm/config',
 };
 
 // Permission definitions with CRUD

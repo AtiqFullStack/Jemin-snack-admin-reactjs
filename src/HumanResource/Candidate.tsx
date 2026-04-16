@@ -1,7 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Tag, Space } from 'antd';
+import {
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Tag,
+  Space,
+  Select,
+  Checkbox,
+} from 'antd';
 import candidateService from 'src/services/candidateService';
 import { Link } from 'react-router-dom';
+import configService from 'src/services/configService';
 
 const statusColors = {
   PENDING: 'default',
@@ -14,10 +25,19 @@ const statusColors = {
 const Candidate = () => {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [designations, setDesignations] = useState<any>([]);
   const [form] = Form.useForm();
   const { getCandidates, createCandidates } = candidateService();
+  const { getConfig } = configService();
 
   useEffect(() => {
+    getConfig('employeDesignation')
+      .then((res: any) => {
+        setDesignations(res.data.value || []);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
     const fetchData = async () => {
       const response = (await getCandidates()) as any;
       console.log(response);
@@ -26,6 +46,7 @@ const Candidate = () => {
     fetchData();
   }, []);
 
+  console.log(designations);
   // Add Candidate
   const handleAdd = async (values: any) => {
     const newCandidate = {
@@ -33,6 +54,8 @@ const Candidate = () => {
       ...values,
       status: 'PENDING',
     };
+    console.log(newCandidate);
+    // return
     const response = (await createCandidates(newCandidate)) as any;
     if (response) {
       setCandidates([...candidates, response.data]);
@@ -69,10 +92,7 @@ const Candidate = () => {
       title: 'Actions',
       render: (_: any, record: any) => (
         <Space>
-          <Button size="small" type="primary">
-            Send Offer
-          </Button>
-          <Button disabled={!_._id} size="small">
+          <Button disabled={!_._id} size="small" type="primary">
             <Link to={`/hrms/candidate/${record?._id}`}>View</Link>
           </Button>
         </Space>
@@ -129,9 +149,31 @@ const Candidate = () => {
           <Form.Item
             name="designation"
             label="Designation"
-            rules={[{ required: true, message: 'Enter designation' }]}
+            rules={[{ required: true, message: 'Select designation' }]}
           >
-            <Input />
+            <Select
+              placeholder="Select designation"
+              options={designations.map((d: any) => ({
+                label: d.label,
+                value: d.label,
+              }))}
+              showSearch
+              filterOption={(input, option) =>
+                String(option?.label ?? '')
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+            />
+          </Form.Item>
+          <Form.Item name="isBDE" label="Is BDE">
+            <Checkbox
+              onChange={(e) =>
+                form.setFields([{ name: 'isBDE', value: e.target.checked }])
+              }
+              checked={form.getFieldValue('isBDE')}
+            >
+              Is BDE
+            </Checkbox>
           </Form.Item>
           <Form.Item
             name="source"

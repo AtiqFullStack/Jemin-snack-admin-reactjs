@@ -71,6 +71,7 @@ import SalarySlip from 'src/HumanResource/SalarySlip.tsx';
 import Leave from 'src/HumanResource/Leave.tsx';
 import Candidate from 'src/HumanResource/Candidate.tsx';
 import SigleCandidate from 'src/HumanResource/SigleCandidate.tsx';
+import ConfigPage from 'src/pages/Config/index.tsx';
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -224,8 +225,13 @@ const router = createBrowserRouter([
         path: 'recordings',
         element: <CallLogs />,
       },
+      {
+        path: 'config',
+        element: <ConfigPage />,
+      },
     ],
   },
+
   {
     path: '/hrms',
     element: <PageWrapper children={<DashboardLayout />} />,
@@ -255,6 +261,7 @@ const router = createBrowserRouter([
         path: 'setting',
         element: <HrSettings />,
       },
+
       {
         path: 'setting/configuration',
         element: <Navigate to="/hrms/setting" replace />,

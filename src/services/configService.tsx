@@ -11,7 +11,34 @@ const configService = () => {
       console.log(error);
     }
   };
-  return { getConfig };
+
+  const createConfig = async (data: any) => {
+    try {
+      const res = await apiClient.post('/config/create', data);
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateConfig = async (id: string, data: any) => {
+    try {
+      const res = await apiClient.put(`/config/update/${id}`, data);
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const deleteConfig = async (id: string) => {
+    try {
+      const res = await apiClient.post(`/config/delete/${id}`);
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  return { getConfig, createConfig, updateConfig, deleteConfig };
 };
 
 export default configService;

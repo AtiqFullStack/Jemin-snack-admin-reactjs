@@ -31,11 +31,15 @@ import {
   CloseOutlined,
   InfoCircleOutlined,
   PrinterOutlined,
+  PlusOutlined,
+  MinusCircleOutlined,
 } from '@ant-design/icons';
 import { BASEURL } from 'src/services/api/apiClient';
 import candidateService from 'src/services/candidateService';
 import { useParams } from 'react-router-dom';
 import Templates from 'src/components/Templates';
+import { SiMinutemailer } from 'react-icons/si';
+import DocumentForm from 'src/components/DocumentForm';
 
 const { Title, Text } = Typography;
 
@@ -92,6 +96,25 @@ const DOC_FIELDS: Record<
     { key: 'probationPeriodOfferletter', label: 'Probation Period (months)' },
     { key: 'resignDay', label: 'Resignation Notice Period (days)' },
   ],
+  'Offer Letter BDE': [
+    { key: 'name', label: 'Name' },
+    { key: 'designation', label: 'Designation' },
+    { key: 'date', label: 'Date', type: 'date' },
+    { key: 'joiningDate', label: 'Joining Date', type: 'date' },
+
+    // 💰 Salary
+    { key: 'ctc', label: 'CTC', type: 'number' },
+    { key: 'monthlySalary', label: 'Monthly Salary', type: 'number' },
+
+    // 📆 Periods
+    { key: 'probationPeriod', label: 'Probation (months)', type: 'number' },
+    { key: 'reviewPeriod', label: 'Review Period (days)', type: 'number' },
+
+    // 🎯 Complex fields (arrays)
+    { key: 'salesTargets', label: 'Sales Targets (JSON)', type: 'list' },
+    { key: 'allowances', label: 'Allowances (JSON)', type: 'list' },
+    // { key: 'requiredDocuments', label: 'Required Docs (JSON)', type: "list" },
+  ],
 };
 
 const DOC_ENDPOINT: Record<string, string> = {
@@ -100,6 +123,7 @@ const DOC_ENDPOINT: Record<string, string> = {
   'HR Policies': 'hr-policies',
   Checklist: 'checklist',
   'Probation Letter': 'probation',
+  'Offer Letter BDE': 'offer-letter-bde',
 };
 
 const DOC_ICON: Record<string, any> = {
@@ -108,14 +132,10 @@ const DOC_ICON: Record<string, any> = {
   'HR Policies': <CheckSquareOutlined style={{ fontSize: 20 }} />,
   Checklist: <CheckSquareOutlined style={{ fontSize: 20 }} />,
   'Probation Letter': <FileTextOutlined style={{ fontSize: 20 }} />,
+  'Offer Letter BDE': <FileTextOutlined style={{ fontSize: 20 }} />,
 };
 
-const documents = [
-  {
-    title: 'Offer Letter',
-    status: 'COMPLETED',
-    desc: 'Last updated 2 days ago',
-  },
+const _documents = [
   {
     title: 'Checklist',
     status: 'PENDING',
@@ -134,10 +154,12 @@ const documents = [
   },
 ];
 
-const TABS = ['Documents', 'Details', 'Actions'];
+// const TABS = ['Documents', 'Details', 'Actions'];
+const TABS = ['Documents', 'Details'];
 
 const SigleCandidate = () => {
   const { candidateId } = useParams<{ candidateId: string }>();
+  const [documents, setdocuments] = useState(_documents);
   const { getById, updateCandidate, downloadPdf, sendEmail, downloading } =
     candidateService();
   const [candidate, setCandidate] = useState<any>(null);
@@ -154,8 +176,15 @@ const SigleCandidate = () => {
 
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailProgress, setEmailProgress] = useState(0);
+  const [salesTargets, setSalesTargets] = useState<any[]>([]);
+  const [allowances, setAllowances] = useState<any[]>([]);
+  const [requiredDocuments, setRequiredDocuments] = useState<any[]>([]);
+  const progress = (emailProgress: any) => {
+    console.log(emailProgress);
+  };
+  console.log(allowances);
 
-  const sendEmailApi = async () => {
+  const sendEmailApi = async (doc: any = 'ALL') => {
     setEmailLoading(true);
     setEmailProgress(0);
 
@@ -165,13 +194,10 @@ const SigleCandidate = () => {
     }, 400);
 
     try {
-      const res = (await sendEmail(candidateId, 'offer-letter')) as any;
+      const res = (await sendEmail(candidateId, doc, progress)) as any;
       clearInterval(interval);
       setEmailProgress(100);
       if (res?.success) {
-        message.success('Documents sent to ' + candidate?.email);
-      } else {
-        // message.error(res?.message || 'Failed to send email');
         message.success('Documents sent to ' + candidate?.email);
       }
     } catch {
@@ -185,7 +211,12 @@ const SigleCandidate = () => {
   const fetchCandidate = async () => {
     setLoading(true);
     const res: any = await getById(candidateId);
-    if (res?.success) setCandidate(res.data);
+    if (res?.success) {
+      setCandidate(res.data);
+      setSalesTargets(res.data?.salesTargets || []);
+      setAllowances(res.data?.allowances || []);
+      setRequiredDocuments(res.data?.requiredDocuments || []);
+    }
     setLoading(false);
   };
   useEffect(() => {
@@ -196,6 +227,40 @@ const SigleCandidate = () => {
     fetchCandidate();
   }, [candidateId]);
 
+  useEffect(() => {
+    console.log(candidate);
+    if (candidate) {
+      if (candidate.isBDE) {
+        setdocuments((pre) => [
+          {
+            title: 'Offer Letter BDE',
+            status: 'PENDING',
+            desc: 'Probation period under review',
+          },
+          ...pre,
+        ]);
+      } else {
+        setdocuments((pre) => [
+          {
+            title: 'Offer Letter',
+            status: 'COMPLETED',
+            desc: 'Last updated 2 days ago',
+          },
+          ...pre,
+        ]);
+      }
+      if (!candidate) {
+        setdocuments((pre) => [
+          {
+            title: 'Offer Letter',
+            status: 'COMPLETED',
+            desc: 'Last updated 2 days ago',
+          },
+          ...pre,
+        ]);
+      }
+    }
+  }, [candidate]);
   const buildUrl = (docTitle: string, values: Record<string, any>) => {
     const endpoint = DOC_ENDPOINT[docTitle] || 'checklist';
     const params = new URLSearchParams(values).toString();
@@ -212,11 +277,20 @@ const SigleCandidate = () => {
     const data = {
       name: candidate?.name || '',
       designation: candidate?.designation || '',
+
       date: toDateInput(candidate?.date),
-      effectiveDate: toDateInput(candidate?.effectiveDate),
-      probationPeriod: candidate?.probationPeriod || 6,
-      reviewPeriod: candidate?.reviewPeriod || 15,
+      joiningDate: toDateInput(candidate?.joiningDate),
+
+      ctc: candidate?.ctc || 420000,
+      monthlySalary: candidate?.monthlySalary || 35000,
+
+      probationPeriod: candidate?.probationPeriod || 3,
+      reviewPeriod: candidate?.reviewPeriod || 7,
+
+      salesTargets: candidate?.salesTargets,
+      allowances: candidate?.allowances || [],
     };
+    console.log(data);
     form.setFieldsValue(data);
     setEditModal(true);
   };
@@ -233,6 +307,7 @@ const SigleCandidate = () => {
   const handleEditSubmit = async () => {
     const values = form.getFieldsValue();
     console.log(values);
+    // return
     const res = (await updateCandidate(candidateId, values)) as any;
     if (res?.success) {
       await fetchCandidate();
@@ -302,11 +377,11 @@ const SigleCandidate = () => {
               loading={emailLoading}
               icon={<SendOutlined />}
             >
-              Send All Docs
+              Email All Docs
             </Button>
-            <Button size="large" icon={<DownloadOutlined />}>
+            {/* <Button size="large" icon={<DownloadOutlined />}>
               Download CV
-            </Button>
+            </Button> */}
           </Space>
         </Flex>
       </Card>
@@ -375,15 +450,18 @@ const SigleCandidate = () => {
                   <div>
                     <Text strong>{doc.title}</Text>
                     <br />
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    {/* <Text type="secondary" style={{ fontSize: 12 }}>
                       {doc.desc}
-                    </Text>
+                    </Text> */}
                   </div>
                 </Flex>
                 <Flex align="center" gap={16}>
                   {/* <Tag color={doc.status === 'COMPLETED' ? 'success' : 'warning'}>
                     {doc.status === 'COMPLETED' ? 'Completed' : 'Pending'}
                   </Tag> */}
+                  <Button onClick={() => sendEmailApi(DOC_ENDPOINT[doc.title])}>
+                    <SiMinutemailer />
+                  </Button>
                   <Button
                     size="small"
                     icon={<EditOutlined />}
@@ -405,41 +483,43 @@ const SigleCandidate = () => {
 
         {/* Details Tab */}
         {activeTab === 'Details' && (
-          <Row gutter={[24, 20]}>
-            {[
-              { label: 'Full Name', value: candidate.name },
-              { label: 'Email', value: candidate.email },
-              { label: 'Phone', value: candidate.mobile || candidate.phone },
-              { label: 'Designation', value: candidate.designation },
-              { label: 'Department', value: candidate.department },
-              { label: 'Status', value: candidate.status },
-            ].map(
-              (item) =>
-                item.value && (
-                  <Col xs={24} sm={12} key={item.label}>
-                    <Text
-                      type="secondary"
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: 1,
-                      }}
-                    >
-                      {item.label}
-                    </Text>
-                    <br />
-                    {item.label === 'Status' ? (
-                      <Tag color="blue" style={{ marginTop: 4 }}>
-                        {item.value}
-                      </Tag>
-                    ) : (
-                      <Text strong>{item.value}</Text>
-                    )}
-                  </Col>
-                )
-            )}
-          </Row>
+          <>
+            <Row gutter={[24, 20]}>
+              {[
+                { label: 'Full Name', value: candidate.name },
+                { label: 'Email', value: candidate.email },
+                { label: 'Phone', value: candidate.mobile || candidate.phone },
+                { label: 'Designation', value: candidate.designation },
+                { label: 'Department', value: candidate.department },
+                // { label: 'Status', value: candidate.status },
+              ].map(
+                (item) =>
+                  item.value && (
+                    <Col xs={24} sm={12} key={item.label}>
+                      <Text
+                        type="secondary"
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: 1,
+                        }}
+                      >
+                        {item.label}
+                      </Text>
+                      <br />
+                      {item.label === 'Status' ? (
+                        <Tag color="blue" style={{ marginTop: 4 }}>
+                          {item.value}
+                        </Tag>
+                      ) : (
+                        <Text strong>{item.value}</Text>
+                      )}
+                    </Col>
+                  )
+              )}
+            </Row>
+          </>
         )}
 
         {/* Actions Tab */}
@@ -523,91 +603,7 @@ const SigleCandidate = () => {
         </Flex>
 
         {/* Form Body */}
-        <div style={{ padding: '8px 32px' }}>
-          <Form form={form} layout="vertical">
-            <Row gutter={16}>
-              {(DOC_FIELDS[editDoc?.title] || []).map((field) => (
-                <Col
-                  span={
-                    field.type === 'number' ||
-                    DOC_FIELDS[editDoc?.title].length > 4
-                      ? 12
-                      : 24
-                  }
-                  key={field.key}
-                >
-                  <Form.Item
-                    name={field.key}
-                    label={
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: '#424752',
-                        }}
-                      >
-                        {field.label}
-                      </Text>
-                    }
-                    style={{ marginBottom: 16 }}
-                  >
-                    {field.type === 'number' ? (
-                      <InputNumber
-                        style={{
-                          width: '100%',
-                          borderRadius: 8,
-                          background: '#f2f4f6',
-                          borderColor: '#c2c6d4',
-                        }}
-                        size="large"
-                      />
-                    ) : field.type === 'date' ? (
-                      <Input
-                        type="date"
-                        style={{
-                          borderRadius: 8,
-                          background: '#f2f4f6',
-                          borderColor: '#c2c6d4',
-                          fontWeight: 500,
-                        }}
-                        size="large"
-                      />
-                    ) : (
-                      <Input
-                        style={{
-                          borderRadius: 8,
-                          background: '#f2f4f6',
-                          borderColor: '#c2c6d4',
-                          fontWeight: 500,
-                        }}
-                        size="large"
-                      />
-                    )}
-                  </Form.Item>
-                </Col>
-              ))}
-            </Row>
-
-            {/* Info Box */}
-            <div
-              style={{
-                background: '#fff7e6',
-                borderRadius: 10,
-                padding: '12px 16px',
-                display: 'flex',
-                gap: 10,
-                alignItems: 'flex-start',
-                marginBottom: 8,
-              }}
-            >
-              <InfoCircleOutlined style={{ color: '#d46b08', marginTop: 2 }} />
-              <Text style={{ fontSize: 12, color: '#793100', lineHeight: 1.6 }}>
-                Updating these fields will log an activity in the candidate's
-                history. The preview will reflect the latest values entered.
-              </Text>
-            </div>
-          </Form>
-        </div>
+        <DocumentForm DOC_FIELDS={DOC_FIELDS} form={form} editDoc={editDoc} />
 
         {/* Footer */}
         <Flex justify="flex-end" gap={12} style={{ padding: '16px 32px 28px' }}>

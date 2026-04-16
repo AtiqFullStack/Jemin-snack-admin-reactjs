@@ -171,6 +171,11 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
   ]),
 
   getItem(
+    <Link to={PATH_CRM.config}>Configurations</Link>,
+    PATH_CRM.config,
+    <CustomerServiceOutlined />
+  ),
+  getItem(
     <Link to={PATH_CRM.support}>Support</Link>,
     PATH_CRM.support,
     <CustomerServiceOutlined />

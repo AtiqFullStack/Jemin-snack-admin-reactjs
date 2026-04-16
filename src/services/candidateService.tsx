@@ -82,15 +82,35 @@ const candidateService = () => {
     }
   };
 
-  const sendEmail = async (id: any, doc: any) => {
+  const sendEmail = async (id: any, doc: any, onProgress: any) => {
     try {
       const response = await axios.post(
-        `${BASEURL}${API_ENDPOINTS.CANDIDATES.SEND_EMAIL(id, doc)}`
+        `${BASEURL}${API_ENDPOINTS.CANDIDATES.SEND_EMAIL(id, doc)}`,
+        {}, // agar body nahi hai to empty object
+        {
+          onUploadProgress: (e) => {
+            if (e.total) {
+              const percent = Math.round((e.loaded * 100) / e.total);
+              console.log('Sending Progress:', percent + '%');
+
+              // optional callback (React UI ke liye)
+              if (onProgress) onProgress(percent);
+            }
+          },
+
+          onDownloadProgress: (e) => {
+            if (e.total) {
+              const percent = Math.round((e.loaded * 100) / e.total);
+              console.log('Response Progress:', percent + '%');
+            }
+          },
+        }
       );
-      console.log(response);
-      return response;
+
+      console.log('Final Response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error('Error sending email:', error?.response || error.message);
       throw error;
     }
   };
