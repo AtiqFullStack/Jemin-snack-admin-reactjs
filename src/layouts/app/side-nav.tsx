@@ -23,6 +23,7 @@ import {
   hasRouteAccess,
 } from '../../config/permissions';
 import { useAuth } from '../../hooks';
+import { Locate, LocationEditIcon } from 'lucide-react';
 
 const { Sider } = Layout;
 
@@ -63,14 +64,6 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
       <Link to={PATH_CRM.activities.tasks}>Tasks</Link>,
       PATH_CRM.activities.tasks
     ),
-    // getItem(
-    //   <Link to={PATH_CRM.activities.meetings}>Meetings</Link>,
-    //   PATH_CRM.activities.meetings
-    // ),
-    // getItem(
-    //   <Link to={PATH_CRM.activities.calendar}>Calendar</Link>,
-    //   PATH_CRM.activities.calendar
-    // ),
   ]),
 
   getItem('Calls', 'submenu-calls', <PhoneOutlined />, [
@@ -80,6 +73,11 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
       PATH_CRM.recordings
     ),
   ]),
+  getItem(
+    <Link to={PATH_CRM.locations}>Location</Link>,
+    PATH_CRM.locations,
+    <LocationEditIcon />
+  ),
 
   getItem('Human Resource', 'group-ops', null, [], 'group'),
   //  getItem(

@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from './redux/store';
 import { PRIMARY_COLOR } from './theme/colors';
 import './App.css';
+import 'leaflet/dist/leaflet.css';
 
 // Legacy COLOR export for backward compatibility
 // TODO: Migrate all usages to theme-aware colors from theme/colors.ts

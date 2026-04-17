@@ -180,7 +180,7 @@ const SigleCandidate = () => {
   };
   console.log(allowances);
 
-  const sendEmailApi = async (doc: any = 'ALL') => {
+  const sendEmailApi = async (doc: any) => {
     setEmailLoading(true);
     setEmailProgress(0);
 
@@ -188,9 +188,13 @@ const SigleCandidate = () => {
     const interval = setInterval(() => {
       setEmailProgress((prev) => (prev < 85 ? prev + 10 : prev));
     }, 400);
-
+    console.log(doc);
     try {
-      const res = (await sendEmail(candidateId, doc, progress)) as any;
+      const res = (await sendEmail(
+        candidateId,
+        doc ? doc : 'ALL',
+        progress
+      )) as any;
       clearInterval(interval);
       setEmailProgress(100);
       if (res?.success) {
@@ -367,7 +371,7 @@ const SigleCandidate = () => {
           </Flex>
           <Space>
             <Button
-              onClick={sendEmailApi}
+              onClick={() => sendEmailApi('ALL')}
               type="primary"
               size="large"
               loading={emailLoading}

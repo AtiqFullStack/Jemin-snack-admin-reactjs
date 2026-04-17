@@ -72,6 +72,8 @@ import Leave from 'src/HumanResource/Leave.tsx';
 import Candidate from 'src/HumanResource/Candidate.tsx';
 import SigleCandidate from 'src/HumanResource/SigleCandidate.tsx';
 import ConfigPage from 'src/pages/Config/index.tsx';
+import Map from 'src/components/Map.tsx';
+import Location from 'src/pages/Location.tsx';
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -129,8 +131,12 @@ const router = createBrowserRouter([
     children: [
       {
         path: 'default',
-        element: <DefaultDashboardPage />,
+        element: <Map />,
       },
+      //   {
+      //   path: 'default',
+      //   element: <DefaultDashboardPage />,
+      // },
       {
         path: 'projects',
         element: <ProjectsDashboardPage />,
@@ -228,6 +234,10 @@ const router = createBrowserRouter([
       {
         path: 'config',
         element: <ConfigPage />,
+      },
+      {
+        path: 'location',
+        element: <Location />,
       },
     ],
   },

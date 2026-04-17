@@ -53,6 +53,18 @@ const candidateService = () => {
       throw error;
     }
   };
+  const deleteCandidate = async (id?: any) => {
+    try {
+      const response = await apiRequest.delete(
+        API_ENDPOINTS.CANDIDATES.DELETE(id)
+      );
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error('Error fetching activityLogs:', error);
+      throw error;
+    }
+  };
 
   const downloadPdf = async (id: any, doc: string) => {
     setIsDownloading(true);
@@ -83,6 +95,7 @@ const candidateService = () => {
   };
 
   const sendEmail = async (id: any, doc: any, onProgress: any) => {
+    console.log(doc);
     try {
       const response = await axios.post(
         `${BASEURL}${API_ENDPOINTS.CANDIDATES.SEND_EMAIL(id, doc)}`,
@@ -124,6 +137,7 @@ const candidateService = () => {
     setIsDownloading,
     downloading,
     sendEmail,
+    deleteCandidate,
   };
 };
 

@@ -9,10 +9,14 @@ import {
   Space,
   Select,
   Checkbox,
+  message,
+  PopconfirmProps,
+  Popconfirm,
 } from 'antd';
 import candidateService from 'src/services/candidateService';
 import { Link } from 'react-router-dom';
 import configService from 'src/services/configService';
+import { Trash } from 'lucide-react';
 
 const statusColors = {
   PENDING: 'default',
@@ -27,9 +31,33 @@ const Candidate = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [designations, setDesignations] = useState<any>([]);
   const [form] = Form.useForm();
-  const { getCandidates, createCandidates } = candidateService();
+  const { getCandidates, createCandidates, deleteCandidate } =
+    candidateService();
   const { getConfig } = configService();
 
+  const [messageApi] = message.useMessage();
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const confirm: PopconfirmProps['onConfirm'] = async (e) => {
+    console.log(e);
+    const res = (await deleteCandidate(selectedUser._id)) as any;
+    console.log(res);
+    if (res.success) {
+      messageApi.success(res.message);
+      fetchData();
+    }
+  };
+
+  const cancel: PopconfirmProps['onCancel'] = (e) => {
+    console.log(e);
+    // messageApi.error('Click on No');
+    // fetchData()
+  };
+
+  const fetchData = async () => {
+    const response = (await getCandidates()) as any;
+    console.log(response);
+    setCandidates(response.data);
+  };
   useEffect(() => {
     getConfig('employeDesignation')
       .then((res: any) => {
@@ -38,11 +66,7 @@ const Candidate = () => {
       .catch((err) => {
         console.log(err);
       });
-    const fetchData = async () => {
-      const response = (await getCandidates()) as any;
-      console.log(response);
-      setCandidates(response.data);
-    };
+
     fetchData();
   }, []);
 
@@ -95,6 +119,23 @@ const Candidate = () => {
           <Button disabled={!_._id} size="small" type="primary">
             <Link to={`/hrms/candidate/${record?._id}`}>View</Link>
           </Button>
+          <Popconfirm
+            title="Delete the task"
+            description={`Are you sure to delete this Candidate . ${selectedUser?.name}?`}
+            onConfirm={confirm}
+            onCancel={cancel}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button
+              onClick={() => setSelectedUser(_)}
+              disabled={!_._id}
+              size="small"
+              type="primary"
+            >
+              <Trash size={15} />
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },

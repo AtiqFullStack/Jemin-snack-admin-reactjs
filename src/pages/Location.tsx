@@ -1,0 +1,155 @@
+import { Button, Card, DatePicker, Space, Table, Tag } from 'antd';
+import { Locate } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import Map from 'src/components/Map';
+import apiClient from 'src/services/api/apiClient';
+import { API_ENDPOINTS } from 'src/services/api/endpoints';
+import staffService from 'src/services/staffService';
+import dayjs, { Dayjs } from 'dayjs';
+
+type UserStatus = 'active' | 'inactive';
+
+type User = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  roleId: any;
+  status: UserStatus;
+  created_at: string;
+  createdAt?: string;
+  password?: string;
+};
+
+const Location = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [locationData, setLocationData] = useState(null);
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  const userId = searchParams.get('userId');
+  console.log(userId);
+
+  const getUserLocation = useCallback(async () => {
+    const date = selectedDate.format('YYYY-MM-DD');
+    const res = await apiClient.get(
+      `${API_ENDPOINTS.LOCATION.GET}?userId=${userId}&date=${date}&responseType=simple`
+    );
+    if (res.data.success) {
+      setLocationData(res.data.data);
+    }
+  }, [userId, selectedDate]);
+
+  const normalizeUser = (user: any): User => ({
+    ...user,
+    created_at: user?.created_at ?? user?.createdAt ?? '',
+    createdAt: user?.createdAt ?? user?.created_at ?? '',
+  });
+
+  const { getStaff } = staffService();
+
+  const getStaffs = async () => {
+    const res = (await getStaff()) as any;
+    if (res.success) {
+      setUsers((res.data.items ?? []).map(normalizeUser));
+    }
+  };
+
+  useEffect(() => {
+    getStaffs();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      getUserLocation();
+    }
+  }, [userId, selectedDate]);
+  const columns = [
+    {
+      title: 'Name',
+      key: 'name',
+      render: (_: any, record: User) =>
+        `${record.firstName} ${record.lastName}`,
+    },
+    { title: 'Email', dataIndex: 'email', key: 'email' },
+    { title: 'Phone', dataIndex: 'phone', key: 'phone' },
+    {
+      title: 'Role',
+      dataIndex: 'roleId',
+      key: 'roleId',
+      render: (roleId: any) => {
+        return (
+          <>
+            {roleId ? (
+              <Tag color="blue">{roleId?.name ?? 'Unknown'}</Tag>
+            ) : (
+              <Tag color="red">{roleId?.name ?? 'Not Assigned'}</Tag>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: UserStatus) => (
+        <Tag color={status === 'active' ? 'green' : 'red'}>{status}</Tag>
+      ),
+    },
+
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_: any, record: User) => (
+        <Space>
+          <Button
+            onClick={() => {
+              setSearchParams({ userId: record._id });
+            }}
+          >
+            <Locate />
+            View
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+  return (
+    <div>
+      <div style={{ padding: 24 }}>
+        <Card title="Staff Location ">
+          {userId ? (
+            <div style={{ height: '60%' }}>
+              <Space style={{ marginBottom: 12 }}>
+                <DatePicker
+                  value={selectedDate}
+                  onChange={(date) => date && setSelectedDate(date)}
+                  allowClear={false}
+                  disabledDate={(d) => d.isAfter(dayjs())}
+                />
+                <Button type="primary" onClick={getUserLocation}>
+                  Apply
+                </Button>
+                <Button onClick={() => setSearchParams({})}>← Back</Button>
+              </Space>
+              <Map data={locationData} />
+            </div>
+          ) : (
+            <Table
+              rowKey={(record) => record._id}
+              columns={columns}
+              dataSource={users}
+              pagination={{ pageSize: 10 }}
+              rowHoverable={false}
+            />
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default Location;

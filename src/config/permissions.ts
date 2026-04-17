@@ -17,6 +17,7 @@ export const PATH_CRM = {
   dashboard: '/dashboards/default',
   // customers: '/crm/customers',
   leads: '/crm/leads',
+  locations: '/crm/location',
   // contacts: '/crm/contacts',
   // accounts: '/crm/accounts',
   // deals: '/crm/deals',

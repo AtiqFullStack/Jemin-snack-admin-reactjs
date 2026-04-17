@@ -39,7 +39,7 @@ export const API_ENDPOINTS = {
     GET: (id: string) => `/hr/candidates/byId/${id}`,
     CREATE: '/hr/candidates',
     UPDATE: (id: string) => `/hr/candidates/update/${id}`,
-    DELETE: (id: string) => `/hr/candidates/${id}`,
+    DELETE: (id: string) => `/hr/candidates/delete/${id}`,
     DOWNLOAD: (id: string, doc: string) =>
       `/generate-pdf?userId=${id}&document=${doc}`,
     SEND_EMAIL: (id: string, doc: any) =>
@@ -57,7 +57,9 @@ export const API_ENDPOINTS = {
     GENERATE_ALL_PAYSLIPS: '/staff/salary/generateAllPayslips',
     DELETE: (id: string) => `/salary/delete/${id}`,
   },
-
+  LOCATION: {
+    GET: '/staff/location/history',
+  },
   HR_SETTINGS: {
     GET: '/hr-settings',
     CREATE: '/hr-settings',
