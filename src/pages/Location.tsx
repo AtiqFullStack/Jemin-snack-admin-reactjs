@@ -1,7 +1,7 @@
 import { Button, Card, DatePicker, Space, Table, Tag } from 'antd';
 import { Locate } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+
 import { useSearchParams } from 'react-router-dom';
 import Map from 'src/components/Map';
 import apiClient from 'src/services/api/apiClient';

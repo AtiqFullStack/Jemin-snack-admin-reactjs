@@ -111,7 +111,7 @@ const Map: React.FC<any> = ({ data }) => {
 
   const current = data?.currentLocation
     ? [data.currentLocation.lat, data.currentLocation.lng]
-    : null;
+    : (null as any);
 
   return (
     <div style={{ height: '65vh', width: '100%', marginTop: 20 }}>

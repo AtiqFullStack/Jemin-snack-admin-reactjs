@@ -24,6 +24,7 @@
     "@tanem/react-nprogress": "^5.0.51",
     "@tanstack/react-query": "^5.90.10",
     "@tanstack/react-query-devtools": "^5.90.2",
+    "@types/leaflet": "^1.9.21",
     "antd": "^6.3.0",
     "axios": "^1.13.5",
     "dayjs": "^1.11.9",

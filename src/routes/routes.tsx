@@ -72,7 +72,7 @@ import Leave from 'src/HumanResource/Leave.tsx';
 import Candidate from 'src/HumanResource/Candidate.tsx';
 import SigleCandidate from 'src/HumanResource/SigleCandidate.tsx';
 import ConfigPage from 'src/pages/Config/index.tsx';
-import Map from 'src/components/Map.tsx';
+
 import Location from 'src/pages/Location.tsx';
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -129,14 +129,14 @@ const router = createBrowserRouter([
     ),
     errorElement: <ErrorPage />,
     children: [
+      // {
+      //   path: 'default',
+      //   element: <Map />,
+      // },
       {
         path: 'default',
-        element: <Map />,
+        element: <DefaultDashboardPage />,
       },
-      //   {
-      //   path: 'default',
-      //   element: <DefaultDashboardPage />,
-      // },
       {
         path: 'projects',
         element: <ProjectsDashboardPage />,

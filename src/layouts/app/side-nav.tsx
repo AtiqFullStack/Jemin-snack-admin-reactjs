@@ -23,7 +23,7 @@ import {
   hasRouteAccess,
 } from '../../config/permissions';
 import { useAuth } from '../../hooks';
-import { Locate, LocationEditIcon } from 'lucide-react';
+import { LocationEditIcon } from 'lucide-react';
 
 const { Sider } = Layout;
 
