@@ -31,14 +31,22 @@ const Location = () => {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const userId = searchParams.get('userId');
   console.log(userId);
-
+  console.log(locationData);
   const getUserLocation = useCallback(async () => {
     const date = selectedDate.format('YYYY-MM-DD');
-    const res = await apiClient.get(
-      `${API_ENDPOINTS.LOCATION.GET}?userId=${userId}&date=${date}&responseType=simple`
-    );
-    if (res.data.success) {
-      setLocationData(res.data.data);
+    try {
+      const res = await apiClient.get(
+        `${API_ENDPOINTS.LOCATION.GET}?userId=${userId}&date=${date}&responseType=simple`
+      );
+
+      if (res.data.success) {
+        setLocationData(res.data.data);
+      } else {
+        setLocationData(null);
+      }
+    } catch (error) {
+      console.log(error);
+      setLocationData(null);
     }
   }, [userId, selectedDate]);
 

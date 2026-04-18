@@ -30,7 +30,7 @@ const endIcon = new L.Icon({
 });
 
 const currentIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png', // 👤 icon
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
   iconSize: [35, 35],
 });
 
@@ -90,33 +90,43 @@ const PointMarker: React.FC<{
   );
 };
 
+// 🔥 Validate coordinates
+const isValidPos = (pos: any): pos is [number, number] =>
+  Array.isArray(pos) &&
+  pos.length === 2 &&
+  typeof pos[0] === 'number' &&
+  typeof pos[1] === 'number';
+
 // 🚀 MAIN MAP
 const Map: React.FC<any> = ({ data }) => {
   const [positions, setPositions] = useState<[number, number][]>([]);
 
   useEffect(() => {
     if (data?.path) {
-      // 🔥 remove duplicate points
       const unique = data.path.filter(
         (p: any, i: number, arr: any[]) =>
           i === 0 || p[0] !== arr[i - 1][0] || p[1] !== arr[i - 1][1]
       );
 
       setPositions(unique);
+    } else {
+      setPositions([]);
     }
   }, [data]);
 
   const start = positions[0];
   const end = positions[positions.length - 1];
 
-  const current = data?.currentLocation
-    ? [data.currentLocation.lat, data.currentLocation.lng]
-    : (null as any);
+  // ✅ FIXED CURRENT LOCATION SAFETY CHECK
+  const current =
+    data?.currentLocation?.lat != null && data?.currentLocation?.lng != null
+      ? [data.currentLocation.lat, data.currentLocation.lng]
+      : null;
 
   return (
     <div style={{ height: '65vh', width: '100%', marginTop: 20 }}>
       <MapContainer
-        center={current || start || [26.83865, 75.78781]}
+        center={(current || start || [26.83865, 75.78781]) as [number, number]}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
       >
@@ -125,7 +135,7 @@ const Map: React.FC<any> = ({ data }) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* ✅ Polyline */}
+        {/* 🟦 Path */}
         {positions.length > 0 && (
           <Polyline
             positions={positions}
@@ -134,24 +144,30 @@ const Map: React.FC<any> = ({ data }) => {
         )}
 
         {/* 🟢 Start */}
-        {start && <PointMarker pos={start} label="🟢 Start" icon={startIcon} />}
+        {isValidPos(start) && (
+          <PointMarker pos={start} label="🟢 Start" icon={startIcon} />
+        )}
 
         {/* 🔴 End */}
-        {end && <PointMarker pos={end} label="🔴 End" icon={endIcon} />}
+        {isValidPos(end) && (
+          <PointMarker pos={end} label="🔴 End" icon={endIcon} />
+        )}
 
-        {/* 👤 Current Location */}
-        {current && (
+        {/* 👤 Current Location (FIXED) */}
+        {isValidPos(current) && (
           <PointMarker
-            pos={current as [number, number]}
+            pos={current}
             label="👤 Current Location"
             icon={currentIcon}
           />
         )}
 
-        {/* 📍 Optional: intermediate points (light markers) */}
-        {positions.slice(1, -1).map((pos, i) => (
-          <Marker key={i} position={pos} />
-        ))}
+        {/* 📍 Intermediate points */}
+        {positions
+          .slice(1, -1)
+          .map((pos, i) =>
+            isValidPos(pos) ? <Marker key={i} position={pos} /> : null
+          )}
       </MapContainer>
     </div>
   );

@@ -45,7 +45,7 @@ type SalaryState = {
       bonus: number;
     };
     deductions: {
-      pf: number;
+      pf: number | { type: string; value: number };
       other: number;
     };
     advanceDeduction: number;
@@ -63,7 +63,7 @@ type SalaryState = {
         bonus: number;
       };
       deductions: {
-        pf: number;
+        pf: number | { type: string; value: number };
         other: number;
       };
       advanceDeduction: number;
@@ -88,7 +88,7 @@ const useSalary = create<SalaryState>((set) => ({
     const response = await apiClient.post(API_ENDPOINTS.SALARY.CREATE, payload);
     return response.data;
   },
-  updateSalary: async (staffId, payload) => {
+  updateSalary: async (staffId, payload: any) => {
     const response = await apiClient.put(
       API_ENDPOINTS.SALARY.UPDATE(staffId),
       payload
