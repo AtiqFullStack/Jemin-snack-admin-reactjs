@@ -12,6 +12,7 @@ import {
   Input,
   InputNumber,
   Row,
+  Segmented,
   Space,
   Statistic,
   Table,
@@ -63,6 +64,7 @@ type Earnings = {
 
 type Deductions = {
   pf: number;
+  pfType: 'percentage' | 'fixed';
   advance: number;
   otherDeduction: number;
 };
@@ -103,7 +105,7 @@ const deductionFields: Array<{
   label: string;
   hint: string;
 }> = [
-  { key: 'pf', label: 'PF', hint: 'Provident fund' },
+  { key: 'pf', label: 'PF (%)', hint: '' },
   { key: 'advance', label: 'Advance', hint: 'Important deduction head' },
   {
     key: 'otherDeduction',
@@ -121,6 +123,7 @@ const defaultEarnings = (): Earnings => ({
 
 const defaultDeductions = (): Deductions => ({
   pf: 0,
+  pfType: 'percentage',
   advance: 0,
   otherDeduction: 0,
 });
@@ -153,7 +156,12 @@ const mapSalaryToDraft = (activeSalary?: any): SalaryDraft => {
       bonus: activeSalary.earnings?.bonus ?? 0,
     },
     deductions: {
-      pf: activeSalary.deductions?.pf ?? 0,
+      pf:
+        typeof activeSalary.deductions?.pf === 'number'
+          ? activeSalary.deductions.pf
+          : activeSalary.deductions?.pf?.value ?? 0,
+      pfType:
+        activeSalary.deductions?.pf?.type === 'fixed' ? 'fixed' : 'percentage',
       advance: activeSalary.advanceDeduction ?? 0,
       otherDeduction: activeSalary.deductions?.other ?? 0,
     },
@@ -273,8 +281,13 @@ const SalarySetting = () => {
     (sum, amount) => sum + amount,
     0
   );
+  const pfAmount = salaryDraft.deductionSettings.pfEnabled
+    ? salaryDraft.deductions.pfType === 'percentage'
+      ? (gross * salaryDraft.deductions.pf) / 100
+      : salaryDraft.deductions.pf
+    : 0;
   const totalDeduction =
-    (salaryDraft.deductionSettings.pfEnabled ? salaryDraft.deductions.pf : 0) +
+    pfAmount +
     salaryDraft.deductions.advance +
     salaryDraft.deductions.otherDeduction;
   const netSalary = gross - totalDeduction;
@@ -315,7 +328,7 @@ const SalarySetting = () => {
       },
       deductions: {
         ...prev.deductions,
-        pf: checked ? prev.deductions.pf || 1800 : 0,
+        pf: checked ? prev.deductions.pf || 12 : 0,
       },
     }));
   };
@@ -348,8 +361,11 @@ const SalarySetting = () => {
       },
       deductions: {
         pf: salaryDraft.deductionSettings.pfEnabled
-          ? Number(salaryDraft.deductions.pf || 0)
-          : 0,
+          ? {
+              type: salaryDraft.deductions.pfType,
+              value: Number(salaryDraft.deductions.pf || 0),
+            }
+          : { type: 'percentage', value: 0 },
         other: Number(salaryDraft.deductions.otherDeduction || 0),
       },
       advanceDeduction: Number(salaryDraft.deductions.advance || 0),
@@ -456,7 +472,7 @@ const SalarySetting = () => {
     <div style={{ padding: 10 }}>
       <Space direction="vertical" size={16} style={{ width: '100%' }}>
         <Card
-          title="Employee Listing"
+          title="Staff Listing"
           extra={
             <Space>
               <Input.Search
@@ -720,19 +736,86 @@ const SalarySetting = () => {
                               </Text>
                             )}
                           </div>
-                          <InputNumber
-                            min={0}
-                            prefix="₹"
-                            style={{ width: 170, flexShrink: 0 }}
-                            value={salaryDraft.deductions[field.key]}
-                            disabled={
-                              field.key === 'pf' &&
-                              !salaryDraft.deductionSettings.pfEnabled
-                            }
-                            onChange={(value) =>
-                              updateDeduction(field.key, value)
-                            }
-                          />
+                          {field.key === 'pf' ? (
+                            <Flex
+                              gap={6}
+                              align="center"
+                              style={{ flexShrink: 0 }}
+                            >
+                              <Segmented
+                                size="small"
+                                value={salaryDraft.deductions.pfType}
+                                options={[
+                                  { label: '%', value: 'percentage' },
+                                  { label: '₹', value: 'fixed' },
+                                ]}
+                                disabled={
+                                  !salaryDraft.deductionSettings.pfEnabled
+                                }
+                                onChange={(val) =>
+                                  setSalaryDraft((prev) => ({
+                                    ...prev,
+                                    deductions: {
+                                      ...prev.deductions,
+                                      pfType: val as 'percentage' | 'fixed',
+                                      pf: 0,
+                                    },
+                                  }))
+                                }
+                              />
+                              <InputNumber
+                                min={0}
+                                max={
+                                  salaryDraft.deductions.pfType === 'percentage'
+                                    ? 100
+                                    : undefined
+                                }
+                                prefix={
+                                  salaryDraft.deductions.pfType === 'percentage'
+                                    ? '%'
+                                    : '₹'
+                                }
+                                style={{ width: 120 }}
+                                value={salaryDraft.deductions.pf}
+                                disabled={
+                                  !salaryDraft.deductionSettings.pfEnabled
+                                }
+                                onChange={(value) =>
+                                  updateDeduction('pf', value)
+                                }
+                              />
+                              {salaryDraft.deductionSettings.pfEnabled && (
+                                <Text
+                                  type="secondary"
+                                  style={{ fontSize: 11, whiteSpace: 'nowrap' }}
+                                >
+                                  ₹{Math.round(pfAmount)}
+                                </Text>
+                              )}
+                            </Flex>
+                          ) : (
+                            <InputNumber
+                              min={0}
+                              prefix="₹"
+                              style={{ width: 170, flexShrink: 0 }}
+                              value={salaryDraft.deductions[field.key]}
+                              disabled={
+                                field.key === 'pf' &&
+                                !salaryDraft.deductionSettings.pfEnabled
+                              }
+                              onChange={(value) =>
+                                updateDeduction(field.key, value)
+                              }
+                              addonAfter={
+                                field.key === 'pf' &&
+                                salaryDraft.deductionSettings.pfEnabled ? (
+                                  <Text style={{ fontSize: 11 }}>
+                                    ₹{Math.round(pfAmount)}
+                                  </Text>
+                                ) : null
+                              }
+                            />
+                          )}
                         </Flex>
                       ))}
                     </Space>
