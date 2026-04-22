@@ -59,9 +59,9 @@ const LeadsPage = () => {
 
   const loc = useLocation().pathname;
 
-  const navigateWithLink = (id: any) => {
-    window.location.href = `jeminisnacks://lead/${id}`;
-  };
+  // const navigateWithLink = (id: any) => {
+  //   window.location.href = `jeminisnacks://lead/${id}`;
+  // };
 
   const { creatLeads, getLeads, deleteLeads, updateLeads, bulkCreateLeads } =
     leadServices();
