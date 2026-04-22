@@ -59,6 +59,10 @@ const LeadsPage = () => {
 
   const loc = useLocation().pathname;
 
+  const navigateWithLink = (id: any) => {
+    window.location.href = `jeminisnacks://lead/${id}`;
+  };
+
   const { creatLeads, getLeads, deleteLeads, updateLeads, bulkCreateLeads } =
     leadServices();
   const { getStaff } = staffService();
@@ -458,6 +462,9 @@ const LeadsPage = () => {
       key: 'actions',
       render: (_: any, record: Lead) => (
         <Space>
+          {/* <Button onClick={()=>navigateWithLink(record._id)}>
+            App
+          </Button> */}
           <Button
             size="small"
             icon={<EyeOutlined />}
