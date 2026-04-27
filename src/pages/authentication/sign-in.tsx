@@ -4,7 +4,6 @@ import {
   Button,
   Checkbox,
   Col,
-
   Flex,
   Form,
   Input,
@@ -15,14 +14,9 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import {
-
-  MoonOutlined,
-  SunOutlined,
-
-} from '@ant-design/icons';
+import { MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { useMediaQuery } from 'react-responsive';
-import {  PATH_DASHBOARD } from '../../constants';
+import { PATH_DASHBOARD } from '../../constants';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,7 +26,7 @@ import { useAuth } from '../../hooks';
 import { handleApiError } from '../../services/api/apiClient';
 import AuthLeft from '../../components/auth/AuthLeft';
 
-const { Title} = Typography;
+const { Title } = Typography;
 
 type FieldType = {
   email?: string;
@@ -163,8 +157,11 @@ export const SignInPage = () => {
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
             initialValues={{
-              email: 'superadmin@example.com',
-              password: 'Password123',
+              // email: 'superadmin@example.com',
+              // password: 'Password123',
+              email: '',
+              password: '',
+
               remember: true,
             }}
             onFinish={onFinish}

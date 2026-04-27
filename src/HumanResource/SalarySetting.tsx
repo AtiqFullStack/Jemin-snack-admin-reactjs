@@ -143,6 +143,7 @@ const mapSalaryToDraft = (activeSalary?: any): SalaryDraft => {
     return createDefaultDraft();
   }
 
+  console.log(activeSalary);
   return {
     salaryId: activeSalary._id,
     effectiveMonth: activeSalary.effectiveFrom
@@ -165,7 +166,7 @@ const mapSalaryToDraft = (activeSalary?: any): SalaryDraft => {
       otherDeduction: activeSalary.deductions?.other ?? 0,
     },
     deductionSettings: {
-      pfEnabled: Boolean(activeSalary.deductions?.pf),
+      pfEnabled: Boolean(activeSalary.deductions?.pf?.pfEnabled),
     },
     salaryType: activeSalary.salaryType || 'monthly',
     isActive: activeSalary.isActive ?? true,
@@ -363,12 +364,15 @@ const SalarySetting = () => {
           ? {
               type: salaryDraft.deductions.pfType,
               value: Number(salaryDraft.deductions.pf || 0),
+              pfEnabled: salaryDraft.deductionSettings.pfEnabled,
             }
           : { type: 'percentage', value: 0 },
         other: Number(salaryDraft.deductions.otherDeduction || 0),
       },
       advanceDeduction: Number(salaryDraft.deductions.advance || 0),
     };
+    // console.log(payload)
+    // return
     try {
       console.log(selectedEmployee);
       if (selectedEmployee.isSalaryAssigned) {
@@ -703,6 +707,7 @@ const SalarySetting = () => {
                           <Text strong>PF</Text>
                           <br />
                           <Space size={8} style={{ marginTop: 4 }}>
+                            {/* {JSON.stringify(salaryDraft.deductionSettings.pfEnabled)} */}
                             <Checkbox
                               checked={salaryDraft.deductionSettings.pfEnabled}
                               onChange={(e) => togglePf(e.target.checked)}
