@@ -151,19 +151,10 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
       PATH_CRM.settings.roles,
       <SettingOutlined />
     ),
-    getItem(
-      <Link to={PATH_CRM.settings.pipelines}>Pipelines</Link>,
-      PATH_CRM.settings.pipelines,
-      <FileTextOutlined />
-    ),
+
     getItem(
       <Link to={PATH_CRM.settings.sources}>Lead Sources</Link>,
       PATH_CRM.settings.sources,
-      <AppstoreOutlined />
-    ),
-    getItem(
-      <Link to={PATH_CRM.settings.integrations}>Integrations</Link>,
-      PATH_CRM.settings.integrations,
       <AppstoreOutlined />
     ),
   ]),
