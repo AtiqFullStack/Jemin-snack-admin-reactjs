@@ -17,6 +17,7 @@ import candidateService from 'src/services/candidateService';
 import { Link } from 'react-router-dom';
 import configService from 'src/services/configService';
 import { Trash } from 'lucide-react';
+import { usePermissions } from 'src/hooks';
 
 const statusColors = {
   PENDING: 'default',
@@ -36,6 +37,7 @@ const Candidate = () => {
   const { getConfig } = configService();
 
   const [messageApi] = message.useMessage();
+  const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const confirm: PopconfirmProps['onConfirm'] = async (e) => {
     console.log(e);
@@ -116,9 +118,12 @@ const Candidate = () => {
       title: 'Actions',
       render: (_: any, record: any) => (
         <Space>
-          <Button disabled={!_._id} size="small" type="primary">
-            <Link to={`/hrms/candidate/${record?._id}`}>View</Link>
-          </Button>
+          {canRead('candidates') && (
+            <Button disabled={!_._id} size="small" type="primary">
+              <Link to={`/hrms/candidate/${record?._id}`}>View</Link>
+            </Button>
+          )}
+
           <Popconfirm
             title="Delete the task"
             description={`Are you sure to delete this Candidate . ${selectedUser?.name}?`}
@@ -127,14 +132,16 @@ const Candidate = () => {
             okText="Yes"
             cancelText="No"
           >
-            <Button
-              onClick={() => setSelectedUser(_)}
-              disabled={!_._id}
-              size="small"
-              type="primary"
-            >
-              <Trash size={15} />
-            </Button>
+            {canDelete('candidates') && (
+              <Button
+                onClick={() => setSelectedUser(_)}
+                disabled={!_._id}
+                size="small"
+                type="primary"
+              >
+                <Trash size={15} />
+              </Button>
+            )}
           </Popconfirm>
         </Space>
       ),
@@ -145,13 +152,15 @@ const Candidate = () => {
     <div style={{ padding: 20 }}>
       <h2>Candidate Management</h2>
 
-      <Button
-        type="primary"
-        onClick={() => setIsModalOpen(true)}
-        style={{ marginBottom: 16 }}
-      >
-        + Add Candidate
-      </Button>
+      {canCreate('candidates') && (
+        <Button
+          type="primary"
+          onClick={() => setIsModalOpen(true)}
+          style={{ marginBottom: 16 }}
+        >
+          + Add Candidate
+        </Button>
+      )}
 
       <Table rowHoverable={false} columns={columns} dataSource={candidates} />
 

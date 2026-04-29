@@ -15,17 +15,11 @@ export type Role = 'admin' | 'manager' | 'sales' | 'support';
 // CRM Routes
 export const PATH_CRM = {
   dashboard: '/dashboards/default',
-  // customers: '/crm/customers',
   leads: '/crm/leads',
   locations: '/crm/location',
-  // contacts: '/crm/contacts',
-  // accounts: '/crm/accounts',
-  // deals: '/crm/deals',
   activities: {
     leads: '/crm/activities/leads',
     tasks: '/crm/activities/tasks',
-    meetings: '/crm/activities/meetings',
-    calendar: '/crm/activities/calendar',
   },
   hr: {
     Attendance: '/hrms/employeee/attendance',
@@ -34,14 +28,12 @@ export const PATH_CRM = {
     payslip: '/hrms/setting/payslip',
 
     // Candidate
-
     candidate: '/hrms/candidate',
     Settings: '/hrms/setting',
   },
   calls: '/crm/calls',
   recordings: '/crm/recordings',
-  vendors: '/crm/vendors',
-  products: '/crm/products',
+
   reports: {
     overview: '/crm/reports/overview',
     sales: '/crm/reports/sales',
@@ -50,7 +42,6 @@ export const PATH_CRM = {
   settings: {
     users: '/crm/settings/staff',
     roles: '/crm/settings/roles',
-    pipelines: '/crm/settings/pipelines',
     sources: '/crm/settings/sources',
     integrations: '/crm/settings/integrations',
   },
@@ -63,86 +54,95 @@ export const PERMISSIONS = {
   // Dashboard
   'dashboard.read': 'View Dashboard',
 
-  // Customers
-  'customers.read': 'View Customers',
-  'customers.create': 'Create Customers',
-  'customers.update': 'Update Customers',
-  'customers.delete': 'Delete Customers',
-
   // Leads
   'leads.read': 'View Leads',
   'leads.create': 'Create Leads',
   'leads.update': 'Update Leads',
   'leads.delete': 'Delete Leads',
 
-  // Contacts
-  'contacts.read': 'View Contacts',
-  'contacts.create': 'Create Contacts',
-  'contacts.update': 'Update Contacts',
-  'contacts.delete': 'Delete Contacts',
+  // Lead Activities
+  'leads_activities.read': 'View Lead Activities',
+  'leads_activities.create': 'Create Lead Activities',
+  'leads_activities.update': 'Update Lead Activities',
+  'leads_activities.delete': 'Delete Lead Activities',
 
-  // Accounts
-  'accounts.read': 'View Accounts',
-  'accounts.create': 'Create Accounts',
-  'accounts.update': 'Update Accounts',
-  'accounts.delete': 'Delete Accounts',
-
-  // Deals
-  'deals.read': 'View Deals',
-  'deals.create': 'Create Deals',
-  'deals.update': 'Update Deals',
-  'deals.delete': 'Delete Deals',
-
-  // Activities
-  'activities.read': 'View Activities',
-  'activities.create': 'Create Activities',
-  'activities.update': 'Update Activities',
-  'activities.delete': 'Delete Activities',
-
-  // human resources
-  'timesheet.create': 'Create Attendance',
-  'timesheet.read': 'Read Attendance',
-  'timesheet.update': 'Update Attendance',
-  'timesheet.delete': 'Delete Attendance',
-
-  'salary.create': 'Create Salary',
-  'salary.read': 'Salary',
-  'salary.update': 'Update Salary',
-  'salary.delete': 'Delete Salary',
+  // Tasks
+  'tasks.read': 'View Tasks',
+  'tasks.create': 'Create Tasks',
+  'tasks.update': 'Update Tasks',
+  'tasks.delete': 'Delete Tasks',
 
   // Calls
   'calls.read': 'View Calls',
-  'calls.create': 'Create Calls',
-  'calls.update': 'Update Calls',
   'calls.delete': 'Delete Calls',
 
-  // Vendors
-  'vendors.read': 'View Vendors',
-  'vendors.create': 'Create Vendors',
-  'vendors.update': 'Update Vendors',
-  'vendors.delete': 'Delete Vendors',
+  // Recordings
+  'recordings.read': 'View Recordings',
+  'recordings.delete': 'Delete Recordings',
 
-  // Products
-  'products.read': 'View Products',
-  'products.create': 'Create Products',
-  'products.update': 'Update Products',
-  'products.delete': 'Delete Products',
+  // Location
+  'locations.read': 'View Locations',
+
+  // HR - Attendance
+  'timesheet.read': 'View Attendance',
+  'timesheet.create': 'Create Attendance',
+  'timesheet.update': 'Update Attendance',
+  'timesheet.delete': 'Delete Attendance',
+
+  // HR - Leave
+  'leave.read': 'View Leave',
+  'leave.create': 'Create Leave',
+  'leave.update': 'Update Leave',
+  'leave.delete': 'Delete Leave',
+
+  // HR - Salary
+  'salary.read': 'View Own Salary',
+  'salary.readAll': 'View All Salaries',
+  'salary.create': 'Create Salary',
+  'salary.update': 'Update Salary',
+  'salary.delete': 'Delete Salary',
+
+  // HR - Payslip
+  'salary.payslip': 'View Payslip',
+  'salary.payslip.generate': 'Generate Payslip',
+  'salary.payslip.send': 'Send Payslip',
+
+  // HR - Candidates
+  'candidates.read': 'View Candidates',
+  'candidates.create': 'Create Candidates',
+  'candidates.update': 'Update Candidates',
+  'candidates.delete': 'Delete Candidates',
+
+  // HR - Configuration
+  'hr.settings.read': 'View HR Configuration',
+  'hr.settings.update': 'Update HR Configuration',
 
   // Reports
   'reports.read': 'View Reports',
+  'reports.sales': 'View Sales Reports',
+  'reports.team': 'View Team Reports',
 
-  // Settings
-  'settings.users.read': 'View Users',
-  'settings.users.create': 'Create Users',
-  'settings.users.update': 'Update Users',
-  'settings.users.delete': 'Delete Users',
+  // Settings - Staff
+  'settings.users.read': 'View Staff',
+  'settings.users.create': 'Create Staff',
+  'settings.users.update': 'Update Staff',
+  'settings.users.delete': 'Delete Staff',
 
+  // Settings - Roles
   'settings.roles.read': 'View Roles',
   'settings.roles.create': 'Create Roles',
   'settings.roles.update': 'Update Roles',
   'settings.roles.delete': 'Delete Roles',
 
+  // Settings - General
   'settings.manage': 'Manage Settings',
+
+  // Config
+  'config.read': 'View Configurations',
+  'config.update': 'Update Configurations',
+
+  // Support
+  'support.read': 'View Support',
 };
 
 // Role-based permissions
@@ -214,25 +214,38 @@ export const ROLE_PERMISSIONS: Record<Role, (Permission | 'ALL')[]> = {
 };
 
 // Route to permission mapping (make routes optional if no specific permission needed)
-export const ROUTE_PERMISSIONS: Record<string, Permission | null> = {
-  [PATH_CRM.dashboard]: null, // Dashboard always accessible
-  [PATH_CRM.leads]: 'leads.read',
+export const ROUTE_PERMISSIONS: Record<string, any> = {
+  [PATH_CRM.dashboard]: null,
 
-  [PATH_CRM.activities.tasks]: 'activities.read',
-  [PATH_CRM.activities.meetings]: 'activities.read',
-  [PATH_CRM.activities.calendar]: 'activities.read',
+  // CRM
+  [PATH_CRM.leads]: 'leads.read',
+  [PATH_CRM.activities.leads]: 'leads_activities.read',
+  [PATH_CRM.activities.tasks]: 'tasks.read',
   [PATH_CRM.calls]: 'calls.read',
-  [PATH_CRM.recordings]: 'calls.read',
-  [PATH_CRM.vendors]: 'vendors.read',
-  [PATH_CRM.products]: 'products.read',
+  [PATH_CRM.recordings]: 'recordings.read',
+  [PATH_CRM.locations]: 'locations.read',
+
+  // HR
+  [PATH_CRM.hr.Attendance]: 'timesheet.read',
+  [PATH_CRM.hr.leave]: 'leave.read',
+  [PATH_CRM.hr.salarySetting]: 'salary.readAll',
+  [PATH_CRM.hr.payslip]: 'salary.payslip',
+  [PATH_CRM.hr.candidate]: 'candidates.read',
+  [PATH_CRM.hr.Settings]: 'hr.settings.read',
+
+  // Reports
   [PATH_CRM.reports.overview]: 'reports.read',
-  [PATH_CRM.reports.sales]: 'reports.read',
-  [PATH_CRM.reports.team]: 'reports.read',
+  [PATH_CRM.reports.sales]: 'reports.sales',
+  [PATH_CRM.reports.team]: 'reports.team',
+
+  // Settings
   [PATH_CRM.settings.users]: 'settings.users.read',
   [PATH_CRM.settings.roles]: 'settings.roles.read',
-  [PATH_CRM.settings.pipelines]: 'settings.manage',
   [PATH_CRM.settings.sources]: 'settings.manage',
   [PATH_CRM.settings.integrations]: 'settings.manage',
+
+  // Config & Support
+  [PATH_CRM.config]: 'config.read',
   [PATH_CRM.support]: 'support.read',
 };
 
@@ -271,19 +284,23 @@ export const getPermissionOptions = () => {
 // Module label map (optional: better headings)
 export const PERMISSION_GROUP_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
-  customers: 'Customers',
   leads: 'Leads',
-  contacts: 'Contacts',
-  accounts: 'Accounts',
-  deals: 'Deals',
-  activities: 'Activities',
+  leads_activities: 'Lead Activities',
+  tasks: 'Tasks',
   calls: 'Calls',
-  vendors: 'Vendors',
-  products: 'Products',
+  recordings: 'Recordings',
+  locations: 'Location',
+  timesheet: 'Attendance',
+  leave: 'Leave',
+  salary: 'Salary & Payslip',
+  candidates: 'Candidates',
+  hr: 'HR Configuration',
   reports: 'Reports',
   settings: 'Settings',
-  'settings.users': 'Settings • Users',
+  'settings.users': 'Settings • Staff',
   'settings.roles': 'Settings • Roles',
+  config: 'Configurations',
+  support: 'Support',
 };
 
 // group key finder

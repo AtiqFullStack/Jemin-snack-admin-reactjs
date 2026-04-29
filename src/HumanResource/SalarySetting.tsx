@@ -24,6 +24,7 @@ import type { TableProps } from 'antd';
 import { EditOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSalary } from './../zustand';
+import { usePermissions } from 'src/hooks';
 
 const { Title, Text } = Typography;
 
@@ -183,6 +184,7 @@ const SalarySetting = () => {
     updateSalary,
   } = useSalary();
 
+  const { canCreate, canUpdate, canRead, customCondition } = usePermissions();
   const [allStaffs, setAllStaffs] = useState<Staff[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Staff | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -254,8 +256,11 @@ const SalarySetting = () => {
   }, [employe, selectedEmployee]);
 
   useEffect(() => {
-    getEmployeDetailsWithSalary();
-  }, []);
+    console.log(customCondition('salary.readAll'));
+    if (customCondition('salary.readAll')) {
+      getEmployeDetailsWithSalary();
+    }
+  }, [customCondition('salary.readAll')]);
 
   const filteredStaffs = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
@@ -457,16 +462,23 @@ const SalarySetting = () => {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
-        <Button
-          type={selectedEmployee?._id === record._id ? 'primary' : 'default'}
-          icon={<EditOutlined />}
-          onClick={(event) => {
-            event.stopPropagation();
-            handleSelectEmployee(record);
-          }}
-        >
-          Edit
-        </Button>
+        <>
+          {canUpdate('salary') ||
+            (canCreate('salary') && (
+              <Button
+                type={
+                  selectedEmployee?._id === record._id ? 'primary' : 'default'
+                }
+                icon={<EditOutlined />}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleSelectEmployee(record);
+                }}
+              >
+                Edit
+              </Button>
+            ))}
+        </>
       ),
     },
   ];

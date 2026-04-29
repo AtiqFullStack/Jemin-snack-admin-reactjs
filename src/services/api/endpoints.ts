@@ -16,7 +16,8 @@ export const API_ENDPOINTS = {
 
   // ==================== ROLES & PERMISSIONS ====================
   ROLES: {
-    LIST: '/roles/get',
+    LIST: (roleId: any) =>
+      roleId ? `/roles/get?roleId=${roleId}` : '/roles/get',
     GET: (id: string) => `/roles/${id}`,
     CREATE: '/roles/create',
     UPDATE: (id: string) => `/roles/${id}`,

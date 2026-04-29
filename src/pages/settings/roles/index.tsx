@@ -21,7 +21,10 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { getPermissionsGrouped, PERMISSIONS } from '../../../config/permissions';
+import {
+  getPermissionsGrouped,
+  PERMISSIONS,
+} from '../../../config/permissions';
 import './styles.css';
 import roleService from '../../../services/roleService';
 import { usePermissions } from '../../../hooks';
@@ -78,7 +81,7 @@ const RolesPage = () => {
   };
 
   useEffect(() => {
-    getRoles()
+    getRoles(null)
       .then((fetchedRoles: any) => {
         if (fetchedRoles.success) {
           setRoles((fetchedRoles.data ?? []).map(normalizeRole));
@@ -146,11 +149,11 @@ const RolesPage = () => {
         return (
           <Space wrap>
             {safePermissions.slice(0, 3).map((p) => (
-            <Tag key={p}>
-              {p === '*' || p === 'ALL'
-                ? 'All Permissions'
-                : permissionLabelMap[p] || p}
-            </Tag>
+              <Tag key={p}>
+                {p === '*' || p === 'ALL'
+                  ? 'All Permissions'
+                  : permissionLabelMap[p] || p}
+              </Tag>
             ))}
             {safePermissions.length > 3 && (
               <Tag>+{safePermissions.length - 3} more</Tag>
@@ -211,79 +214,84 @@ const RolesPage = () => {
   };
 
   const handleSaveRole = async () => {
-    form.validateFields().then(async (values) => {
-      const normalizedRoleName = values.name.trim();
+    form
+      .validateFields()
+      .then(async (values) => {
+        const normalizedRoleName = values.name.trim();
 
-      if (hasDuplicateRoleName(normalizedRoleName)) {
-        form.setFields([
-          { name: 'name', errors: ['Role name already exists'] },
-        ]);
-        return;
-      }
-
-      form.setFields([{ name: 'name', errors: [] }]);
-
-      if (editingRole) {
-        // Update existing role
-        const updatedRole: Role = {
-          ...editingRole,
-          name: normalizedRoleName,
-          description: values.description,
-          permissions: selectedPermissions,
-        };
-        const res = (await updateRoles(editingRole._id!, updatedRole)) as any;
-        if (res.success) {
-          const normalizedUpdatedRole = normalizeRole(updatedRole);
-          setRoles(
-            roles.map((r) =>
-              r._id === editingRole._id ? normalizedUpdatedRole : r
-            )
-          );
-          message.success(res.message || 'Role updated successfully');
-        } else {
-          if (res?.message && /exist|duplicate|already/i.test(res.message)) {
-            form.setFields([{ name: 'name', errors: [res.message] }]);
-            return;
-          }
-          message.error(res.message || 'Failed to update role');
+        if (hasDuplicateRoleName(normalizedRoleName)) {
+          form.setFields([
+            { name: 'name', errors: ['Role name already exists'] },
+          ]);
+          return;
         }
-      } else {
-        // Create new role
-        const newRole: Role = {
-          id: `R-${String(roles.length + 1).padStart(3, '0')}`,
-          name: normalizedRoleName,
-          description: values.description,
-          permissions: selectedPermissions,
-          users_count: 0,
-          created_at: new Date().toISOString().split('T')[0],
-        };
-        const res = (await createRoles(newRole)) as any;
-        if (res.success) {
-          const createdRole = normalizeRole(res.data ?? newRole);
-          setRoles([...roles, createdRole]);
-          message.success(res.message || 'Role created successfully');
-        } else {
-          if (res?.message && /exist|duplicate|already/i.test(res.message)) {
-            form.setFields([{ name: 'name', errors: [res.message] }]);
-            return;
-          }
-          message.error(res.message || 'Failed to create role');
-        }
-      }
-      setIsDrawerOpen(false);
-      form.resetFields();
-      setSelectedPermissions([]);
-      setEditingRole(null);
-    }).catch((error: any) => {
-      const apiMessage =
-        error?.response?.data?.message || error?.message || 'Failed to save role';
 
-      if (/exist|duplicate|already/i.test(apiMessage)) {
-        form.setFields([{ name: 'name', errors: [apiMessage] }]);
-        return;
-      }
-      message.error(apiMessage);
-    });
+        form.setFields([{ name: 'name', errors: [] }]);
+
+        if (editingRole) {
+          // Update existing role
+          const updatedRole: Role = {
+            ...editingRole,
+            name: normalizedRoleName,
+            description: values.description,
+            permissions: selectedPermissions,
+          };
+          const res = (await updateRoles(editingRole._id!, updatedRole)) as any;
+          if (res.success) {
+            const normalizedUpdatedRole = normalizeRole(updatedRole);
+            setRoles(
+              roles.map((r) =>
+                r._id === editingRole._id ? normalizedUpdatedRole : r
+              )
+            );
+            message.success(res.message || 'Role updated successfully');
+          } else {
+            if (res?.message && /exist|duplicate|already/i.test(res.message)) {
+              form.setFields([{ name: 'name', errors: [res.message] }]);
+              return;
+            }
+            message.error(res.message || 'Failed to update role');
+          }
+        } else {
+          // Create new role
+          const newRole: Role = {
+            id: `R-${String(roles.length + 1).padStart(3, '0')}`,
+            name: normalizedRoleName,
+            description: values.description,
+            permissions: selectedPermissions,
+            users_count: 0,
+            created_at: new Date().toISOString().split('T')[0],
+          };
+          const res = (await createRoles(newRole)) as any;
+          if (res.success) {
+            const createdRole = normalizeRole(res.data ?? newRole);
+            setRoles([...roles, createdRole]);
+            message.success(res.message || 'Role created successfully');
+          } else {
+            if (res?.message && /exist|duplicate|already/i.test(res.message)) {
+              form.setFields([{ name: 'name', errors: [res.message] }]);
+              return;
+            }
+            message.error(res.message || 'Failed to create role');
+          }
+        }
+        setIsDrawerOpen(false);
+        form.resetFields();
+        setSelectedPermissions([]);
+        setEditingRole(null);
+      })
+      .catch((error: any) => {
+        const apiMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to save role';
+
+        if (/exist|duplicate|already/i.test(apiMessage)) {
+          form.setFields([{ name: 'name', errors: [apiMessage] }]);
+          return;
+        }
+        message.error(apiMessage);
+      });
   };
 
   const handlePermissionChange = (permissionKey: string, checked: boolean) => {

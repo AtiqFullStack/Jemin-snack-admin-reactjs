@@ -5,7 +5,6 @@ import {
   BarChartOutlined,
   CalendarOutlined,
   CustomerServiceOutlined,
-  FileTextOutlined,
   HistoryOutlined,
   PhoneOutlined,
   SettingOutlined,
@@ -17,12 +16,9 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { getThemeColors } from '../../theme/colors';
 import { Logo } from '../../components';
-import {
-  PATH_CRM,
-  // Role as PermissionRole,
-  hasRouteAccess,
-} from '../../config/permissions';
+import { PATH_CRM, hasRouteAccess } from '../../config/permissions';
 import { useAuth } from '../../hooks';
+import { usePermissions } from '../../hooks/usePermissions';
 import { LocationEditIcon } from 'lucide-react';
 
 const { Sider } = Layout;
@@ -238,18 +234,10 @@ const SideNav = ({ ...others }: SideNavProps) => {
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [current, setCurrent] = useState<string>('');
   const { user } = useAuth() as any;
+  const { userPermissions } = usePermissions();
 
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const colors = getThemeColors(mytheme as 'dark' | 'light');
-
-  // Get user's role permissions from auth state
-  // const user = useSelector((state: RootState) => state.auth?.user);
-  // console.log(user);
-
-  const userPermissions = user?.roleId?.permissions || [];
-
-  // console.log('User:', user);
-  // console.log('User Permissions:', userPermissions);
 
   const items = useMemo(
     () => filterMenuByRole(CRM_MENU_ITEMS, userPermissions),

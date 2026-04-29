@@ -26,7 +26,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
   const currentPath = location.pathname.replace(/\/+$/, '') || '/';
   const userPermissions = user?.roleId?.permissions || [];
-
   // Show loading spinner while checking auth status
   if (isLoading) {
     return (

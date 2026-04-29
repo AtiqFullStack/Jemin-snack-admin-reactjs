@@ -34,7 +34,7 @@ const LeavePolicySettingsTab = () => {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = (await getRoles()) as any;
+        const response = (await getRoles(null)) as any;
         setRoles(response?.data ?? []);
       } catch (error) {
         console.log(error);

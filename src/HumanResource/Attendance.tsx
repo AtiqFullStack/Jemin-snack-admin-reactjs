@@ -22,11 +22,13 @@ import {
 import {
   CalendarOutlined,
   EditOutlined,
+  EyeOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import attendanceService from '../services/attendanceService';
+import { usePermissions } from 'src/hooks';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -147,6 +149,8 @@ const Attendance = () => {
   const [form] = Form.useForm<AttendanceFormValues>();
   const { getAttendanceList, updateAttendance, deleteAttendance } =
     attendanceService();
+
+  const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
   const [records, setRecords] = useState<AttendanceTableRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
@@ -518,16 +522,32 @@ const Attendance = () => {
       width: 170,
       render: (_, record) => (
         <Space>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => openEditDrawer(record)}
-          >
-            Edit
-          </Button>
-          <Button danger type="text" onClick={() => handleDelete(record)}>
-            Delete
-          </Button>
+          {canRead('timesheet') && (
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              onClick={() => {
+                // viewAttendance(record);
+              }}
+            >
+              View
+            </Button>
+          )}
+
+          {canUpdate('timesheet') && (
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => openEditDrawer(record)}
+            >
+              Edit
+            </Button>
+          )}
+          {canDelete('timesheet') && (
+            <Button danger type="text" onClick={() => handleDelete(record)}>
+              Delete
+            </Button>
+          )}
         </Space>
       ),
     },

@@ -38,6 +38,7 @@ import {
   type HrSettingsForm,
   type HrShift,
 } from './hr-settings/types';
+import { usePermissions } from 'src/hooks';
 
 const { Title, Text } = Typography;
 const { useToken } = theme;
@@ -150,6 +151,8 @@ const HrSettings = () => {
   );
   const [deletedHolidayIds, setDeletedHolidayIds] = useState<string[]>([]);
   const [savingProgress, setSavingProgress] = useState<number | null>(null);
+
+  const { canCreate, canUpdate } = usePermissions();
   const activeSection = tabMeta[activeKey] ?? tabMeta.company;
 
   const setCompanyName = (value: string) => {
@@ -661,20 +664,22 @@ const HrSettings = () => {
                 </div>
               )}
               <Tooltip title="Save all changes in current section">
-                <Button
-                  type="primary"
-                  icon={<SaveOutlined />}
-                  onClick={handleSave}
-                  loading={loading}
-                  size="large"
-                  style={{
-                    minWidth: 156,
-                    borderRadius: 12,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  }}
-                >
-                  {savingProgress === 100 ? 'Saved!' : 'Save Settings'}
-                </Button>
+                {canUpdate('config') && (
+                  <Button
+                    type="primary"
+                    icon={<SaveOutlined />}
+                    onClick={handleSave}
+                    loading={loading}
+                    size="large"
+                    style={{
+                      minWidth: 156,
+                      borderRadius: 12,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    {savingProgress === 100 ? 'Saved!' : 'Save Settings'}
+                  </Button>
+                )}
               </Tooltip>
             </Space>
           </Flex>
