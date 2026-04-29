@@ -281,8 +281,8 @@ const SigleCandidate = () => {
       date: toDateInput(candidate?.date),
       joiningDate: toDateInput(candidate?.joiningDate),
 
-      ctc: candidate?.ctc || 420000,
-      monthlySalary: candidate?.monthlySalary || 35000,
+      ctc: candidate?.ctc,
+      monthlySalary: candidate?.monthlySalary,
 
       probationPeriod: candidate?.probationPeriod || 3,
       reviewPeriod: candidate?.reviewPeriod || 7,
@@ -305,7 +305,12 @@ const SigleCandidate = () => {
   };
 
   const handleEditSubmit = async () => {
-    const values = form.getFieldsValue();
+    const formValues = form.getFieldsValue();
+    const monthlySalary = Number(formValues.monthlySalary);
+    const values = {
+      ...formValues,
+      ...(Number.isFinite(monthlySalary) ? { ctc: monthlySalary * 12 } : {}),
+    };
     console.log(values);
     // return
     const res = (await updateCandidate(candidateId, values)) as any;

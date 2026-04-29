@@ -22,6 +22,39 @@ const DocumentForm = (props: any) => {
 
   // 🔥 Watch probationPeriod
   const probation = Form.useWatch('probationPeriod', form);
+  const handleValuesChange = (changedValues: any) => {
+    if (Object.prototype.hasOwnProperty.call(changedValues, 'monthlySalary')) {
+      if (
+        changedValues.monthlySalary === null ||
+        changedValues.monthlySalary === undefined ||
+        changedValues.monthlySalary === ''
+      ) {
+        return;
+      }
+
+      const salary = Number(changedValues.monthlySalary);
+
+      if (Number.isFinite(salary)) {
+        form.setFieldsValue({ ctc: salary * 12 });
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(changedValues, 'ctc')) {
+      if (
+        changedValues.ctc === null ||
+        changedValues.ctc === undefined ||
+        changedValues.ctc === ''
+      ) {
+        return;
+      }
+
+      const ctc = Number(changedValues.ctc);
+
+      if (Number.isFinite(ctc)) {
+        form.setFieldsValue({ monthlySalary: (ctc / 12).toFixed(2) });
+      }
+    }
+  };
 
   // 🔥 Auto generate salesTargets based on probation
   useEffect(() => {
@@ -38,11 +71,11 @@ const DocumentForm = (props: any) => {
     }));
 
     form.setFieldsValue({ salesTargets: generated });
-  }, [probation]);
+  }, [probation, form]);
 
   return (
     <div style={{ padding: '8px 32px' }}>
-      <Form form={form} layout="vertical">
+      <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
         <Row gutter={16}>
           {(DOC_FIELDS[editDoc?.title] || []).map((field: any) => {
             const isSalesTarget = field.key === 'salesTargets';
