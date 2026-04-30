@@ -251,6 +251,9 @@ export const ROUTE_PERMISSIONS: Record<string, any> = {
   [PATH_CRM.settings.sources]: 'settings.manage',
   [PATH_CRM.settings.integrations]: 'settings.manage',
 
+  // Products
+  [PATH_CRM.products]: 'products.read',
+
   // Config & Support
   [PATH_CRM.config]: 'config.read',
   [PATH_CRM.support]: 'support.read',

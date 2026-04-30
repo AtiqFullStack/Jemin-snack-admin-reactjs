@@ -246,12 +246,12 @@ const SideNav = ({ ...others }: SideNavProps) => {
 
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const colors = getThemeColors(mytheme as 'dark' | 'light');
-  console.log(userPermissions);
+
   const items = useMemo(
     () => filterMenuByRole(CRM_MENU_ITEMS, userPermissions),
     [userPermissions]
   );
-  console.log(items);
+
   // Only these submenus should be "single open"
   const rootSubmenuKeys = [
     'submenu-activities',

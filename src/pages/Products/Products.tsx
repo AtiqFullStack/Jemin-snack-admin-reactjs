@@ -406,9 +406,9 @@ const Products = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      {JSON.stringify(canCreate('products'))} <br />
+      {/* {JSON.stringify(canCreate('products'))} <br />
       {JSON.stringify(canUpdate('products'))} <br />
-      {JSON.stringify(canDelete('products'))}
+      {JSON.stringify(canDelete('products'))} */}
       <Space
         direction="vertical"
         size={20}

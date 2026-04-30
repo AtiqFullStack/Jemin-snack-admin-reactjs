@@ -225,7 +225,7 @@ const StaffPage = () => {
       title: 'StaffId',
       dataIndex: 'Id',
       key: 'Id',
-      render: (_: any, record: User) => (
+      render: (_: any) => (
         <p
           className="bold"
           style={{

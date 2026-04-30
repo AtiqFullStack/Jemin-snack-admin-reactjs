@@ -3,15 +3,6 @@
  * Contains all products-related types, API functions, and React Query hooks
  */
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  UseQueryOptions,
-} from '@tanstack/react-query';
-import { apiRequest } from '../../services/api/apiClient';
-import { API_ENDPOINTS } from '../../services/api/endpoints';
-
 // ==================== TYPES ====================
 
 export interface ProductDto {
@@ -95,50 +86,7 @@ export const productKeys = {
   categories: () => [...productKeys.all, 'categories'] as const,
 };
 
-// ==================== API FUNCTIONS ====================
-
-const productsApi = {
-  getAll: () =>
-    apiRequest.get<ProductDto[]>(API_ENDPOINTS.DASHBOARD.PRODUCTS.LIST),
-
-  getTop: () =>
-    apiRequest.get<ProductDto[]>(API_ENDPOINTS.DASHBOARD.PRODUCTS.TOP),
-
-  getById: (id: string) =>
-    apiRequest.get<ProductDto>(API_ENDPOINTS.DASHBOARD.PRODUCTS.GET(id)),
-
-  getCategories: () =>
-    apiRequest.get<CategoryListResponse>(
-      API_ENDPOINTS.DASHBOARD.PRODUCTS.CATEGORIES
-    ),
-
-  create: (data: Partial<ProductDto>) =>
-    apiRequest.post(API_ENDPOINTS.DASHBOARD.PRODUCTS.CREATE, data),
-
-  update: (id: string, data: Partial<ProductDto>) =>
-    apiRequest.put(API_ENDPOINTS.DASHBOARD.PRODUCTS.UPDATE(id), data),
-
-  delete: (id: string) =>
-    apiRequest.delete(API_ENDPOINTS.DASHBOARD.PRODUCTS.DELETE(id)),
-};
-
 // ==================== QUERY HOOKS ====================
-
-export const useProducts = (options?: UseQueryOptions<ProductDto[]>) => {
-  return useQuery({
-    queryKey: productKeys.all,
-    queryFn: productsApi.getAll,
-    ...options,
-  });
-};
-
-export const useTopProducts = (options?: UseQueryOptions<ProductDto[]>) => {
-  return useQuery({
-    queryKey: productKeys.top(),
-    queryFn: productsApi.getTop,
-    ...options,
-  });
-};
 
 // export const useProduct = (id: string) => {
 //   return useQuery({
@@ -148,48 +96,4 @@ export const useTopProducts = (options?: UseQueryOptions<ProductDto[]>) => {
 //   });
 // };
 
-export const useProductCategories = () => {
-  return useQuery({
-    queryKey: productKeys.categories(),
-    queryFn: productsApi.getCategories,
-  });
-};
-
 // ==================== MUTATION HOOKS ====================
-
-export const useCreateProduct = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: productsApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-    },
-  });
-};
-
-export const useUpdateProduct = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<ProductDto> }) =>
-      productsApi.update(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-      queryClient.invalidateQueries({
-        queryKey: productKeys.detail(variables.id),
-      });
-    },
-  });
-};
-
-export const useDeleteProduct = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: productsApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-    },
-  });
-};

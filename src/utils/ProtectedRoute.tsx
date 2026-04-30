@@ -8,6 +8,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useAuth } from '../contexts/AuthContext';
 import { hasRouteAccess } from '../config/permissions';
+import { usePermissions } from '../hooks/usePermissions';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -22,10 +23,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAuth = true,
 }) => {
-  const { isAuthenticated, isLoading, user } = useAuth() as any;
+  const { isAuthenticated, isLoading } = useAuth() as any;
+  const { userPermissions } = usePermissions();
   const location = useLocation();
   const currentPath = location.pathname.replace(/\/+$/, '') || '/';
-  const userPermissions = user?.roleId?.permissions || [];
   // Show loading spinner while checking auth status
   if (isLoading) {
     return (
