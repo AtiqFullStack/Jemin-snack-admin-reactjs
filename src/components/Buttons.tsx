@@ -1,6 +1,5 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
-import React from 'react';
 
 const Buttons = () => {
   const openEditDrawer = (record: any) => {
@@ -9,6 +8,7 @@ const Buttons = () => {
   const handleDelete = (record: any) => {
     console.log('Delete record:', record);
   };
+  const record = {};
   return (
     <Space>
       <Button

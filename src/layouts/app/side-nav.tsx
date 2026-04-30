@@ -17,7 +17,7 @@ import { RootState } from '../../redux/store';
 import { getThemeColors } from '../../theme/colors';
 import { Logo } from '../../components';
 import { PATH_CRM, hasRouteAccess } from '../../config/permissions';
-import { useAuth } from '../../hooks';
+
 import { usePermissions } from '../../hooks/usePermissions';
 import { LocationEditIcon } from 'lucide-react';
 
@@ -233,7 +233,7 @@ const SideNav = ({ ...others }: SideNavProps) => {
   const { pathname } = useLocation();
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [current, setCurrent] = useState<string>('');
-  const { user } = useAuth() as any;
+  // const { user } = useAuth() as any;
   const { userPermissions } = usePermissions();
 
   const { mytheme } = useSelector((state: RootState) => state.theme);

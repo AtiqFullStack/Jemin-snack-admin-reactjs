@@ -16,6 +16,7 @@ import {
   Spin,
   Table,
   Tag,
+  TimePicker,
   Typography,
   message,
 } from 'antd';
@@ -47,6 +48,7 @@ type ApiAttendanceRecord = {
         phone?: string;
         department?: string;
         position?: string;
+        Id?: string;
       }
     | string;
   date: string;
@@ -57,8 +59,13 @@ type ApiAttendanceRecord = {
     time?: string;
   };
   totalBreakMinutes?: number;
+  grossMinutes?: number;
+  netWorkingMinutes?: number;
   totalHours?: number;
   grossHours?: number;
+  lateMinutes?: number;
+  earlyLeaveMinutes?: number;
+  overtimeMinutes?: number;
   status: ApiAttendanceStatus;
   isLate?: boolean;
   shift?: {
@@ -81,6 +88,10 @@ type AttendanceTableRecord = {
   checkIn: string;
   checkOut: string;
   workHours: string;
+  grossHours: string;
+  totalBreak: string;
+  lateMinutes: string;
+  earlyLeaveMinutes: string;
   overtime: string;
   date: string;
   notes: string;
@@ -88,9 +99,12 @@ type AttendanceTableRecord = {
 };
 
 type AttendanceFormValues = {
+  date: Dayjs;
   status: ApiAttendanceStatus;
-  shiftStart: string;
-  shiftEnd: string;
+  checkInTime?: Dayjs | null;
+  checkOutTime?: Dayjs | null;
+  shiftStart?: Dayjs | null;
+  shiftEnd?: Dayjs | null;
   notes: string;
 };
 
@@ -125,7 +139,7 @@ const getEmployeeCode = (employee: ApiAttendanceRecord['employeeId']) => {
     return '-';
   }
 
-  return employee._id?.slice(-6).toUpperCase() || '-';
+  return employee.Id || employee._id?.slice(-6).toUpperCase() || '-';
 };
 
 const formatClockTime = (value?: string) => {
@@ -141,16 +155,49 @@ const formatClockTime = (value?: string) => {
   return parsed.format('hh:mm A');
 };
 
-const formatHours = (value?: number) => `${Number(value ?? 0).toFixed(2)}h`;
+const formatDurationFromMinutes = (value?: number) => {
+  const totalMinutes = Math.max(Math.round(Number(value ?? 0)), 0);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (!hours) {
+    return `${minutes}m`;
+  }
+
+  if (!minutes) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${minutes}m`;
+};
+
+const formatHours = (value?: number) =>
+  formatDurationFromMinutes(Number(value ?? 0) * 60);
 const formatDateLabel = (value?: string) =>
   value && dayjs(value).isValid() ? dayjs(value).format('DD MMM YYYY') : '-';
+const parseShiftTime = (value?: string) => {
+  const [hours, minutes] = (value || '').split(':').map(Number);
+
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+
+  return dayjs().hour(hours).minute(minutes).second(0).millisecond(0);
+};
 
 const Attendance = () => {
   const [form] = Form.useForm<AttendanceFormValues>();
   const { getAttendanceList, updateAttendance, deleteAttendance } =
     attendanceService();
 
-  const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
+  const { canUpdate, canDelete, canRead } = usePermissions();
   const [records, setRecords] = useState<AttendanceTableRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
@@ -219,9 +266,11 @@ const Attendance = () => {
           checkIn: formatClockTime(item.checkIn?.time),
           checkOut: formatClockTime(item.checkOut?.time),
           workHours: formatHours(item.totalHours),
-          overtime: formatHours(
-            Math.max((item.grossHours ?? 0) - (item.totalHours ?? 0), 0)
-          ),
+          grossHours: formatHours(item.grossHours),
+          totalBreak: formatDurationFromMinutes(item.totalBreakMinutes),
+          lateMinutes: formatDurationFromMinutes(item.lateMinutes),
+          earlyLeaveMinutes: formatDurationFromMinutes(item.earlyLeaveMinutes),
+          overtime: formatDurationFromMinutes(item.overtimeMinutes),
           date: item.date,
           notes: item.remarks?.trim() || '-',
           raw: item,
@@ -293,9 +342,16 @@ const Attendance = () => {
   const openEditDrawer = (record: AttendanceTableRecord) => {
     setEditingRecord(record);
     form.setFieldsValue({
+      date: dayjs(record.raw.date),
       status: record.status,
-      shiftStart: record.shiftStart,
-      shiftEnd: record.shiftEnd,
+      checkInTime: record.raw.checkIn?.time
+        ? dayjs(record.raw.checkIn.time)
+        : null,
+      checkOutTime: record.raw.checkOut?.time
+        ? dayjs(record.raw.checkOut.time)
+        : null,
+      shiftStart: parseShiftTime(record.shiftStart),
+      shiftEnd: parseShiftTime(record.shiftEnd),
       notes: record.raw.remarks?.trim() || '',
     });
     setIsDrawerOpen(true);
@@ -327,10 +383,17 @@ const Attendance = () => {
     try {
       const values = await form.validateFields();
       const response = (await updateAttendance(editingRecord.id, {
+        date: values.date?.format('YYYY-MM-DD'),
         status: values.status,
+        checkIn: values.checkInTime
+          ? { time: values.checkInTime.toISOString() }
+          : {},
+        checkOut: values.checkOutTime
+          ? { time: values.checkOutTime.toISOString() }
+          : {},
         shift: {
-          start: values.shiftStart?.trim() || '',
-          end: values.shiftEnd?.trim() || '',
+          start: values.shiftStart?.format('HH:mm') || '',
+          end: values.shiftEnd?.format('HH:mm') || '',
         },
         remarks: values.notes?.trim() || '',
       })) as { success?: boolean; message?: string };
@@ -383,14 +446,18 @@ const Attendance = () => {
     const header = [
       'Employee Name',
       'Employee Code',
+      'Date',
+      'Status',
       'Department',
       'Designation',
-      'Date',
       'Shift',
-      'Status',
       'Check In',
       'Check Out',
-      'Work Hours',
+      'Net Hours',
+      'Gross Hours',
+      'Break',
+      'Late',
+      'Early Leave',
       'Overtime',
       'Notes',
     ];
@@ -398,14 +465,18 @@ const Attendance = () => {
     const rows = filteredRecords.map((record) => [
       record.employeeName,
       record.employeeCode,
+      dayjs(record.date).format('DD MMM YYYY'),
+      statusConfig[record.status].label,
       record.department,
       record.designation,
-      dayjs(record.date).format('DD MMM YYYY'),
       record.shiftLabel,
-      statusConfig[record.status].label,
       record.checkIn,
       record.checkOut,
       record.workHours,
+      record.grossHours,
+      record.totalBreak,
+      record.lateMinutes,
+      record.earlyLeaveMinutes,
       record.overtime,
       record.notes,
     ]);
@@ -448,18 +519,10 @@ const Attendance = () => {
           <div>
             <Text strong>{record.employeeName}</Text>
             <br />
-            <Text type="secondary">
-              {record.employeeCode} • {record.designation}
-            </Text>
+            <Text type="secondary">{record.employeeCode}</Text>
           </div>
         </Space>
       ),
-    },
-    {
-      title: 'Department',
-      dataIndex: 'department',
-      key: 'department',
-      width: 140,
     },
     {
       title: 'Date',
@@ -469,10 +532,27 @@ const Attendance = () => {
       render: (value: string) => formatDateLabel(value),
     },
     {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      render: (status: ApiAttendanceStatus) => (
+        <Tag color={statusConfig[status].color}>
+          {statusConfig[status].label}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Department',
+      dataIndex: 'department',
+      key: 'department',
+      width: 140,
+    },
+    {
       title: 'Shift',
       dataIndex: 'shiftLabel',
       key: 'shiftLabel',
-      width: 170,
+      width: 135,
     },
     {
       title: 'Check In',
@@ -487,27 +567,45 @@ const Attendance = () => {
       width: 110,
     },
     {
-      title: 'Hours',
+      title: 'Net',
       dataIndex: 'workHours',
       key: 'workHours',
+      width: 100,
+    },
+    {
+      title: 'Gross',
+      dataIndex: 'grossHours',
+      key: 'grossHours',
+      width: 100,
+    },
+    {
+      title: 'Break',
+      dataIndex: 'totalBreak',
+      key: 'totalBreak',
+      width: 90,
+    },
+    {
+      title: 'Late',
+      dataIndex: 'lateMinutes',
+      key: 'lateMinutes',
+      width: 100,
+      render: (value: string, record) => (
+        <Text type={record.raw.lateMinutes ? 'danger' : 'secondary'}>
+          {value}
+        </Text>
+      ),
+    },
+    {
+      title: 'Early',
+      dataIndex: 'earlyLeaveMinutes',
+      key: 'earlyLeaveMinutes',
       width: 100,
     },
     {
       title: 'OT',
       dataIndex: 'overtime',
       key: 'overtime',
-      width: 90,
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (status: ApiAttendanceStatus) => (
-        <Tag color={statusConfig[status].color}>
-          {statusConfig[status].label}
-        </Tag>
-      ),
+      width: 100,
     },
     {
       title: 'Notes',
@@ -712,7 +810,7 @@ const Attendance = () => {
               dataSource={filteredRecords}
               size="small"
               pagination={{ pageSize: 14 }}
-              scroll={{ x: 1250 }}
+              scroll={{ x: 1550 }}
               rowHoverable={false}
             />
           </Spin>
@@ -721,7 +819,7 @@ const Attendance = () => {
 
       <Drawer
         title={editingRecord ? 'Edit Attendance Entry' : 'Edit Attendance'}
-        width={480}
+        width={560}
         open={isDrawerOpen}
         onClose={closeDrawer}
         destroyOnClose
@@ -766,15 +864,83 @@ const Attendance = () => {
                 />
               </Form.Item>
             </Col>
+            <Col span={24}>
+              <Form.Item
+                name="date"
+                label="Attendance Date"
+                rules={[
+                  { required: true, message: 'Attendance date is required' },
+                ]}
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="checkInTime" label="Check In">
+                <DatePicker
+                  allowClear
+                  showTime={{ format: 'HH:mm' }}
+                  format="DD MMM YYYY HH:mm"
+                  style={{ width: '100%' }}
+                  placeholder="Select check-in"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="checkOutTime" label="Check Out">
+                <DatePicker
+                  allowClear
+                  showTime={{ format: 'HH:mm' }}
+                  format="DD MMM YYYY HH:mm"
+                  style={{ width: '100%' }}
+                  placeholder="Select check-out"
+                />
+              </Form.Item>
+            </Col>
             <Col span={12}>
               <Form.Item name="shiftStart" label="Shift Start">
-                <Input placeholder="09:00 AM" />
+                <TimePicker
+                  format="HH:mm"
+                  style={{ width: '100%' }}
+                  placeholder="10:00"
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="shiftEnd" label="Shift End">
-                <Input placeholder="06:00 PM" />
+                <TimePicker
+                  format="HH:mm"
+                  style={{ width: '100%' }}
+                  placeholder="19:00"
+                />
               </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Card
+                size="small"
+                bordered={false}
+                style={{ background: '#fafafa' }}
+              >
+                <Row gutter={[12, 8]}>
+                  <Col span={8}>
+                    <Text type="secondary">Late</Text>
+                    <br />
+                    <Text strong>{editingRecord?.lateMinutes || '0m'}</Text>
+                  </Col>
+                  <Col span={8}>
+                    <Text type="secondary">Early Leave</Text>
+                    <br />
+                    <Text strong>
+                      {editingRecord?.earlyLeaveMinutes || '0m'}
+                    </Text>
+                  </Col>
+                  <Col span={8}>
+                    <Text type="secondary">Overtime</Text>
+                    <br />
+                    <Text strong>{editingRecord?.overtime || '0m'}</Text>
+                  </Col>
+                </Row>
+              </Card>
             </Col>
             <Col span={24}>
               <Form.Item name="notes" label="Remarks / Notes">

@@ -16,6 +16,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import staffService from '../../../services/staffService';
 import roleService from '../../../services/roleService';
 import { usePermissions } from '../../../hooks';
+import ShiftSelector from 'src/components/ShiftSelector';
 
 type UserStatus = 'active' | 'inactive';
 
@@ -30,6 +31,7 @@ type User = {
   created_at: string;
   createdAt?: string;
   password?: string;
+  shiftId?: any;
 };
 
 type Role = {
@@ -106,6 +108,7 @@ const StaffPage = () => {
   };
 
   const openEditModal = (record: User) => {
+    console.log(record);
     setEditingUser(record);
     form.setFieldsValue({
       firstName: record.firstName,
@@ -114,6 +117,7 @@ const StaffPage = () => {
       phone: record.phone,
       roleId: record.roleId?._id || record.roleId,
       status: record.status,
+      shiftId: record?.shiftId?._id,
     });
     setIsDrawerOpen(true);
   };
@@ -144,8 +148,6 @@ const StaffPage = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      console.log('cakiel');
-
       // Unique checks (client-side)
       const excludeId = editingUser?._id;
       if (isEmailTaken(values.email, excludeId)) {
@@ -165,6 +167,7 @@ const StaffPage = () => {
           phone: values.phone,
           roleId: values.roleId,
           status: values.status,
+          shiftId: values?.shiftId,
         };
         const res = (await updateStaff(editingUser._id, updated)) as any;
         if (res.success) {
@@ -183,6 +186,7 @@ const StaffPage = () => {
           phone: values.phone,
           roleId: values.roleId,
           status: values.status ?? 'active',
+          shiftId: values?.shiftId,
         };
 
         const res = (await createStaff(newUser)) as any;
@@ -217,6 +221,21 @@ const StaffPage = () => {
   };
 
   const columns = [
+    {
+      title: 'StaffId',
+      dataIndex: 'Id',
+      key: 'Id',
+      render: (_: any, record: User) => (
+        <p
+          className="bold"
+          style={{
+            fontWeight: '600',
+          }}
+        >
+          {_ ? _ : 'NA'}
+        </p>
+      ),
+    },
     {
       title: 'Name',
       key: 'name',
@@ -422,6 +441,8 @@ const StaffPage = () => {
               options={roles.map((r) => ({ value: r._id, label: r.name }))}
             />
           </Form.Item>
+
+          <ShiftSelector />
 
           {/* ✅ Optional but useful */}
           <Form.Item name="status" label="Status" initialValue="active">

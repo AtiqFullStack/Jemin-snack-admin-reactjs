@@ -184,7 +184,7 @@ const SalarySetting = () => {
     updateSalary,
   } = useSalary();
 
-  const { canCreate, canUpdate, canRead, customCondition } = usePermissions();
+  const { canCreate, canUpdate, customCondition } = usePermissions();
   const [allStaffs, setAllStaffs] = useState<Staff[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Staff | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

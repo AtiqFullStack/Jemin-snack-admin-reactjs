@@ -37,7 +37,7 @@ const Candidate = () => {
   const { getConfig } = configService();
 
   const [messageApi] = message.useMessage();
-  const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
+  const { canCreate, canDelete, canRead } = usePermissions();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const confirm: PopconfirmProps['onConfirm'] = async (e) => {
     console.log(e);

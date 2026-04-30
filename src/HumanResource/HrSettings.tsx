@@ -152,7 +152,7 @@ const HrSettings = () => {
   const [deletedHolidayIds, setDeletedHolidayIds] = useState<string[]>([]);
   const [savingProgress, setSavingProgress] = useState<number | null>(null);
 
-  const { canCreate, canUpdate } = usePermissions();
+  const { canUpdate } = usePermissions();
   const activeSection = tabMeta[activeKey] ?? tabMeta.company;
 
   const setCompanyName = (value: string) => {
