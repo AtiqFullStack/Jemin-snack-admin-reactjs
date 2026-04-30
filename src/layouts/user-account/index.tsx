@@ -21,6 +21,7 @@ import { useStylesContext } from '../../context';
 import { authService } from '../../services/auth/authService';
 
 import './styles.css';
+import { imageUrl } from 'src/utils/convertor';
 
 const { Link, Text } = Typography;
 
@@ -190,7 +191,7 @@ export const UserAccountLayout = () => {
           <Col xs={24} sm={8} lg={4}>
             {user?.avatar ? (
               <Image
-                src={user.avatar}
+                src={imageUrl(user.avatar)}
                 alt="user profile image"
                 height="100%"
                 width="100%"

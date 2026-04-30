@@ -5,6 +5,10 @@ export const timeConverter = (time: any) => {
   return converted;
 };
 
+export const imageUrl = (url: string) => {
+  return `${BASEURL}/${url}`;
+};
+
 export const getAttachmentUrl = (url?: string) => {
   if (!url) return '#';
   if (/^https?:\/\//i.test(url)) return url;

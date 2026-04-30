@@ -17,6 +17,7 @@ import staffService from '../../../services/staffService';
 import roleService from '../../../services/roleService';
 import { usePermissions } from '../../../hooks';
 import ShiftSelector from 'src/components/ShiftSelector';
+import { imageUrl } from 'src/utils/convertor';
 
 type UserStatus = 'active' | 'inactive';
 
@@ -221,6 +222,17 @@ const StaffPage = () => {
   };
 
   const columns = [
+    {
+      title: 'Image',
+      dataIndex: 'avatar',
+      key: 'avatar',
+      render: (_: any) => (
+        <img
+          style={{ width: 70, height: 70, borderRadius: '50%' }}
+          src={imageUrl(_)}
+        ></img>
+      ),
+    },
     {
       title: 'StaffId',
       dataIndex: 'Id',

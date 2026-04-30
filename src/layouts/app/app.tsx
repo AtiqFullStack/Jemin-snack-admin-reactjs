@@ -36,6 +36,8 @@ import { PATH_AUTH, PATH_USER_PROFILE } from '../../constants';
 // import { enableMockData } from '../../redux/data-mode/dataModeSlice';
 // import { RootState } from '../../redux/store.ts';
 import { useAuth } from '../../contexts/AuthContext.tsx';
+import { imageUrl } from 'src/utils/convertor.ts';
+import { authService } from 'src/services/auth/authService.ts';
 const { Content } = Layout;
 
 type AppLayoutProps = {
@@ -54,17 +56,37 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const navigate = useNavigate();
   const nodeRef = useRef(null);
   const floatBtnRef = useRef(null);
+  const getUser = localStorage.getItem('user');
   // const dispatch = useDispatch();
   // const { user, isAuthenticated } = useSelector(
   //   (state: RootState) => state.auth
   // );
   const { logout } = useAuth();
+  const [user, setUser] = useState<any>(null);
 
   const handleLogout = async () => {
     message.open({
       type: 'loading',
       content: 'signing you out',
     });
+
+    useEffect(() => {
+      console.log(getUser);
+      if (getUser) {
+        setUser(JSON.parse(getUser));
+      }
+      const profileDetails = async () => {
+        try {
+          const response = await authService.getProfile();
+          console.log({ response });
+          setUser(response ?? null);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+
+      // profileDetails();
+    }, [getUser]);
 
     // If authenticated, logout from API
     await logout();
@@ -96,6 +118,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     setCollapsed(isMobile);
   }, [isMobile]);
 
+  console.log(user);
   useEffect(() => {
     window.addEventListener('scroll', () => {
       if (window.scrollY > 5) {
@@ -189,7 +212,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
               <Dropdown menu={{ items }} trigger={['click']}>
                 <Flex>
                   <img
-                    src="/me.jpg"
+                    src={'./jpg'}
                     alt="user profile photo"
                     height={36}
                     width={36}
