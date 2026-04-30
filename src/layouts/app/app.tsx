@@ -36,8 +36,8 @@ import { PATH_AUTH, PATH_USER_PROFILE } from '../../constants';
 // import { enableMockData } from '../../redux/data-mode/dataModeSlice';
 // import { RootState } from '../../redux/store.ts';
 import { useAuth } from '../../contexts/AuthContext.tsx';
-import { imageUrl } from 'src/utils/convertor.ts';
-import { authService } from 'src/services/auth/authService.ts';
+// import { imageUrl } from 'src/utils/convertor.ts';
+// import { authService } from 'src/services/auth/authService.ts';
 const { Content } = Layout;
 
 type AppLayoutProps = {
@@ -75,15 +75,15 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       if (getUser) {
         setUser(JSON.parse(getUser));
       }
-      const profileDetails = async () => {
-        try {
-          const response = await authService.getProfile();
-          console.log({ response });
-          setUser(response ?? null);
-        } catch (error) {
-          console.log(error);
-        }
-      };
+      // const profileDetails = async () => {
+      //   try {
+      //     const response = await authService.getProfile();
+      //     console.log({ response });
+      //     setUser(response ?? null);
+      //   } catch (error) {
+      //     console.log(error);
+      //   }
+      // };
 
       // profileDetails();
     }, [getUser]);
