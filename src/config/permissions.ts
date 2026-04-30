@@ -33,6 +33,7 @@ export const PATH_CRM = {
   },
   calls: '/crm/calls',
   recordings: '/crm/recordings',
+  products: '/crm/products',
 
   reports: {
     overview: '/crm/reports/overview',
@@ -71,6 +72,12 @@ export const PERMISSIONS = {
   'tasks.create': 'Create Tasks',
   'tasks.update': 'Update Tasks',
   'tasks.delete': 'Delete Tasks',
+
+  // Products
+  'products.read': 'View Products',
+  'products.create': 'Create Products',
+  'products.update': 'Update Products',
+  'products.delete': 'Delete Products',
 
   // Calls
   'calls.read': 'View Calls',

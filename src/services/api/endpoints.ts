@@ -115,6 +115,23 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/activityLogs/${id}`,
   },
 
+  //=========================PRODUCTS===========================
+  PRODUCT: {
+    TYPE: {
+      GET: '/products/type',
+      POST: '/products/type',
+      UPDATE: (id: string) => `/products/type/${id}`,
+      DELETE: (id: string) => `/products/type/${id}`,
+    },
+    PRODUCT: {
+      GET: '/products',
+      GET_BY_ID: (id: string) => `/products/${id}`,
+      POST: '/products',
+      UPDATE: (id: string) => `/products/${id}`,
+      DELETE: (id: string) => `/products/${id}`,
+    },
+  },
+
   //=========================TASKS===========================
 
   TASK: {
@@ -181,15 +198,6 @@ export const API_ENDPOINTS = {
     // stats
     GET_STATS: '/auth/getDashBoardStats',
     // Products
-    PRODUCTS: {
-      LIST: '/antd/products',
-      GET: (id: string) => `/antd/products/${id}`,
-      CREATE: '/antd/products',
-      UPDATE: (id: string) => `/antd/products/${id}`,
-      DELETE: (id: string) => `/antd/products/${id}`,
-      TOP: '/antd/products/top',
-      CATEGORIES: '/antd/products/categories',
-    },
 
     // Orders
     ORDERS: {

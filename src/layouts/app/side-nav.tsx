@@ -7,6 +7,7 @@ import {
   CustomerServiceOutlined,
   HistoryOutlined,
   PhoneOutlined,
+  ProductOutlined,
   SettingOutlined,
   SolutionOutlined,
   UserOutlined,
@@ -69,6 +70,13 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
       PATH_CRM.recordings
     ),
   ]),
+
+  getItem(
+    <Link to={PATH_CRM.products}>Products</Link>,
+    PATH_CRM.products,
+    <ProductOutlined />
+  ),
+
   getItem(
     <Link to={PATH_CRM.locations}>Location</Link>,
     PATH_CRM.locations,
@@ -238,12 +246,12 @@ const SideNav = ({ ...others }: SideNavProps) => {
 
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const colors = getThemeColors(mytheme as 'dark' | 'light');
-
+  console.log(userPermissions);
   const items = useMemo(
     () => filterMenuByRole(CRM_MENU_ITEMS, userPermissions),
     [userPermissions]
   );
-
+  console.log(items);
   // Only these submenus should be "single open"
   const rootSubmenuKeys = [
     'submenu-activities',

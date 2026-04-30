@@ -140,13 +140,13 @@ export const useTopProducts = (options?: UseQueryOptions<ProductDto[]>) => {
   });
 };
 
-export const useProduct = (id: string) => {
-  return useQuery({
-    queryKey: productKeys.detail(id),
-    queryFn: () => productsApi.getById(id),
-    enabled: !!id,
-  });
-};
+// export const useProduct = (id: string) => {
+//   return useQuery({
+//     queryKey: productKeys.detail(id),
+//     queryFn: () => productsApi.getById(id),
+//     enabled: !!id,
+//   });
+// };
 
 export const useProductCategories = () => {
   return useQuery({

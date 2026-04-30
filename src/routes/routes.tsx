@@ -74,6 +74,7 @@ import SigleCandidate from 'src/HumanResource/SigleCandidate.tsx';
 import ConfigPage from 'src/pages/Config/index.tsx';
 
 import Location from 'src/pages/Location.tsx';
+import Products from 'src/pages/Products/Products.tsx';
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -231,6 +232,11 @@ const router = createBrowserRouter([
         path: 'recordings',
         element: <CallLogs />,
       },
+      {
+        path: 'products',
+        element: <Products />,
+      },
+
       {
         path: 'config',
         element: <ConfigPage />,
