@@ -127,20 +127,20 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
     <SettingOutlined />
   ),
 
-  getItem('Reports', 'submenu-reports', <BarChartOutlined />, [
-    getItem(
-      <Link to={PATH_CRM.reports.overview}>Overview</Link>,
-      PATH_CRM.reports.overview
-    ),
-    getItem(
-      <Link to={PATH_CRM.reports.sales}>Sales</Link>,
-      PATH_CRM.reports.sales
-    ),
-    getItem(
-      <Link to={PATH_CRM.reports.team}>Team</Link>,
-      PATH_CRM.reports.team
-    ),
-  ]),
+  // getItem('Reports', 'submenu-reports', <BarChartOutlined />, [
+  //   getItem(
+  //     <Link to={PATH_CRM.reports.overview}>Overview</Link>,
+  //     PATH_CRM.reports.overview
+  //   ),
+  //   getItem(
+  //     <Link to={PATH_CRM.reports.sales}>Sales</Link>,
+  //     PATH_CRM.reports.sales
+  //   ),
+  //   getItem(
+  //     <Link to={PATH_CRM.reports.team}>Team</Link>,
+  //     PATH_CRM.reports.team
+  //   ),
+  // ]),
 
   getItem('Admin', 'group-admin', null, [], 'group'),
 
