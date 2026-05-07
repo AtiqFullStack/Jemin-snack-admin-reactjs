@@ -24,11 +24,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true,
 }) => {
   const { isAuthenticated, isLoading } = useAuth() as any;
-  const { userPermissions } = usePermissions();
+  const { userPermissions, isPermissionsLoading } = usePermissions();
   const location = useLocation();
   const currentPath = location.pathname.replace(/\/+$/, '') || '/';
   // Show loading spinner while checking auth status
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && requireAuth && isPermissionsLoading)) {
     return (
       <div
         style={{

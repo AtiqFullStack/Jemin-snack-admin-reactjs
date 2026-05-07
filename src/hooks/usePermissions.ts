@@ -10,20 +10,24 @@ export const usePermissions = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>(
     user?.roleId?.permissions || []
   );
-  console.log(roleId);
+  const [isPermissionsLoading, setIsPermissionsLoading] = useState(!!roleId);
+
   useEffect(() => {
-    if (!roleId) return;
+    if (!roleId) {
+      setIsPermissionsLoading(false);
+      return;
+    }
+    setIsPermissionsLoading(true);
     apiRequest
       .get(API_ENDPOINTS.ROLES.LIST(roleId))
       .then((res: any) => {
         const role = Array.isArray(res.data) ? res.data[0] : res.data;
-        console.log(role);
         if (role?.permissions?.length) {
-          console.log(role.permissions);
           setUserPermissions(role.permissions);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setIsPermissionsLoading(false));
   }, [roleId]);
 
   const hasPermission = (permission: Permission): boolean => {
@@ -54,5 +58,6 @@ export const usePermissions = () => {
     canRead,
     userPermissions,
     customCondition,
+    isPermissionsLoading,
   };
 };

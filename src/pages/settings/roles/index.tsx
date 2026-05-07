@@ -14,6 +14,7 @@ import {
   message,
   Divider,
   Modal,
+  Select,
 } from 'antd';
 import {
   PlusOutlined,
@@ -39,6 +40,7 @@ type Role = {
   usersCount?: number;
   created_at: string;
   createdAt?: string;
+  roleType?: string;
 };
 
 const RolesPage = () => {
@@ -100,6 +102,7 @@ const RolesPage = () => {
     form.setFieldsValue({
       name: role.name,
       description: role.description,
+      roleType: role.roleType,
     });
     setSelectedPermissions(role.permissions || []);
     setIsDrawerOpen(true);
@@ -235,6 +238,7 @@ const RolesPage = () => {
             name: normalizedRoleName,
             description: values.description,
             permissions: selectedPermissions,
+            roleType: values.roleType,
           };
           const res = (await updateRoles(editingRole._id!, updatedRole)) as any;
           if (res.success) {
@@ -260,6 +264,7 @@ const RolesPage = () => {
             description: values.description,
             permissions: selectedPermissions,
             users_count: 0,
+            roleType: values.roleType,
             created_at: new Date().toISOString().split('T')[0],
           };
           const res = (await createRoles(newRole)) as any;
@@ -421,6 +426,26 @@ const RolesPage = () => {
                 rules={[{ required: true }]}
               >
                 <Input.TextArea rows={4} placeholder="Enter role description" />
+              </Form.Item>
+              <Form.Item
+                name="roleType"
+                label="Select RoleType"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  defaultValue=""
+                  // style={{ width: 120 }}
+                  // onChange={() => { }}
+                  // "hr", "sales", "admin", "telecaller", "administration"
+                  options={[
+                    { value: 'hr', label: 'Human Resource' },
+                    { value: 'sales', label: 'Sales' },
+                    // { value: 'admin', label: 'admin' },
+                    { value: 'administration', label: 'Administration' },
+                    { value: 'telecaller', label: 'Telecaller' },
+                    // { value: 'disabled', label: 'Disabled', disabled: true },
+                  ]}
+                />
               </Form.Item>
             </Form>
           </Col>
