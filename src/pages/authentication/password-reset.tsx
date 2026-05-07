@@ -11,8 +11,14 @@ import {
   theme,
   Tooltip,
   Typography,
+  Space,
+  Spin,
 } from 'antd';
-import { MoonOutlined, SunOutlined } from '@ant-design/icons';
+import {
+  MoonOutlined,
+  SunOutlined,
+  ArrowLeftOutlined,
+} from '@ant-design/icons';
 import { Logo } from '../../components';
 import { useMediaQuery } from 'react-responsive';
 import { PATH_AUTH } from '../../constants';
@@ -22,11 +28,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '../../redux/theme/themeSlice';
 import { RootState } from '../../redux/store';
 import { STRINGS } from '../../assets';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { Title, Text } = Typography;
 
 type FieldType = {
   email?: string;
+  otp?: string;
+  password?: string;
+  confirmPassword?: string;
 };
 
 export const PasswordResetPage = () => {
@@ -37,32 +47,85 @@ export const PasswordResetPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { mytheme } = useSelector((state: RootState) => state.theme);
+  const { sendOtp, verifyOtpAndResetPassword } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'email' | 'otp' | 'password'>('email');
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [form] = Form.useForm();
 
-  const onFinish = (values: any) => {
-    console.log('Success:', values);
+  const handleSendOtp = async () => {
+    if (!email || !email.includes('@')) {
+      message.error('Please enter a valid email');
+      return;
+    }
+
     setLoading(true);
-
-    message.open({
-      type: 'loading',
-      content: 'Sending reset link...',
-      duration: 1.5,
-    });
-
-    // Mock - in production, this would send an actual reset email
-    setTimeout(() => {
-      message.destroy();
-      message.success('Password reset link sent to your email!', 2);
-
-      setTimeout(() => {
-        setLoading(false);
-        navigate(PATH_AUTH.signin);
-      }, 2000);
-    }, 1500);
+    try {
+      const res = await sendOtp(email);
+      if (res?.success) {
+        message.success('OTP sent to your email');
+        setStep('otp');
+      } else {
+        message.error(res?.message || 'Failed to send OTP');
+      }
+    } catch (error: any) {
+      message.error(error?.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log('Failed:', errorInfo);
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length < 4) {
+      message.error('Please enter a valid OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await verifyOtpAndResetPassword(email, otp, '');
+      if (res?.success) {
+        message.success('OTP verified');
+        setStep('password');
+      } else {
+        message.error(res?.message || 'Invalid OTP');
+      }
+    } catch (error: any) {
+      message.error(error?.message || 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!password || password.length < 6) {
+      message.error('Password must be at least 6 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
+      message.error('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await verifyOtpAndResetPassword(email, otp, password);
+      if (res?.success) {
+        message.success('Password updated successfully');
+        setTimeout(() => {
+          navigate(PATH_AUTH.signin);
+        }, 1500);
+      } else {
+        message.error(res?.message || 'Failed to reset password');
+      }
+    } catch (error: any) {
+      message.error(error?.message || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -116,43 +179,184 @@ export const PasswordResetPage = () => {
             background: colorBgContainer,
           }}
         >
-          <Title className="m-0">Forgot password</Title>
-          <Text>Enter your email to rest your password.</Text>
-          <Form
-            name="sign-up-form"
-            layout="vertical"
-            labelCol={{ span: 24 }}
-            wrapperCol={{ span: 24 }}
-            initialValues={{ remember: true }}
-            onFinish={onFinish}
-            onFinishFailed={onFinishFailed}
-            autoComplete="off"
-            requiredMark={false}
-            style={{ width: '100%' }}
-          >
-            <Form.Item<FieldType>
-              label="Email"
-              name="email"
-              rules={[{ required: true, message: 'Please input your email' }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item>
-              <Flex align="center" gap="small">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="middle"
-                  loading={loading}
+          <Flex align="center" gap="small">
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(PATH_AUTH.signin)}
+            />
+            <Title className="m-0">Reset Password</Title>
+          </Flex>
+
+          <Text>
+            {step === 'email' && 'Enter your email to receive an OTP'}
+            {step === 'otp' && 'Enter the OTP sent to your email'}
+            {step === 'password' && 'Create a new password'}
+          </Text>
+
+          <Spin spinning={loading} style={{ width: '100%' }}>
+            {step === 'email' && (
+              <Form
+                layout="vertical"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                autoComplete="off"
+                requiredMark={false}
+                style={{ width: '100%' }}
+              >
+                <Form.Item<FieldType>
+                  label="Email"
+                  name="email"
+                  rules={[
+                    { required: true, message: 'Please input your email' },
+                    {
+                      type: 'email',
+                      message: 'Please enter a valid email',
+                    },
+                  ]}
                 >
-                  Submit
-                </Button>
-                <Button type="text" size="middle" loading={loading}>
-                  Cancel
-                </Button>
-              </Flex>
-            </Form.Item>
-          </Form>
+                  <Input
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                  />
+                </Form.Item>
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    size="middle"
+                    loading={loading}
+                    onClick={handleSendOtp}
+                    disabled={!email || !email.includes('@')}
+                    block
+                  >
+                    Send OTP
+                  </Button>
+                </Form.Item>
+              </Form>
+            )}
+
+            {step === 'otp' && (
+              <Form
+                layout="vertical"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                autoComplete="off"
+                requiredMark={false}
+                style={{ width: '100%' }}
+              >
+                <Form.Item<FieldType>
+                  label="OTP"
+                  name="otp"
+                  rules={[
+                    { required: true, message: 'Please input the OTP' },
+                    {
+                      min: 4,
+                      message: 'OTP must be at least 4 characters',
+                    },
+                  ]}
+                >
+                  <Input
+                    placeholder="Enter 4-6 digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    disabled={loading}
+                    maxLength={6}
+                  />
+                </Form.Item>
+                <Form.Item>
+                  <Space style={{ width: '100%' }} direction="vertical">
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      size="middle"
+                      loading={loading}
+                      onClick={handleVerifyOtp}
+                      disabled={!otp || otp.length < 4}
+                      block
+                    >
+                      Verify OTP
+                    </Button>
+                    <Button
+                      type="text"
+                      size="small"
+                      onClick={() => setStep('email')}
+                      disabled={loading}
+                    >
+                      Change Email
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </Form>
+            )}
+
+            {step === 'password' && (
+              <Form
+                layout="vertical"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
+                autoComplete="off"
+                requiredMark={false}
+                style={{ width: '100%' }}
+              >
+                <Form.Item<FieldType>
+                  label="New Password"
+                  name="password"
+                  rules={[
+                    { required: true, message: 'Please input your password' },
+                    {
+                      min: 6,
+                      message: 'Password must be at least 6 characters',
+                    },
+                  ]}
+                >
+                  <Input.Password
+                    placeholder="Enter new password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                  />
+                </Form.Item>
+                <Form.Item<FieldType>
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  rules={[
+                    { required: true, message: 'Please confirm your password' },
+                    {
+                      min: 6,
+                      message: 'Password must be at least 6 characters',
+                    },
+                  ]}
+                >
+                  <Input.Password
+                    placeholder="Confirm password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={loading}
+                  />
+                </Form.Item>
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    size="middle"
+                    loading={loading}
+                    onClick={handleResetPassword}
+                    disabled={
+                      !password ||
+                      password.length < 6 ||
+                      password !== confirmPassword
+                    }
+                    block
+                  >
+                    Reset Password
+                  </Button>
+                </Form.Item>
+              </Form>
+            )}
+          </Spin>
         </Flex>
       </Col>
     </Row>

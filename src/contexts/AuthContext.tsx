@@ -27,6 +27,12 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (user: UserProfileDto) => void;
   isAdmin: any;
+  sendOtp: (email: string) => Promise<any>;
+  verifyOtpAndResetPassword: (
+    email: string,
+    otp: string,
+    password: string
+  ) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -143,6 +149,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     tokenStorage.setUser(updatedUser);
   }, []);
 
+  /**
+   * Send OTP for password reset
+   */
+  const sendOtp = useCallback(async (email: string): Promise<any> => {
+    try {
+      const response = await authService.forgotPassword(email);
+      return response;
+    } catch (error) {
+      console.error('Send OTP failed:', error);
+      throw error;
+    }
+  }, []);
+
+  /**
+   * Verify OTP and reset password
+   */
+  const verifyOtpAndResetPassword = useCallback(
+    async (email: string, otp: string, password: string): Promise<any> => {
+      try {
+        const response = await authService.resetPassword({
+          email,
+          otp,
+          newPassword: password,
+        });
+        return response;
+      } catch (error) {
+        console.error('Reset password failed:', error);
+        throw error;
+      }
+    },
+    []
+  );
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -152,6 +191,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateUser,
     isAdmin,
+    sendOtp,
+    verifyOtpAndResetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

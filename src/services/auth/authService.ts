@@ -187,29 +187,51 @@ export const authService = {
   },
 
   /**
-   * Request password reset email - DUMMY IMPLEMENTATION
+   * Request password reset email
    */
   forgotPassword: async (email: string): Promise<ApiResponseOfObject> => {
-    console.log('[Auth Service - MOCK] Dummy forgot password for:', email);
+    const res = (await apiRequest.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+      email,
+    })) as any;
+
+    if (res?.success) {
+      return {
+        success: true,
+        message: res.message || 'OTP sent to your email',
+        data: res.data,
+      };
+    }
 
     return {
-      success: true,
-      message: 'Password reset email sent (mock mode)',
+      success: false,
+      message: res?.message || 'Failed to send OTP',
       data: null,
     };
   },
 
   /**
-   * Reset password with token - DUMMY IMPLEMENTATION
+   * Reset password with OTP
    */
   resetPassword: async (
-    _data: ResetPasswordRequestDto
+    data: ResetPasswordRequestDto
   ): Promise<ApiResponseOfObject> => {
-    console.log('[Auth Service - MOCK] Dummy password reset');
+    const res = (await apiRequest.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+      email: data.email,
+      otp: data.otp,
+      password: data.newPassword,
+    })) as any;
+
+    if (res?.success) {
+      return {
+        success: true,
+        message: res.message || 'Password reset successful',
+        data: res.data,
+      };
+    }
 
     return {
-      success: true,
-      message: 'Password reset successful (mock mode)',
+      success: false,
+      message: res?.message || 'Failed to reset password',
       data: null,
     };
   },

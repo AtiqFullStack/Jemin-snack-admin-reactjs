@@ -309,6 +309,7 @@ const Administration = () => {
                 columns={staffColumns}
                 dataSource={recentStaff}
                 pagination={false}
+                rowHoverable={false}
                 size="small"
                 locale={{ emptyText: 'No staff found' }}
               />

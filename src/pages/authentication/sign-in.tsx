@@ -14,9 +14,13 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { MoonOutlined, SunOutlined } from '@ant-design/icons';
+import {
+  MoonOutlined,
+  SunOutlined,
+  ArrowLeftOutlined,
+} from '@ant-design/icons';
 import { useMediaQuery } from 'react-responsive';
-import { PATH_DASHBOARD } from '../../constants';
+import { PATH_DASHBOARD, PATH_AUTH } from '../../constants';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -157,10 +161,10 @@ export const SignInPage = () => {
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
             initialValues={{
-              // email: 'superadmin@example.com',
-              // password: 'Password123',
-              email: 'zonavahace@mailinator.com',
-              password: 'H12345678',
+              email: 'superadmin@example.com',
+              password: 'Password123',
+              // email: 'zonavahace@mailinator.com',
+              // password: 'H12345678',
 
               remember: true,
             }}
@@ -208,7 +212,13 @@ export const SignInPage = () => {
                 >
                   Login
                 </Button>
-                {/* <Link href={PATH_AUTH.passwordReset}>Forgot password?</Link> */}
+                <Button
+                  type="text"
+                  size="small"
+                  onClick={() => navigate(PATH_AUTH.passwordReset)}
+                >
+                  Forgot password?
+                </Button>
               </Flex>
             </Form.Item>
           </Form>
