@@ -159,8 +159,8 @@ export const SignInPage = () => {
             initialValues={{
               // email: 'superadmin@example.com',
               // password: 'Password123',
-              email: '',
-              password: '',
+              email: 'zonavahace@mailinator.com',
+              password: 'H12345678',
 
               remember: true,
             }}

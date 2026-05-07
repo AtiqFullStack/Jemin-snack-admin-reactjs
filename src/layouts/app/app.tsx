@@ -61,6 +61,23 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   // const { user, isAuthenticated } = useSelector(
   //   (state: RootState) => state.auth
   // );
+  useEffect(() => {
+    console.log(getUser);
+    if (getUser) {
+      setUser(JSON.parse(getUser));
+    }
+    // const profileDetails = async () => {
+    //   try {
+    //     const response = await authService.getProfile();
+    //     console.log({ response });
+    //     setUser(response ?? null);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
+
+    // profileDetails();
+  }, [getUser]);
   const { logout } = useAuth();
   const [user, setUser] = useState<any>(null);
 
@@ -69,24 +86,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       type: 'loading',
       content: 'signing you out',
     });
-
-    useEffect(() => {
-      console.log(getUser);
-      if (getUser) {
-        setUser(JSON.parse(getUser));
-      }
-      // const profileDetails = async () => {
-      //   try {
-      //     const response = await authService.getProfile();
-      //     console.log({ response });
-      //     setUser(response ?? null);
-      //   } catch (error) {
-      //     console.log(error);
-      //   }
-      // };
-
-      // profileDetails();
-    }, [getUser]);
 
     // If authenticated, logout from API
     await logout();
