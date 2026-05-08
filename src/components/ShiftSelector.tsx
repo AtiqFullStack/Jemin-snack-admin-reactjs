@@ -38,7 +38,7 @@ const ShiftSelector = () => {
       <Form.Item
         name="shiftId"
         label="Shift"
-        rules={[{ required: true, message: 'Role is required' }]}
+        rules={[{ required: false, message: 'Shift is required' }]}
       >
         <Select
           placeholder="Select Shift"

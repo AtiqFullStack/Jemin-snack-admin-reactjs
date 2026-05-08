@@ -2,7 +2,7 @@ import { apiRequest } from './api/apiClient';
 import { API_ENDPOINTS } from './api/endpoints';
 
 const roleService = () => {
-  const getRoles = async (params: any) => {
+  const getRoles = async (params?: any) => {
     try {
       const response = await apiRequest.get(API_ENDPOINTS.ROLES.LIST(params));
       console.log(response);

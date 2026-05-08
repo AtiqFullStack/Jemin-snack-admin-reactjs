@@ -161,8 +161,8 @@ export const SignInPage = () => {
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
             initialValues={{
-              email: 'superadmin@example.com',
-              password: 'Password123',
+              email: 'admin@jemini.com',
+              password: '12345678',
               // email: 'zonavahace@mailinator.com',
               // password: 'H12345678',
 

@@ -24,7 +24,14 @@ import {
 } from '@ant-design/icons';
 import {
   getPermissionsGrouped,
-  PERMISSIONS,
+  getModuleConfig,
+  PermissionObj,
+  getAllGroups,
+  getModulesByGroup,
+  getModuleActions,
+  getModuleScopes,
+  PermissionAction,
+  PermissionScope,
 } from '../../../config/permissions';
 import './styles.css';
 import roleService from '../../../services/roleService';
@@ -35,12 +42,13 @@ type Role = {
   _id?: string;
   name: string;
   description: string;
-  permissions: string[];
+  permissions: PermissionObj[];
   users_count: number;
   usersCount?: number;
   created_at: string;
   createdAt?: string;
-  roleType?: string;
+  isSystem: boolean;
+  __v?: number;
 };
 
 const RolesPage = () => {
@@ -48,17 +56,18 @@ const RolesPage = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [form] = Form.useForm();
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-  const { canCreate, canUpdate, canDelete } = usePermissions();
-  const permissionLabelMap = PERMISSIONS as Record<string, string>;
+  const [selectedPermissions, setSelectedPermissions] = useState<
+    PermissionObj[]
+  >([]);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(
+    new Set()
+  );
 
-  // get ROles and Permissions from config
+  const { canCreate, canUpdate, canDelete } = usePermissions();
   const { getRoles, createRoles, deleteRoles, updateRoles } = roleService();
 
   const permissionsGrouped = getPermissionsGrouped();
-  const allPermissionKeys = Object.values(permissionsGrouped).flatMap((g) =>
-    g.items.map((i) => i.key)
-  );
+  const allGroups = getAllGroups();
 
   const normalizeRole = (role: any): Role => ({
     ...role,
@@ -68,17 +77,14 @@ const RolesPage = () => {
     users_count: role?.users_count ?? role?.usersCount ?? 0,
     created_at: role?.created_at ?? role?.createdAt ?? '',
     createdAt: role?.createdAt ?? role?.created_at ?? '',
+    isSystem: role?.isSystem ?? false,
   });
 
   const formatCreatedDate = (role: Role) => {
     const rawDate = role.createdAt || role.created_at;
-    if (!rawDate) {
-      return '-';
-    }
+    if (!rawDate) return '-';
     const parsedDate = new Date(rawDate);
-    if (Number.isNaN(parsedDate.getTime())) {
-      return rawDate;
-    }
+    if (Number.isNaN(parsedDate.getTime())) return rawDate;
     return parsedDate.toLocaleDateString();
   };
 
@@ -88,9 +94,6 @@ const RolesPage = () => {
         if (fetchedRoles.success) {
           setRoles((fetchedRoles.data ?? []).map(normalizeRole));
         }
-        console.log(fetchedRoles);
-        // Assuming fetchedRoles is an array of roles in the correct format
-        // setRoles(fetchedRoles);
       })
       .catch(() => {
         message.error('Failed to fetch roles');
@@ -98,17 +101,26 @@ const RolesPage = () => {
   }, []);
 
   const handleEditRole = (role: Role) => {
+    if (role.isSystem) {
+      message.error('System roles cannot be edited');
+      return;
+    }
+
     setEditingRole(role);
     form.setFieldsValue({
       name: role.name,
       description: role.description,
-      roleType: role.roleType,
     });
     setSelectedPermissions(role.permissions || []);
     setIsDrawerOpen(true);
   };
 
   const handleDeleteRole = (role: Role) => {
+    if (role.isSystem) {
+      message.error('System roles cannot be deleted');
+      return;
+    }
+
     Modal.confirm({
       title: 'Delete Role',
       icon: <ExclamationCircleOutlined />,
@@ -117,8 +129,6 @@ const RolesPage = () => {
       okType: 'danger',
       cancelText: 'Cancel',
       onOk() {
-        // Add your delete API call here
-        console.log(`Delete role with ID: ${role._id}`);
         if (!role._id) {
           message.error('Role ID is missing');
           return;
@@ -140,26 +150,35 @@ const RolesPage = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (name: string) => <Tag color="blue">{name}</Tag>,
+      render: (name: string, record: Role) => (
+        <Space>
+          <Tag color={record.isSystem ? 'red' : 'blue'}>{name}</Tag>
+          {record.isSystem && <Tag color="red">System</Tag>}
+        </Space>
+      ),
     },
     { title: 'Description', dataIndex: 'description', key: 'description' },
     {
       title: 'Permissions',
       dataIndex: 'permissions',
       key: 'permissions',
-      render: (permissions?: string[]) => {
+      render: (permissions?: PermissionObj[]) => {
         const safePermissions = Array.isArray(permissions) ? permissions : [];
+        if (safePermissions.length === 0) {
+          return <Tag>No permissions</Tag>;
+        }
         return (
           <Space wrap>
-            {safePermissions.slice(0, 3).map((p) => (
-              <Tag key={p}>
-                {p === '*' || p === 'ALL'
-                  ? 'All Permissions'
-                  : permissionLabelMap[p] || p}
-              </Tag>
-            ))}
-            {safePermissions.length > 3 && (
-              <Tag>+{safePermissions.length - 3} more</Tag>
+            {safePermissions.slice(0, 2).map((p: PermissionObj) => {
+              const config = getModuleConfig(p.module);
+              return (
+                <Tag key={p.module} color="cyan">
+                  {config?.label || p.module}
+                </Tag>
+              );
+            })}
+            {safePermissions.length > 2 && (
+              <Tag>+{safePermissions.length - 2} more</Tag>
             )}
           </Space>
         );
@@ -180,13 +199,15 @@ const RolesPage = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (role: any) => (
+      render: (role: Role) => (
         <Space>
           {canUpdate('settings.roles') && (
             <Button
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleEditRole(role)}
+              disabled={role.isSystem}
+              title={role.isSystem ? 'System roles cannot be edited' : ''}
             />
           )}
           {canDelete('settings.roles') && (
@@ -195,6 +216,8 @@ const RolesPage = () => {
               onClick={() => handleDeleteRole(role)}
               danger
               icon={<DeleteOutlined />}
+              disabled={role.isSystem}
+              title={role.isSystem ? 'System roles cannot be deleted' : ''}
             />
           )}
         </Space>
@@ -238,17 +261,11 @@ const RolesPage = () => {
             name: normalizedRoleName,
             description: values.description,
             permissions: selectedPermissions,
-            roleType: values.roleType,
           };
           const res = (await updateRoles(editingRole._id!, updatedRole)) as any;
           if (res.success) {
-            const normalizedUpdatedRole = normalizeRole(updatedRole);
-            setRoles(
-              roles.map((r) =>
-                r._id === editingRole._id ? normalizedUpdatedRole : r
-              )
-            );
             message.success(res.message || 'Role updated successfully');
+            await getRoles(null);
           } else {
             if (res?.message && /exist|duplicate|already/i.test(res.message)) {
               form.setFields([{ name: 'name', errors: [res.message] }]);
@@ -264,13 +281,13 @@ const RolesPage = () => {
             description: values.description,
             permissions: selectedPermissions,
             users_count: 0,
-            roleType: values.roleType,
             created_at: new Date().toISOString().split('T')[0],
+            isSystem: false,
           };
           const res = (await createRoles(newRole)) as any;
           if (res.success) {
-            const createdRole = normalizeRole(res.data ?? newRole);
-            setRoles([...roles, createdRole]);
+            await getRoles(null);
+
             message.success(res.message || 'Role created successfully');
           } else {
             if (res?.message && /exist|duplicate|already/i.test(res.message)) {
@@ -299,41 +316,46 @@ const RolesPage = () => {
       });
   };
 
-  const handlePermissionChange = (permissionKey: string, checked: boolean) => {
-    if (checked) {
-      setSelectedPermissions([...selectedPermissions, permissionKey]);
-    } else {
+  const handleModulePermissionChange = (
+    module: string,
+    actions: PermissionAction[],
+    scope: PermissionScope
+  ) => {
+    const existingIndex = selectedPermissions.findIndex(
+      (p) => p.module === module
+    );
+
+    if (actions.length === 0) {
+      // Remove if no actions selected
       setSelectedPermissions(
-        selectedPermissions.filter((p) => p !== permissionKey)
+        selectedPermissions.filter((p) => p.module !== module)
       );
+    } else if (existingIndex >= 0) {
+      // Update existing
+      const updated = [...selectedPermissions];
+      updated[existingIndex] = { module, actions, scope };
+      setSelectedPermissions(updated);
+    } else {
+      // Add new
+      setSelectedPermissions([
+        ...selectedPermissions,
+        { module, actions, scope },
+      ]);
     }
   };
 
-  const handleSelectAll = () => {
-    setSelectedPermissions(allPermissionKeys);
+  const getSelectedPermission = (module: string) => {
+    return selectedPermissions.find((p) => p.module === module);
   };
 
-  const handleDeselectAll = () => {
-    setSelectedPermissions([]);
-  };
-
-  const handleGroupSelectAll = (groupKey: string) => {
-    const groupPermissions = permissionsGrouped[groupKey].items.map(
-      (i) => i.key
-    );
-    const newSelected = [
-      ...new Set([...selectedPermissions, ...groupPermissions]),
-    ];
-    setSelectedPermissions(newSelected);
-  };
-
-  const handleGroupDeselectAll = (groupKey: string) => {
-    const groupPermissions = permissionsGrouped[groupKey].items.map(
-      (i) => i.key
-    );
-    setSelectedPermissions(
-      selectedPermissions.filter((p) => !groupPermissions.includes(p))
-    );
+  const toggleModuleExpanded = (module: string) => {
+    const newExpanded = new Set(expandedModules);
+    if (newExpanded.has(module)) {
+      newExpanded.delete(module);
+    } else {
+      newExpanded.add(module);
+    }
+    setExpandedModules(newExpanded);
   };
 
   return (
@@ -364,13 +386,14 @@ const RolesPage = () => {
       <Drawer
         title={editingRole ? 'Edit Role' : 'Add New Role'}
         placement="right"
-        width={800}
+        width={900}
         open={isDrawerOpen}
         onClose={() => {
           setIsDrawerOpen(false);
           form.resetFields();
           setSelectedPermissions([]);
           setEditingRole(null);
+          setExpandedModules(new Set());
         }}
         extra={
           <Space>
@@ -389,7 +412,7 @@ const RolesPage = () => {
         }
       >
         <Row gutter={24} className="roles-drawer-content">
-          <Col xs={24} lg={10} className="roles-form-section">
+          <Col xs={24} lg={8} className="roles-form-section">
             <Form form={form} layout="vertical">
               <Form.Item
                 name="name"
@@ -423,93 +446,151 @@ const RolesPage = () => {
               <Form.Item
                 name="description"
                 label="Description"
-                rules={[{ required: true }]}
+                rules={[{ required: true, message: 'Description is required' }]}
               >
                 <Input.TextArea rows={4} placeholder="Enter role description" />
-              </Form.Item>
-              <Form.Item
-                name="roleType"
-                label="Select RoleType"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  defaultValue=""
-                  // style={{ width: 120 }}
-                  // onChange={() => { }}
-                  // "hr", "sales", "admin", "telecaller", "administration"
-                  options={[
-                    { value: 'hr', label: 'Human Resource' },
-                    { value: 'sales', label: 'Sales' },
-                    // { value: 'admin', label: 'admin' },
-                    { value: 'administration', label: 'Administration' },
-                    { value: 'telecaller', label: 'Telecaller' },
-                    // { value: 'disabled', label: 'Disabled', disabled: true },
-                  ]}
-                />
               </Form.Item>
             </Form>
           </Col>
 
-          <Col xs={24} lg={14} className="roles-permissions-section">
+          <Col xs={24} lg={16} className="roles-permissions-section">
             <div className="permissions-header">
               <div>
-                <strong>Permissions</strong>
+                <strong>Module Permissions</strong>
                 <div style={{ color: '#666', fontSize: 12 }}>
-                  Select permissions for this role
+                  Select modules and configure actions & scope
                 </div>
               </div>
-              <Space>
-                <Button size="small" onClick={handleSelectAll}>
-                  Select All
-                </Button>
-                <Button size="small" onClick={handleDeselectAll}>
-                  Deselect All
-                </Button>
-              </Space>
             </div>
 
             <div className="permissions-scroll">
-              {Object.entries(permissionsGrouped).map(([groupKey, group]) => (
-                <div key={groupKey} className="permission-group">
-                  <Divider plain style={{ margin: '8px 0 12px' }}>
-                    <Space>
-                      <span>{group.groupLabel}</span>
-                      <Button
-                        size="small"
-                        type="link"
-                        onClick={() => handleGroupSelectAll(groupKey)}
-                        style={{ padding: 0, height: 'auto' }}
-                      >
-                        All
-                      </Button>
-                      <Button
-                        size="small"
-                        type="link"
-                        onClick={() => handleGroupDeselectAll(groupKey)}
-                        style={{ padding: 0, height: 'auto' }}
-                      >
-                        None
-                      </Button>
-                    </Space>
-                  </Divider>
-                  <Row gutter={[8, 8]}>
-                    {group.items.map((item) => (
-                      <Col xs={24} sm={12} key={item.key}>
-                        <Checkbox
-                          checked={selectedPermissions.includes(item.key)}
-                          onChange={(e) =>
-                            handlePermissionChange(item.key, e.target.checked)
-                          }
+              {allGroups.map((group) => {
+                const modules = getModulesByGroup(group);
+                return (
+                  <div key={group} className="permission-group">
+                    <Divider plain style={{ margin: '12px 0 16px' }}>
+                      <strong>{group}</strong>
+                    </Divider>
+
+                    {modules.map((moduleConfig) => {
+                      const selected = getSelectedPermission(moduleConfig.key);
+                      const isExpanded = expandedModules.has(moduleConfig.key);
+                      const availableActions = getModuleActions(
+                        moduleConfig.key
+                      );
+                      const availableScopes = getModuleScopes(moduleConfig.key);
+
+                      return (
+                        <div
+                          key={moduleConfig.key}
+                          className="module-permission-item"
                         >
-                          <span className="permission-checkbox">
-                            {item.label}
-                          </span>
-                        </Checkbox>
-                      </Col>
-                    ))}
-                  </Row>
-                </div>
-              ))}
+                          <div className="module-header">
+                            <Checkbox
+                              checked={!!selected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  handleModulePermissionChange(
+                                    moduleConfig.key,
+                                    availableActions as PermissionAction[],
+                                    'all'
+                                  );
+                                  setExpandedModules(
+                                    new Set([
+                                      ...expandedModules,
+                                      moduleConfig.key,
+                                    ])
+                                  );
+                                } else {
+                                  handleModulePermissionChange(
+                                    moduleConfig.key,
+                                    [],
+                                    'all'
+                                  );
+                                }
+                              }}
+                            >
+                              <span className="module-name">
+                                {moduleConfig.label}
+                              </span>
+                            </Checkbox>
+                            {selected && (
+                              <Button
+                                type="text"
+                                size="small"
+                                onClick={() =>
+                                  toggleModuleExpanded(moduleConfig.key)
+                                }
+                              >
+                                {isExpanded ? '▼' : '▶'}
+                              </Button>
+                            )}
+                          </div>
+
+                          {selected && isExpanded && (
+                            <div className="module-details">
+                              <Row gutter={[16, 16]}>
+                                <Col xs={24} sm={12}>
+                                  <div className="detail-section">
+                                    <label>Actions</label>
+                                    <div className="actions-list">
+                                      {availableActions.map((action) => (
+                                        <Checkbox
+                                          key={action}
+                                          checked={selected.actions.includes(
+                                            action
+                                          )}
+                                          onChange={(e) => {
+                                            const newActions = e.target.checked
+                                              ? [...selected.actions, action]
+                                              : selected.actions.filter(
+                                                  (a) => a !== action
+                                                );
+                                            handleModulePermissionChange(
+                                              moduleConfig.key,
+                                              newActions as PermissionAction[],
+                                              selected.scope
+                                            );
+                                          }}
+                                        >
+                                          {action.charAt(0).toUpperCase() +
+                                            action.slice(1)}
+                                        </Checkbox>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </Col>
+
+                                <Col xs={24} sm={12}>
+                                  <div className="detail-section">
+                                    <label>Scope</label>
+                                    <Select
+                                      value={selected.scope}
+                                      onChange={(scope) => {
+                                        handleModulePermissionChange(
+                                          moduleConfig.key,
+                                          selected.actions,
+                                          scope
+                                        );
+                                      }}
+                                      options={availableScopes.map((scope) => ({
+                                        value: scope,
+                                        label:
+                                          scope.charAt(0).toUpperCase() +
+                                          scope.slice(1),
+                                      }))}
+                                    />
+                                  </div>
+                                </Col>
+                              </Row>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           </Col>
         </Row>

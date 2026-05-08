@@ -8,7 +8,7 @@
 }
 
 .roles-form-section {
-  flex: 0 0 40%;
+  flex: 0 0 30%;
 }
 
 .roles-permissions-section {
@@ -25,12 +25,99 @@
 }
 
 .permissions-scroll {
-  max-height: calc(100vh - 169px);
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
+  padding-right: 8px;
+}
+
+.permissions-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.permissions-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.permissions-scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.permissions-scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 .permission-group {
   margin-bottom: 24px;
+}
+
+.module-permission-item {
+  margin-bottom: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 12px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.module-permission-item:hover {
+  background: #fff;
+  border-color: #d9d9d9;
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.module-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.module-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-section label {
+  font-weight: 500;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.actions-list .ant-checkbox {
+  font-size: 13px;
 }
 
 .permission-checkbox {
@@ -67,9 +154,12 @@
     align-items: flex-start;
   }
 
-  .permission-group .ant-col-12 {
-    flex: 0 0 100% !important;
-    max-width: 100% !important;
+  .module-details {
+    padding: 8px 0;
+  }
+
+  .module-permission-item {
+    padding: 8px;
   }
 }
 
@@ -80,5 +170,10 @@
 
   .permissions-scroll {
     max-height: 300px;
+  }
+
+  .module-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
