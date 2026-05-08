@@ -62,9 +62,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   //   (state: RootState) => state.auth
   // );
   useEffect(() => {
-    console.log(getUser);
     if (getUser) {
-      setUser(JSON.parse(getUser));
+      // setUser(JSON.parse(getUser));
     }
     // const profileDetails = async () => {
     //   try {
@@ -117,7 +116,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     setCollapsed(isMobile);
   }, [isMobile]);
 
-  console.log(user);
   useEffect(() => {
     window.addEventListener('scroll', () => {
       if (window.scrollY > 5) {

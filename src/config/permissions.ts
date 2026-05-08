@@ -84,6 +84,12 @@ export const MODULES = {
     actions: ['read', 'create', 'update', 'delete'],
     scopes: ['all', 'assigned', 'own'],
   },
+  tasks: {
+    label: 'Tasks',
+    group: 'Sales',
+    actions: ['read', 'create', 'update', 'delete'],
+    scopes: ['all', 'assigned', 'own'],
+  },
   customers: {
     label: 'Customers',
     group: 'Sales',

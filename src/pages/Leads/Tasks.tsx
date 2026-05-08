@@ -16,7 +16,7 @@ import {
   Upload,
 } from 'antd';
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/index';
+import { useAuth, usePermissions } from '../../hooks/index';
 import RelatedToList from '../../assets/jsons/related.json';
 import leadServices from '../../services/leadServices';
 import configService from '../../services/configService';
@@ -59,6 +59,7 @@ interface Task {
 
 const Tasks = ({ lead }: { lead?: any }) => {
   const { isLoading } = useAuth();
+  const { canCreate, canRead, canDelete, canUpdate } = usePermissions();
   const {
     createTask,
     getByLeadId,
@@ -235,39 +236,52 @@ const Tasks = ({ lead }: { lead?: any }) => {
       key: 'action',
       width: 100,
       // fixed: 'right',
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: 'view',
-                icon: <EyeOutlined />,
-                label: 'View',
-                onClick: () => handleView(record),
-              },
-              {
-                key: 'edit',
-                icon: <EditOutlined />,
-                label: 'Edit',
-                onClick: () => handleEdit(record),
-              },
-              {
-                type: 'divider',
-              },
-              {
-                key: 'delete',
-                icon: <DeleteOutlined />,
-                label: 'Delete',
-                danger: true,
-                onClick: () => handleDelete(record._id),
-              },
-            ],
-          }}
-          trigger={['click']}
-        >
-          <Button type="text" icon={<MoreOutlined />} />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = [];
+
+        if (canRead('tasks')) {
+          items.push({
+            key: 'view',
+            icon: <EyeOutlined />,
+            label: 'View',
+            onClick: () => handleView(record),
+          });
+        }
+
+        if (canUpdate('tasks')) {
+          items.push({
+            key: 'edit',
+            icon: <EditOutlined />,
+            label: 'Edit',
+            onClick: () => handleEdit(record),
+          });
+        }
+
+        if (canDelete('tasks')) {
+          if (items.length > 0) {
+            items.push({
+              type: 'divider',
+            });
+          }
+          items.push({
+            key: 'delete',
+            icon: <DeleteOutlined />,
+            label: 'Delete',
+            danger: true,
+            onClick: () => handleDelete(record._id),
+          });
+        }
+
+        return (
+          <Dropdown
+            menu={{ items }}
+            trigger={['click']}
+            disabled={items.length === 0}
+          >
+            <Button type="text" icon={<MoreOutlined />} />
+          </Dropdown>
+        );
+      },
     },
   ];
 
@@ -461,13 +475,15 @@ const Tasks = ({ lead }: { lead?: any }) => {
                 </Select.Option>
               ))}
             </Select>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreateTask}
-            >
-              Create Task
-            </Button>
+            {canCreate('tasks') && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleCreateTask}
+              >
+                Create Task
+              </Button>
+            )}
           </Space>
         }
       >
