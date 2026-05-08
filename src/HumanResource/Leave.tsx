@@ -10,20 +10,19 @@ import {
   Select,
   message,
   Popconfirm,
+  Modal,
+  Descriptions,
 } from 'antd';
 import {
   CheckOutlined,
   CloseOutlined,
   ReloadOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { UserAvatar } from 'src/components';
 import leaveService from 'src/services/leaveService';
-import { timeConverter } from 'src/utils/convertor';
-// import { UserAvatar } from '../../components';
-// import leaveService from '../../services/leaveService';
-// import { timeConverter } from '../../utils/convertor';
-
-timeConverter;
+import { imageUrl, timeConverter } from 'src/utils/convertor';
+import { usePermissions } from 'src/hooks';
 
 const { Text } = Typography;
 
@@ -41,11 +40,14 @@ const STATUS_COLOR: Record<string, string> = {
 
 const Leave = () => {
   const { getAllLeaves, updateLeaveStatus } = leaveService();
+  const { canCreate, canRead, canUpdate, canDelete } = usePermissions();
   const [leaves, setLeaves] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
   const [typeFilter, setTypeFilter] = useState<string | undefined>();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedLeave, setSelectedLeave] = useState<any>(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
 
   const fetchLeaves = async () => {
     setLoading(true);
@@ -57,6 +59,11 @@ const Leave = () => {
   useEffect(() => {
     fetchLeaves();
   }, []);
+
+  const handleViewLeave = (leave: any) => {
+    setSelectedLeave(leave);
+    setViewModalOpen(true);
+  };
 
   const handleStatus = async (id: string, status: string) => {
     setActionLoading(id + status);
@@ -91,7 +98,14 @@ const Leave = () => {
       key: 'employee',
       render: (_: any, row: any) => (
         <Flex align="center" gap={8}>
-          <UserAvatar fullName={row.employeeId?.name} />
+          {row?.employeeId?.avatar ? (
+            <img
+              style={{ width: 30, height: 30, borderRadius: '50%' }}
+              src={imageUrl(row?.employeeId?.avatar)}
+            ></img>
+          ) : (
+            <UserAvatar fullName={row.employeeId?.name} />
+          )}
           <Flex vertical gap={2}>
             <Text strong>{row.employeeId?.name || '-'}</Text>
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -155,10 +169,28 @@ const Leave = () => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, row: any) => {
-        if (row.status !== 'PENDING') return <Text type="secondary">—</Text>;
-        return (
-          <Space>
+        const actions = [];
+
+        // View button - always available if canRead
+        if (canRead('leave')) {
+          actions.push(
+            <Button
+              key="view"
+              size="small"
+              type="link"
+              icon={<EyeOutlined />}
+              onClick={() => handleViewLeave(row)}
+            >
+              View
+            </Button>
+          );
+        }
+
+        // Approve/Reject buttons - only for pending leaves if canUpdate
+        if (row.status === 'PENDING' && canUpdate('leave')) {
+          actions.push(
             <Popconfirm
+              key="approve"
               title="Approve this leave?"
               onConfirm={() => handleStatus(row._id, 'APPROVED')}
               okText="Yes"
@@ -173,7 +205,11 @@ const Leave = () => {
                 Approve
               </Button>
             </Popconfirm>
+          );
+
+          actions.push(
             <Popconfirm
+              key="reject"
               title="Reject this leave?"
               onConfirm={() => handleStatus(row._id, 'REJECTED')}
               okText="Yes"
@@ -188,7 +224,30 @@ const Leave = () => {
                 Reject
               </Button>
             </Popconfirm>
-          </Space>
+          );
+        }
+
+        // Delete button - if canDelete
+        if (canDelete('leave')) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="Delete this leave?"
+              onConfirm={() => handleStatus(row._id, 'DELETED')}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button size="small" danger type="text">
+                Delete
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        return actions.length > 0 ? (
+          <Space size="small">{actions}</Space>
+        ) : (
+          <Text type="secondary">—</Text>
         );
       },
     },
@@ -266,6 +325,175 @@ const Leave = () => {
           }
         />
       </Card>
+
+      {/* View Leave Modal */}
+      <Modal
+        title="Leave Details"
+        open={viewModalOpen}
+        onCancel={() => setViewModalOpen(false)}
+        footer={null}
+        width={700}
+        bodyStyle={{ padding: '24px' }}
+      >
+        {selectedLeave && (
+          <Flex vertical gap={24}>
+            {/* Employee Info */}
+            <Card size="small" style={{ background: '#fafafa' }}>
+              <Flex align="center" gap={12}>
+                {selectedLeave.employeeId?.avatar ? (
+                  <img
+                    style={{ width: 30, height: 30, borderRadius: '50%' }}
+                    src={imageUrl(selectedLeave?.employeeId?.avatar)}
+                  ></img>
+                ) : (
+                  <UserAvatar
+                    fullName={selectedLeave.employeeId?.name}
+                    size={48}
+                  />
+                )}
+
+                <Flex vertical gap={4}>
+                  <Text strong style={{ fontSize: 16 }}>
+                    {selectedLeave.employeeId?.name || '-'}
+                  </Text>
+                  <Text type="secondary">
+                    {selectedLeave.employeeId?.email}
+                  </Text>
+                </Flex>
+              </Flex>
+            </Card>
+
+            {/* Leave Details Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '16px',
+              }}
+            >
+              {/* Leave Type */}
+              <div>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block', marginBottom: 4 }}
+                >
+                  LEAVE TYPE
+                </Text>
+                <Tag color="blue" style={{ fontSize: 13, padding: '4px 12px' }}>
+                  {LEAVE_TYPE_LABELS[selectedLeave.type] || selectedLeave.type}
+                </Tag>
+              </div>
+
+              {/* Status */}
+              <div>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block', marginBottom: 4 }}
+                >
+                  STATUS
+                </Text>
+                <Tag
+                  color={STATUS_COLOR[selectedLeave.status] || 'default'}
+                  style={{ fontSize: 13, padding: '4px 12px' }}
+                >
+                  {selectedLeave.status}
+                </Tag>
+              </div>
+
+              {/* From Date */}
+              <div>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block', marginBottom: 4 }}
+                >
+                  FROM DATE
+                </Text>
+                <Text strong>{timeConverter(selectedLeave.fromDate)}</Text>
+              </div>
+
+              {/* To Date */}
+              <div>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block', marginBottom: 4 }}
+                >
+                  TO DATE
+                </Text>
+                <Text strong>{timeConverter(selectedLeave.toDate)}</Text>
+              </div>
+
+              {/* Days */}
+              <div>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block', marginBottom: 4 }}
+                >
+                  NUMBER OF DAYS
+                </Text>
+                <Tag style={{ fontSize: 13, padding: '4px 12px' }}>
+                  {selectedLeave.days} day{selectedLeave.days > 1 ? 's' : ''}
+                </Tag>
+              </div>
+
+              {/* Applied On */}
+              <div>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block', marginBottom: 4 }}
+                >
+                  APPLIED ON
+                </Text>
+                <Text strong>{timeConverter(selectedLeave.createdAt)}</Text>
+              </div>
+            </div>
+
+            {/* Reason */}
+            <div>
+              <Text
+                type="secondary"
+                style={{ fontSize: 12, display: 'block', marginBottom: 8 }}
+              >
+                REASON
+              </Text>
+              <Card size="small" style={{ background: '#f5f5f5' }}>
+                <Text>{selectedLeave.reason || 'No reason provided'}</Text>
+              </Card>
+            </div>
+
+            {/* Action Buttons */}
+            {selectedLeave.status === 'PENDING' && canUpdate('leave') && (
+              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                <Popconfirm
+                  title="Reject this leave?"
+                  onConfirm={() => {
+                    handleStatus(selectedLeave._id, 'REJECTED');
+                    setViewModalOpen(false);
+                  }}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button danger size="large" style={{ minWidth: 120 }}>
+                    Reject
+                  </Button>
+                </Popconfirm>
+                <Popconfirm
+                  title="Approve this leave?"
+                  onConfirm={() => {
+                    handleStatus(selectedLeave._id, 'APPROVED');
+                    setViewModalOpen(false);
+                  }}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button type="primary" size="large" style={{ minWidth: 120 }}>
+                    Approve
+                  </Button>
+                </Popconfirm>
+              </Space>
+            )}
+          </Flex>
+        )}
+      </Modal>
     </Flex>
   );
 };

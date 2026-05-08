@@ -184,7 +184,7 @@ const SalarySetting = () => {
     updateSalary,
   } = useSalary();
 
-  const { canCreate, canUpdate, customCondition } = usePermissions();
+  const { canCreate, canUpdate, hasPermission } = usePermissions();
   const [allStaffs, setAllStaffs] = useState<Staff[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Staff | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -256,11 +256,11 @@ const SalarySetting = () => {
   }, [employe, selectedEmployee]);
 
   useEffect(() => {
-    console.log(customCondition('salary.readAll'));
-    if (customCondition('salary.readAll')) {
+    console.log(hasPermission('salary', 'read'));
+    if (hasPermission('salary', 'read')) {
       getEmployeDetailsWithSalary();
     }
-  }, [customCondition('salary.readAll')]);
+  }, [hasPermission('salary', 'read')]);
 
   const filteredStaffs = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
@@ -463,21 +463,20 @@ const SalarySetting = () => {
       key: 'action',
       render: (_, record) => (
         <>
-          {canUpdate('salary') ||
-            (canCreate('salary') && (
-              <Button
-                type={
-                  selectedEmployee?._id === record._id ? 'primary' : 'default'
-                }
-                icon={<EditOutlined />}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleSelectEmployee(record);
-                }}
-              >
-                Edit
-              </Button>
-            ))}
+          {(canUpdate('salary') || canCreate('salary')) && (
+            <Button
+              type={
+                selectedEmployee?._id === record._id ? 'primary' : 'default'
+              }
+              icon={<EditOutlined />}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleSelectEmployee(record);
+              }}
+            >
+              Edit
+            </Button>
+          )}
         </>
       ),
     },
@@ -530,9 +529,7 @@ const SalarySetting = () => {
               },
             }}
             onRow={(record) => ({
-              onClick: () => handleSelectEmployee(record),
               style: {
-                cursor: 'pointer',
                 backgroundColor:
                   selectedEmployee?._id === record._id ? '#f0f7ff' : undefined,
               },

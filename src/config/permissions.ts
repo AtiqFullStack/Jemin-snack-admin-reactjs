@@ -73,8 +73,8 @@ export const MODULES = {
   payroll: {
     label: 'Payroll',
     group: 'Human Resources',
-    actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned'],
+    actions: ['read'],
+    scopes: ['all', 'assigned', 'own'],
   },
 
   // Sales Module
@@ -116,8 +116,14 @@ export const MODULES = {
     actions: ['read', 'create', 'delete'],
     scopes: ['all', 'assigned', 'own'],
   },
-  messages: {
-    label: 'Messages',
+  locations: {
+    label: 'Location',
+    group: 'Communication',
+    actions: ['read'],
+    scopes: ['all', 'assigned', 'own'],
+  },
+  recordings: {
+    label: 'Recordings',
     group: 'Communication',
     actions: ['read', 'create', 'delete'],
     scopes: ['all', 'assigned', 'own'],
