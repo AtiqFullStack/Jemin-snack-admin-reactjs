@@ -9,7 +9,7 @@ import TelecallerDashboard from 'src/components/dashboard/TelecallerDashboard';
 
 export const DefaultDashboardPage = () => {
   const { user } = useAuth();
-  const roleType = user?.roleType;
+  const roleType = (user as any)?.roleType;
 
   const renderDashboard = () => {
     switch (roleType) {

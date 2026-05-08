@@ -23,7 +23,6 @@ import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import {
-  getPermissionsGrouped,
   getModuleConfig,
   PermissionObj,
   getAllGroups,
@@ -66,7 +65,6 @@ const RolesPage = () => {
   const { canCreate, canUpdate, canDelete } = usePermissions();
   const { getRoles, createRoles, deleteRoles, updateRoles } = roleService();
 
-  const _permissionsGrouped = getPermissionsGrouped();
   const allGroups = getAllGroups();
 
   const normalizeRole = (role: any): Role => ({

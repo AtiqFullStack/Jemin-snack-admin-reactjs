@@ -347,7 +347,7 @@ const Leave = () => {
                 ) : (
                   <UserAvatar
                     fullName={selectedLeave.employeeId?.name}
-                    size={48}
+                    size="large"
                   />
                 )}
 

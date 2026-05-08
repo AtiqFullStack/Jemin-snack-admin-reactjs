@@ -166,11 +166,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * Verify OTP and reset password
    */
   const verifyOtpAndResetPassword = useCallback(
-    async (email: string, otp: string, password: string): Promise<any> => {
+    async (email: string, _otp: string, password: string): Promise<any> => {
       try {
         const response = await authService.resetPassword({
           email,
           newPassword: password,
+          token: '',
         });
         return response;
       } catch (error) {

@@ -58,10 +58,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Route-level permission guard to block direct URL access
-  const canAccessRoute = hasRouteAccess(
-    userPermissions.map((p) => p.module),
-    currentPath
-  );
+  const canAccessRoute = hasRouteAccess(userPermissions as any, currentPath);
   if (!canAccessRoute) {
     return <Navigate to="/errors/403" replace />;
   }

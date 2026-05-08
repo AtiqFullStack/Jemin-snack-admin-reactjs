@@ -217,8 +217,8 @@ export const authService = {
   ): Promise<ApiResponseOfObject> => {
     const res = (await apiRequest.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
       email: data.email,
-      otp: data.otp,
       password: data.newPassword,
+      token: data.token,
     })) as any;
 
     if (res?.success) {

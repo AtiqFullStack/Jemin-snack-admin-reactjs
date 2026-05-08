@@ -179,7 +179,7 @@ function filterMenuByRole(
   userPermissions: string[]
 ): MenuProps['items'] {
   const isAllowedKey = (k?: React.Key) =>
-    typeof k === 'string' ? hasRouteAccess(userPermissions, k) : false;
+    typeof k === 'string' ? hasRouteAccess(userPermissions as any, k) : false;
 
   const walk = (list: MenuProps['items']): MenuProps['items'] => {
     if (!list) return list;
