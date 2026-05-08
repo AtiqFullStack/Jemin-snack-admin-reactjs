@@ -54,7 +54,7 @@ export const PasswordResetPage = () => {
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [form] = Form.useForm();
+  const [_form] = Form.useForm();
 
   const handleSendOtp = async () => {
     if (!email || !email.includes('@')) {

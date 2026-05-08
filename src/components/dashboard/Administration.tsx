@@ -15,7 +15,6 @@ import {
   TeamOutlined,
   PhoneOutlined,
   UserOutlined,
-  ApartmentOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';

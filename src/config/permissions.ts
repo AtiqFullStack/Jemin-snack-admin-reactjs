@@ -239,8 +239,8 @@ export const getAllGroups = () => {
 
 // Helper to check route access
 export const hasRouteAccess = (
-  userPermissions: string[],
-  route: string
+  _userPermissions: PermissionObj[],
+  _route: string
 ): boolean => {
   // For now, allow all routes - permission check can be enhanced later
   return true;

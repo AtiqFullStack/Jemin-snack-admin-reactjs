@@ -170,7 +170,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const response = await authService.resetPassword({
           email,
-          otp,
           newPassword: password,
         });
         return response;

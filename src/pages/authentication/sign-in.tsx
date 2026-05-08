@@ -14,11 +14,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import {
-  MoonOutlined,
-  SunOutlined,
-  ArrowLeftOutlined,
-} from '@ant-design/icons';
+import { MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { useMediaQuery } from 'react-responsive';
 import { PATH_DASHBOARD, PATH_AUTH } from '../../constants';
 import { useNavigate, useLocation } from 'react-router-dom';

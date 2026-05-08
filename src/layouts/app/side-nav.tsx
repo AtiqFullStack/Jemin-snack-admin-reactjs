@@ -242,7 +242,11 @@ const SideNav = ({ ...others }: SideNavProps) => {
   const colors = getThemeColors(mytheme as 'dark' | 'light');
 
   const items = useMemo(
-    () => filterMenuByRole(CRM_MENU_ITEMS, userPermissions),
+    () =>
+      filterMenuByRole(
+        CRM_MENU_ITEMS,
+        userPermissions.map((p) => p.module)
+      ),
     [userPermissions]
   );
 

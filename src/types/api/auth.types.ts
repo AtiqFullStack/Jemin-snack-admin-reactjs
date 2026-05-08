@@ -74,6 +74,7 @@ export interface UserProfileDto {
   claims?: ClaimDto[];
   createdAt: string;
   updatedAt?: string;
+  userType?: string;
 }
 
 export interface CreateUserDto {

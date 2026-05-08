@@ -11,7 +11,6 @@ import {
   message,
   Popconfirm,
   Modal,
-  Descriptions,
 } from 'antd';
 import {
   CheckOutlined,
@@ -40,7 +39,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 const Leave = () => {
   const { getAllLeaves, updateLeaveStatus } = leaveService();
-  const { canCreate, canRead, canUpdate, canDelete } = usePermissions();
+  const { canRead, canUpdate, canDelete } = usePermissions();
   const [leaves, setLeaves] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | undefined>();

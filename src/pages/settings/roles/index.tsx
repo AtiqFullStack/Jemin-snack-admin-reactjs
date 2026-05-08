@@ -66,7 +66,7 @@ const RolesPage = () => {
   const { canCreate, canUpdate, canDelete } = usePermissions();
   const { getRoles, createRoles, deleteRoles, updateRoles } = roleService();
 
-  const permissionsGrouped = getPermissionsGrouped();
+  const _permissionsGrouped = getPermissionsGrouped();
   const allGroups = getAllGroups();
 
   const normalizeRole = (role: any): Role => ({

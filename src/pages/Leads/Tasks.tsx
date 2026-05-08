@@ -274,7 +274,7 @@ const Tasks = ({ lead }: { lead?: any }) => {
 
         return (
           <Dropdown
-            menu={{ items }}
+            menu={{ items: items as any }}
             trigger={['click']}
             disabled={items.length === 0}
           >

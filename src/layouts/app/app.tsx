@@ -78,7 +78,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     // profileDetails();
   }, [getUser]);
   const { logout } = useAuth();
-  const [user, setUser] = useState<any>(null);
+  const [_user, _setUser] = useState<any>(null);
 
   const handleLogout = async () => {
     message.open({
