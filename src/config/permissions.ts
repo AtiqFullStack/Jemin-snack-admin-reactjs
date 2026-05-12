@@ -50,31 +50,31 @@ export const MODULES = {
     label: 'Staff',
     group: 'Human Resources',
     actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
   attendance: {
     label: 'Attendance',
     group: 'Human Resources',
     actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
   leave: {
     label: 'Leave',
     group: 'Human Resources',
     actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
   salary: {
     label: 'Salary',
     group: 'Human Resources',
     actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
   payroll: {
     label: 'Payroll',
     group: 'Human Resources',
     actions: ['read'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
 
   // Sales Module
@@ -82,26 +82,26 @@ export const MODULES = {
     label: 'Leads',
     group: 'Sales',
     actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
   tasks: {
     label: 'Tasks',
     group: 'Sales',
     actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
-  customers: {
-    label: 'Customers',
-    group: 'Sales',
-    actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned'],
-  },
-  deals: {
-    label: 'Deals',
-    group: 'Sales',
-    actions: ['read', 'create', 'update', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
-  },
+  // customers: {
+  //   label: 'Customers',
+  //   group: 'Sales',
+  //   actions: ['read', 'create', 'update', 'delete'],
+  //   scopes: ['all', 'assigned'],
+  // },
+  // deals: {
+  //   label: 'Deals',
+  //   group: 'Sales',
+  //   actions: ['read', 'create', 'update', 'delete'],
+  //   scopes: ['all', 'assigned', 'own'],
+  // },
   products: {
     label: 'Products',
     group: 'Sales',
@@ -114,28 +114,28 @@ export const MODULES = {
     label: 'Calls',
     group: 'Communication',
     actions: ['read', 'create', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
   locations: {
     label: 'Location',
     group: 'Communication',
     actions: ['read'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
   recordings: {
     label: 'Recordings',
     group: 'Communication',
     actions: ['read', 'create', 'delete'],
-    scopes: ['all', 'assigned', 'own'],
+    scopes: ['all', 'own'],
   },
 
   // Reports Module
-  reports: {
-    label: 'Reports',
-    group: 'Analytics',
-    actions: ['read'],
-    scopes: ['all'],
-  },
+  // reports: {
+  //   label: 'Reports',
+  //   group: 'Analytics',
+  //   actions: ['read'],
+  //   scopes: ['all'],
+  // },
 
   // Settings Module
   settings: {

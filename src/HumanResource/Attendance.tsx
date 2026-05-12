@@ -212,6 +212,9 @@ const Attendance = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingRecord, setEditingRecord] =
     useState<AttendanceTableRecord | null>(null);
+  const [viewingRecord, setViewingRecord] =
+    useState<AttendanceTableRecord | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   const fetchAttendance = async () => {
     setLoading(true);
@@ -338,6 +341,16 @@ const Attendance = () => {
       rate: total ? Math.round((presentCount / total) * 100) : 0,
     };
   }, [filteredRecords]);
+
+  const openViewModal = (record: AttendanceTableRecord) => {
+    setViewingRecord(record);
+    setIsViewModalOpen(true);
+  };
+
+  const closeViewModal = () => {
+    setIsViewModalOpen(false);
+    setViewingRecord(null);
+  };
 
   const openEditDrawer = (record: AttendanceTableRecord) => {
     setEditingRecord(record);
@@ -624,9 +637,7 @@ const Attendance = () => {
             <Button
               type="text"
               icon={<EyeOutlined />}
-              onClick={() => {
-                // viewAttendance(record);
-              }}
+              onClick={() => openViewModal(record)}
             >
               View
             </Button>
@@ -816,6 +827,145 @@ const Attendance = () => {
           </Spin>
         </Card>
       </Space>
+
+      <Modal
+        title="Attendance Details"
+        open={isViewModalOpen}
+        onCancel={closeViewModal}
+        footer={[
+          <Button key="close" type="primary" onClick={closeViewModal}>
+            Close
+          </Button>,
+        ]}
+        width={600}
+      >
+        {viewingRecord && (
+          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <Card
+              size="small"
+              bordered={false}
+              style={{ background: '#fafafa' }}
+            >
+              <Row gutter={[16, 16]}>
+                <Col span={12}>
+                  <Text type="secondary">Employee Name</Text>
+                  <br />
+                  <Text strong>{viewingRecord.employeeName}</Text>
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary">Employee Code</Text>
+                  <br />
+                  <Text strong>{viewingRecord.employeeCode}</Text>
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary">Department</Text>
+                  <br />
+                  <Text strong>{viewingRecord.department}</Text>
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary">Designation</Text>
+                  <br />
+                  <Text strong>{viewingRecord.designation}</Text>
+                </Col>
+              </Row>
+            </Card>
+
+            <Card
+              size="small"
+              bordered={false}
+              style={{ background: '#fafafa' }}
+            >
+              <Row gutter={[16, 16]}>
+                <Col span={12}>
+                  <Text type="secondary">Date</Text>
+                  <br />
+                  <Text strong>{formatDateLabel(viewingRecord.date)}</Text>
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary">Status</Text>
+                  <br />
+                  <Tag color={statusConfig[viewingRecord.status].color}>
+                    {statusConfig[viewingRecord.status].label}
+                  </Tag>
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary">Shift</Text>
+                  <br />
+                  <Text strong>{viewingRecord.shiftLabel}</Text>
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary">Check In</Text>
+                  <br />
+                  <Text strong>{viewingRecord.checkIn}</Text>
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary">Check Out</Text>
+                  <br />
+                  <Text strong>{viewingRecord.checkOut}</Text>
+                </Col>
+              </Row>
+            </Card>
+
+            <Card
+              size="small"
+              bordered={false}
+              style={{ background: '#fafafa' }}
+            >
+              <Row gutter={[16, 16]}>
+                <Col span={8}>
+                  <Text type="secondary">Net Hours</Text>
+                  <br />
+                  <Text strong>{viewingRecord.workHours}</Text>
+                </Col>
+                <Col span={8}>
+                  <Text type="secondary">Gross Hours</Text>
+                  <br />
+                  <Text strong>{viewingRecord.grossHours}</Text>
+                </Col>
+                <Col span={8}>
+                  <Text type="secondary">Break</Text>
+                  <br />
+                  <Text strong>{viewingRecord.totalBreak}</Text>
+                </Col>
+                <Col span={8}>
+                  <Text type="secondary">Late</Text>
+                  <br />
+                  <Text
+                    strong
+                    type={
+                      viewingRecord.raw.lateMinutes ? 'danger' : 'secondary'
+                    }
+                  >
+                    {viewingRecord.lateMinutes}
+                  </Text>
+                </Col>
+                <Col span={8}>
+                  <Text type="secondary">Early Leave</Text>
+                  <br />
+                  <Text strong>{viewingRecord.earlyLeaveMinutes}</Text>
+                </Col>
+                <Col span={8}>
+                  <Text type="secondary">Overtime</Text>
+                  <br />
+                  <Text strong>{viewingRecord.overtime}</Text>
+                </Col>
+              </Row>
+            </Card>
+
+            {viewingRecord.notes !== '-' && (
+              <Card
+                size="small"
+                bordered={false}
+                style={{ background: '#fafafa' }}
+              >
+                <Text type="secondary">Remarks / Notes</Text>
+                <br />
+                <Text>{viewingRecord.notes}</Text>
+              </Card>
+            )}
+          </Space>
+        )}
+      </Modal>
 
       <Drawer
         title={editingRecord ? 'Edit Attendance Entry' : 'Edit Attendance'}
