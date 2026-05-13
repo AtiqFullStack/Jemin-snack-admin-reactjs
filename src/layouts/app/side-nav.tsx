@@ -17,10 +17,16 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { getThemeColors } from '../../theme/colors';
 import { Logo } from '../../components';
-import { PATH_CRM, hasRouteAccess } from '../../config/permissions';
+import {
+  PATH_CRM,
+  canViewModule,
+  getRouteModule,
+  isAdminUser,
+} from '../../config/permissions';
 
 import { usePermissions } from '../../hooks/usePermissions';
 import { LocationEditIcon } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { Sider } = Layout;
 
@@ -176,10 +182,16 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
 
 function filterMenuByRole(
   items: MenuProps['items'],
-  userPermissions: string[]
+  userPermissions: ReturnType<typeof usePermissions>['userPermissions'],
+  user: any
 ): MenuProps['items'] {
-  const isAllowedKey = (k?: React.Key) =>
-    typeof k === 'string' ? hasRouteAccess(userPermissions as any, k) : false;
+  const isAllowedKey = (k?: React.Key) => {
+    if (typeof k !== 'string') return false;
+    if (k === PATH_CRM.dashboard || isAdminUser(user)) return true;
+
+    const module = getRouteModule(k);
+    return module ? canViewModule(userPermissions, module) : false;
+  };
 
   const walk = (list: MenuProps['items']): MenuProps['items'] => {
     if (!list) return list;
@@ -235,19 +247,15 @@ const SideNav = ({ ...others }: SideNavProps) => {
   const { pathname } = useLocation();
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [current, setCurrent] = useState<string>('');
-  // const { user } = useAuth() as any;
+  const { user } = useAuth() as any;
   const { userPermissions } = usePermissions();
 
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const colors = getThemeColors(mytheme as 'dark' | 'light');
 
   const items = useMemo(
-    () =>
-      filterMenuByRole(
-        CRM_MENU_ITEMS,
-        userPermissions.map((p) => p.module)
-      ),
-    [userPermissions]
+    () => filterMenuByRole(CRM_MENU_ITEMS, userPermissions, user),
+    [user, userPermissions]
   );
 
   // Only these submenus should be "single open"

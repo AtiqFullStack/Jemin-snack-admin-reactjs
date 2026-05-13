@@ -250,7 +250,11 @@ const router = createBrowserRouter([
 
   {
     path: '/hrms',
-    element: <PageWrapper children={<DashboardLayout />} />,
+    element: (
+      <ProtectedRoute>
+        <PageWrapper children={<DashboardLayout />} />
+      </ProtectedRoute>
+    ),
     errorElement: <ErrorPage />,
     children: [
       {

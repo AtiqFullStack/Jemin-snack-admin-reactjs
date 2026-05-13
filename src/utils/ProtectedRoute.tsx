@@ -23,7 +23,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAuth = true,
 }) => {
-  const { isAuthenticated, isLoading } = useAuth() as any;
+  const { isAuthenticated, isLoading, user } = useAuth() as any;
   const { userPermissions, isPermissionsLoading } = usePermissions();
   const location = useLocation();
   const currentPath = location.pathname.replace(/\/+$/, '') || '/';
@@ -58,7 +58,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Route-level permission guard to block direct URL access
-  const canAccessRoute = hasRouteAccess(userPermissions as any, currentPath);
+  const canAccessRoute = hasRouteAccess(userPermissions, currentPath, user);
   if (!canAccessRoute) {
     return <Navigate to="/errors/403" replace />;
   }

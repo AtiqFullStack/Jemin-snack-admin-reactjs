@@ -1,44 +1,56 @@
 import { useAuth } from '../contexts/AuthContext';
-import { useEffect, useState } from 'react';
-import { PermissionObj } from '../config/permissions';
+import { useEffect, useMemo, useState } from 'react';
+import { isAdminUser, PermissionObj } from '../config/permissions';
 import { apiRequest } from 'src/services/api/apiClient';
 import { API_ENDPOINTS } from 'src/services/api/endpoints';
 
 export const usePermissions = () => {
   const { user } = useAuth() as any;
   const roleId = user?.roleId?._id || user?.roleId;
-  const [userPermissions, setUserPermissions] = useState<PermissionObj[]>(
-    user?.roleId?.permissions || []
+  const fallbackPermissions = useMemo(
+    () =>
+      Array.isArray(user?.roleId?.permissions) ? user.roleId.permissions : [],
+    [user?.roleId?.permissions]
   );
-  const [isPermissionsLoading, setIsPermissionsLoading] = useState(!!roleId);
+  const [userPermissions, setUserPermissions] =
+    useState<PermissionObj[]>(fallbackPermissions);
+  const [isPermissionsLoading, setIsPermissionsLoading] = useState(
+    !!roleId && !isAdminUser(user)
+  );
 
   useEffect(() => {
-    if (!roleId) {
+    setUserPermissions(fallbackPermissions);
+
+    if (!roleId || isAdminUser(user)) {
       setIsPermissionsLoading(false);
       return;
     }
+
     setIsPermissionsLoading(true);
     apiRequest
       .get(API_ENDPOINTS.ROLES.LIST(roleId))
       .then((res: any) => {
-        const role = Array.isArray(res.data) ? res.data[0] : res.data;
-        if (role?.permissions?.length) {
-          setUserPermissions(role.permissions);
-        }
+        const roleData = res?.data ?? res;
+        const role = Array.isArray(roleData) ? roleData[0] : roleData;
+        setUserPermissions(
+          Array.isArray(role?.permissions) ? role.permissions : []
+        );
       })
-      .catch(() => {})
+      .catch(() => {
+        setUserPermissions(fallbackPermissions);
+      })
       .finally(() => setIsPermissionsLoading(false));
-  }, [roleId]);
+  }, [fallbackPermissions, roleId, user]);
 
   // Find permission object for a module
   const getModulePermission = (module: string): PermissionObj | undefined => {
-    if (user?.isAdmin) return undefined; // Admin has all permissions
+    if (isAdminUser(user)) return undefined; // Admin has all permissions
     return userPermissions.find((p) => p.module === module);
   };
 
   // Check if user has specific action on a module
   const hasAction = (module: string, action: string): boolean => {
-    if (user?.isAdmin) return true; // Admin has all actions
+    if (isAdminUser(user)) return true; // Admin has all actions
     const permission = getModulePermission(module);
     if (!permission) return false;
     return permission.actions.includes(action as any);
@@ -46,7 +58,7 @@ export const usePermissions = () => {
 
   // Check if user has specific scope on a module
   const hasScope = (module: string, scope: string): boolean => {
-    if (user?.isAdmin) return true; // Admin has all scopes
+    if (isAdminUser(user)) return true; // Admin has all scopes
     const permission = getModulePermission(module);
     if (!permission) return false;
     return permission.scope === scope;
@@ -54,31 +66,31 @@ export const usePermissions = () => {
 
   // Check if user has any permission on a module
   const hasModuleAccess = (module: string): boolean => {
-    if (user?.isAdmin) return true; // Admin has access to all modules
+    if (isAdminUser(user)) return true; // Admin has access to all modules
     return !!getModulePermission(module);
   };
 
   // Check if user can read
   const canRead = (module: string): boolean => {
-    if (user?.isAdmin) return true;
-    return hasAction(module, 'read');
+    if (isAdminUser(user)) return true;
+    return hasAction(module, 'read') || hasAction(module, 'view');
   };
 
   // Check if user can create
   const canCreate = (module: string): boolean => {
-    if (user?.isAdmin) return true;
+    if (isAdminUser(user)) return true;
     return hasAction(module, 'create');
   };
 
   // Check if user can update
   const canUpdate = (module: string): boolean => {
-    if (user?.isAdmin) return true;
+    if (isAdminUser(user)) return true;
     return hasAction(module, 'update');
   };
 
   // Check if user can delete
   const canDelete = (module: string): boolean => {
-    if (user?.isAdmin) return true;
+    if (isAdminUser(user)) return true;
     return hasAction(module, 'delete');
   };
 
@@ -88,7 +100,7 @@ export const usePermissions = () => {
     action: string,
     scope: string
   ): boolean => {
-    if (user?.isAdmin) return true;
+    if (isAdminUser(user)) return true;
     const permission = getModulePermission(module);
     if (!permission) return false;
     return (
@@ -98,7 +110,7 @@ export const usePermissions = () => {
 
   // Get all modules user has access to
   const getAccessibleModules = (): string[] => {
-    if (user?.isAdmin) {
+    if (isAdminUser(user)) {
       // Return all available modules for admin
       return [
         'staff',
@@ -106,6 +118,7 @@ export const usePermissions = () => {
         'leave',
         'salary',
         'payroll',
+        'candidates',
         'leads',
         'customers',
         'deals',
@@ -123,7 +136,7 @@ export const usePermissions = () => {
 
   // Check if user has permission (generic check)
   const hasPermission = (module: string, action?: string): boolean => {
-    if (user?.isAdmin) return true; // Admin has all permissions
+    if (isAdminUser(user)) return true; // Admin has all permissions
     if (!action) {
       return hasModuleAccess(module);
     }

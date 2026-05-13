@@ -85,7 +85,7 @@ const LeadsPage = () => {
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const res = await getState(null);
+        const res = (await getState(null)) as any;
         if (res.success && Array.isArray(res.data)) {
           const data = res.data.map((item: any) => ({
             value: item,
@@ -201,7 +201,7 @@ const LeadsPage = () => {
 
     try {
       setLoadingCities(true);
-      const res = await getState(stateName);
+      const res = (await getState(stateName)) as any;
       if (res.success && res.data?.districts) {
         const cityOptions = res.data.districts.map((district: string) => ({
           value: district,
@@ -239,7 +239,7 @@ const LeadsPage = () => {
     if (record.state) {
       try {
         setLoadingCities(true);
-        const res = await getState(record.state);
+        const res = (await getState(record.state)) as any;
         if (res.success && res.data?.districts) {
           const cityOptions = res.data.districts.map((district: string) => ({
             value: district,

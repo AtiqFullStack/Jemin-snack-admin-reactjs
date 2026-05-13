@@ -1,5 +1,5 @@
 // Permission types
-export type PermissionAction = 'read' | 'create' | 'update' | 'delete';
+export type PermissionAction = 'read' | 'view' | 'create' | 'update' | 'delete';
 export type PermissionScope = 'all' | 'assigned' | 'own';
 
 export type PermissionObj = {
@@ -43,6 +43,25 @@ export const PATH_CRM = {
   config: '/crm/config',
 };
 
+export const ROUTE_MODULE_MAP: Record<string, string> = {
+  [PATH_CRM.leads]: 'leads',
+  [PATH_CRM.activities.leads]: 'leads',
+  [PATH_CRM.activities.tasks]: 'tasks',
+  [PATH_CRM.calls]: 'calls',
+  [PATH_CRM.recordings]: 'recordings',
+  [PATH_CRM.products]: 'products',
+  [PATH_CRM.locations]: 'locations',
+  [PATH_CRM.hr.Attendance]: 'attendance',
+  [PATH_CRM.hr.leave]: 'leave',
+  [PATH_CRM.hr.salarySetting]: 'salary',
+  [PATH_CRM.hr.payslip]: 'payroll',
+  [PATH_CRM.hr.candidate]: 'candidates',
+  [PATH_CRM.hr.Settings]: 'settings',
+  [PATH_CRM.settings.users]: 'users',
+  [PATH_CRM.settings.roles]: 'roles',
+  [PATH_CRM.config]: 'settings',
+};
+
 // Module definitions with actions
 export const MODULES = {
   // HR Module
@@ -74,6 +93,12 @@ export const MODULES = {
     label: 'Payroll',
     group: 'Human Resources',
     actions: ['read'],
+    scopes: ['all', 'own'],
+  },
+  candidates: {
+    label: 'Candidates',
+    group: 'Human Resources',
+    actions: ['read', 'create', 'update', 'delete'],
     scopes: ['all', 'own'],
   },
 
@@ -239,9 +264,56 @@ export const getAllGroups = () => {
 
 // Helper to check route access
 export const hasRouteAccess = (
-  _userPermissions: PermissionObj[],
-  _route: string
+  userPermissions: PermissionObj[],
+  route: string,
+  user?: any
 ): boolean => {
-  // For now, allow all routes - permission check can be enhanced later
-  return true;
+  if (isAdminUser(user)) return true;
+
+  const normalizedRoute = normalizeRoute(route);
+  if (normalizedRoute === PATH_CRM.dashboard) return true;
+
+  const module = getRouteModule(normalizedRoute);
+  if (!module) return true;
+
+  return canViewModule(userPermissions, module);
+};
+
+export const normalizeRoute = (route: string): string =>
+  (route || '').split('?')[0].replace(/\/+$/, '') || '/';
+
+export const getRouteModule = (route: string): string | undefined => {
+  const normalizedRoute = normalizeRoute(route);
+  const routes = Object.keys(ROUTE_MODULE_MAP).sort(
+    (a, b) => b.length - a.length
+  );
+
+  const matchedRoute = routes.find(
+    (mappedRoute) =>
+      normalizedRoute === mappedRoute ||
+      normalizedRoute.startsWith(`${mappedRoute}/`)
+  );
+
+  return matchedRoute ? ROUTE_MODULE_MAP[matchedRoute] : undefined;
+};
+
+export const canViewModule = (
+  userPermissions: PermissionObj[],
+  module: string
+): boolean => {
+  const permission = userPermissions.find((p) => p.module === module);
+  if (!permission) return false;
+
+  return permission.actions.some((action) => ['read', 'view'].includes(action));
+};
+
+export const isAdminUser = (user?: any): boolean => {
+  const role = user?.roleId;
+  const roleName = typeof role === 'object' ? role?.name : user?.roleName;
+
+  return (
+    user?.isAdmin === true ||
+    role?.isAdmin === true ||
+    String(roleName || '').toLowerCase() === 'super admin'
+  );
 };
