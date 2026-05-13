@@ -35,14 +35,14 @@ import { UserAvatar } from '../../components';
 import leadServices from '../../services/leadServices';
 import staffService from '../../services/staffService';
 import { timeConverter } from '../../utils/convertor';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../../redux/store';
-import { fetchCountries } from '../../redux/countriesSlice';
 
 import { LeadStage, LeadSource, LeadFormValues, Lead } from '../../types/leads';
 import LeadViewModal from './LeadViewModal';
 import { usePermissions } from '../../hooks/usePermissions';
 import configService from '../../services/configService';
+import stateService from 'src/services/stateService';
 
 const LeadsPage = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -56,6 +56,7 @@ const LeadsPage = () => {
   const [staffs, setStaffs] = useState([]);
   const [searchParams] = useSearchParams();
   const { getConfig } = configService();
+  const { getState } = stateService();
 
   const loc = useLocation().pathname;
 
@@ -66,8 +67,11 @@ const LeadsPage = () => {
   const { creatLeads, getLeads, deleteLeads, updateLeads, bulkCreateLeads } =
     leadServices();
   const { getStaff } = staffService();
+  const [allStates, setAllStates] = useState([]);
+  const [allCities, setAllCities] = useState([]);
+  const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [loadingCities, setLoadingCities] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
-  const countries = useSelector((state: any) => state.countries.countries);
   const { canCreate, canUpdate, canDelete } = usePermissions();
   const [LEADSTATUS, SETLEADSTATUS] = useState([]);
   const [LEADSOURCE, SETLEADSOURCE] = useState([]);
@@ -79,8 +83,24 @@ const LeadsPage = () => {
   const [activityPage, setActvityTab] = useState(false);
 
   useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const res = await getState(null);
+        if (res.success && Array.isArray(res.data)) {
+          const data = res.data.map((item: any) => ({
+            value: item,
+            label: item,
+          }));
+          setAllStates(data);
+        }
+      } catch (error) {
+        console.error('Error fetching states:', error);
+      }
+    };
+    fetchStates();
+  }, []);
+  useEffect(() => {
     fetchLeads();
-    dispatch(fetchCountries());
     getStaff().then((res: any) => {
       if (res.success) {
         console.log(res.data);
@@ -104,6 +124,7 @@ const LeadsPage = () => {
       setActvityTab(false);
     }
   }, [loc]);
+
   useEffect(() => {
     const leadId = searchParams.get('id');
     if (leadId && leads.length > 0) {
@@ -171,8 +192,34 @@ const LeadsPage = () => {
     });
   }, [q, stage, source, leads]);
 
+  const handleStateChange = async (stateName: string) => {
+    setSelectedState(stateName);
+    form.setFieldValue('city', undefined);
+    setAllCities([]);
+
+    if (!stateName) return;
+
+    try {
+      setLoadingCities(true);
+      const res = await getState(stateName);
+      if (res.success && res.data?.districts) {
+        const cityOptions = res.data.districts.map((district: string) => ({
+          value: district,
+          label: district,
+        }));
+        setAllCities(cityOptions);
+      }
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
+
   const handleOpenDrawer = () => {
     setEditingLead(null);
+    setSelectedState(null);
+    setAllCities([]);
     setIsDrawerOpen(true);
     form.resetFields();
     form.setFieldsValue({
@@ -181,11 +228,32 @@ const LeadsPage = () => {
       contacted_today: true,
       is_public: false,
       tags: [],
+      country: 'India',
     });
   };
 
-  const handleEdit = (record: Lead) => {
+  const handleEdit = async (record: Lead) => {
     setEditingLead(record);
+    setSelectedState(record.state || null);
+
+    if (record.state) {
+      try {
+        setLoadingCities(true);
+        const res = await getState(record.state);
+        if (res.success && res.data?.districts) {
+          const cityOptions = res.data.districts.map((district: string) => ({
+            value: district,
+            label: district,
+          }));
+          setAllCities(cityOptions);
+        }
+      } catch (error) {
+        console.error('Error fetching cities:', error);
+      } finally {
+        setLoadingCities(false);
+      }
+    }
+
     form.setFieldsValue({
       status: record.status,
       source: record.source,
@@ -201,7 +269,7 @@ const LeadsPage = () => {
       address: record.address,
       city: record.city,
       state: record.state,
-      country: record.country,
+      country: 'India',
       priority: record.priority,
       zip: record.zip,
       language: 'English',
@@ -249,7 +317,7 @@ const LeadsPage = () => {
       address: values.address,
       city: values.city,
       state: values.state,
-      country: values.country,
+      country: 'India',
       zip: values.zip,
       language: 'English',
       description: values.description,
@@ -717,27 +785,22 @@ const LeadsPage = () => {
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="city" label="City">
-                <Input placeholder="" />
-              </Form.Item>
-
               <Form.Item name="state" label="State">
-                <Input placeholder="" />
-              </Form.Item>
-
-              <Form.Item name="country" label="Country">
                 <Select
                   showSearch
-                  placeholder="Nothing selected"
-                  filterOption={(input, option) =>
-                    String(option?.label ?? '')
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  options={countries.map((c: any) => ({
-                    value: c.name.common,
-                    label: c.name.common,
-                  }))}
+                  placeholder="Select state first"
+                  options={allStates}
+                  onChange={handleStateChange}
+                />
+              </Form.Item>
+
+              <Form.Item name="city" label="City">
+                <Select
+                  showSearch
+                  placeholder="Select state first"
+                  options={allCities}
+                  loading={loadingCities}
+                  disabled={!selectedState || loadingCities}
                 />
               </Form.Item>
 

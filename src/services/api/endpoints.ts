@@ -23,7 +23,10 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/roles/${id}`,
     DELETE: (id: string) => `/roles/${id}`,
   },
-
+  STATE: {
+    GET: (query: any) =>
+      !query ? '/state' : `/state?type=district&state=${query}`,
+  },
   //=========================Staff===========================
 
   STAFF: {

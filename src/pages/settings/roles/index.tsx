@@ -86,7 +86,7 @@ const RolesPage = () => {
     return parsedDate.toLocaleDateString();
   };
 
-  useEffect(() => {
+  const getAllRoles = async () => {
     getRoles(null)
       .then((fetchedRoles: any) => {
         if (fetchedRoles.success) {
@@ -96,6 +96,9 @@ const RolesPage = () => {
       .catch(() => {
         message.error('Failed to fetch roles');
       });
+  };
+  useEffect(() => {
+    getAllRoles();
   }, []);
 
   const handleEditRole = (role: Role) => {
@@ -133,6 +136,7 @@ const RolesPage = () => {
         }
         deleteRoles(role._id).then((res: any) => {
           if (res.success) {
+            getAllRoles();
             setRoles(roles.filter((r) => r._id !== role._id));
             message.success(res.message || 'Role deleted successfully');
           } else {
@@ -182,12 +186,12 @@ const RolesPage = () => {
         );
       },
     },
-    {
-      title: 'Users',
-      dataIndex: 'users_count',
-      key: 'users_count',
-      render: (count: number) => count ?? 0,
-    },
+    // {
+    //   title: 'Users',
+    //   dataIndex: 'users_count',
+    //   key: 'users_count',
+    //   render: (count: number) => count ?? 0,
+    // },
     {
       title: 'Created',
       dataIndex: 'createdAt',
@@ -262,8 +266,8 @@ const RolesPage = () => {
           };
           const res = (await updateRoles(editingRole._id!, updatedRole)) as any;
           if (res.success) {
+            await getAllRoles();
             message.success(res.message || 'Role updated successfully');
-            await getRoles(null);
           } else {
             if (res?.message && /exist|duplicate|already/i.test(res.message)) {
               form.setFields([{ name: 'name', errors: [res.message] }]);
@@ -284,7 +288,7 @@ const RolesPage = () => {
           };
           const res = (await createRoles(newRole)) as any;
           if (res.success) {
-            await getRoles(null);
+            await getAllRoles();
 
             message.success(res.message || 'Role created successfully');
           } else {
