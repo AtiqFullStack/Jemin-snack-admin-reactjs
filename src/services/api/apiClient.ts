@@ -151,9 +151,9 @@ apiClient.interceptors.response.use(
     };
 
     // Log error in development
-    if (import.meta.env.DEV) {
-      message.error(error.response?.data?.message || error.message);
-    }
+    // if (import.meta.env.DEV) {
+    message.error(error.response?.data?.message || error.message);
+    // }
 
     // Handle 401 Unauthorized - Token expired
     if (error.response?.status === 401 && !originalRequest._retry) {

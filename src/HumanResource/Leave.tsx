@@ -47,7 +47,7 @@ const Leave = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedLeave, setSelectedLeave] = useState<any>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
-
+  console.log(canDelete);
   const fetchLeaves = async () => {
     setLoading(true);
     const res: any = await getAllLeaves();
@@ -227,21 +227,21 @@ const Leave = () => {
         }
 
         // Delete button - if canDelete
-        if (canDelete('leave')) {
-          actions.push(
-            <Popconfirm
-              key="delete"
-              title="Delete this leave?"
-              onConfirm={() => handleStatus(row._id, 'DELETED')}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button size="small" danger type="text">
-                Delete
-              </Button>
-            </Popconfirm>
-          );
-        }
+        // if (canDelete('leave')) {
+        //   actions.push(
+        //     <Popconfirm
+        //       key="delete"
+        //       title="Delete this leave?"
+        //       onConfirm={() => handleStatus(row._id, 'DELETED')}
+        //       okText="Yes"
+        //       cancelText="No"
+        //     >
+        //       <Button size="small" danger type="text">
+        //         Delete
+        //       </Button>
+        //     </Popconfirm>
+        //   );
+        // }
 
         return actions.length > 0 ? (
           <Space size="small">{actions}</Space>

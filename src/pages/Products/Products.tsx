@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Avatar,
   Button,
   Card,
   Col,
@@ -24,7 +23,6 @@ import {
   AppstoreAddOutlined,
   DeleteOutlined,
   EditOutlined,
-  PictureOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,

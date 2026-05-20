@@ -1,9 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  UserOutlined,
-  BarChartOutlined,
-  CheckCircleOutlined,
-} from '@ant-design/icons';
+import { UserOutlined, BarChartOutlined } from '@ant-design/icons';
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Lead } from '../../types/leads';

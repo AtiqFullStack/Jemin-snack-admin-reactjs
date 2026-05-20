@@ -57,7 +57,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const navigate = useNavigate();
   const nodeRef = useRef(null);
   const floatBtnRef = useRef(null);
-  const getUser = localStorage.getItem('user');
 
   const { logout, user } = useAuth();
   const [_user, _setUser] = useState<any>(null);
