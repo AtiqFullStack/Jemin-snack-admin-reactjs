@@ -36,6 +36,7 @@ import { PATH_AUTH, PATH_USER_PROFILE } from '../../constants';
 // import { enableMockData } from '../../redux/data-mode/dataModeSlice';
 // import { RootState } from '../../redux/store.ts';
 import { useAuth } from '../../contexts/AuthContext.tsx';
+import { imageUrl } from 'src/utils/convertor.ts';
 // import { imageUrl } from 'src/utils/convertor.ts';
 // import { authService } from 'src/services/auth/authService.ts';
 const { Content } = Layout;
@@ -57,27 +58,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const nodeRef = useRef(null);
   const floatBtnRef = useRef(null);
   const getUser = localStorage.getItem('user');
-  // const dispatch = useDispatch();
-  // const { user, isAuthenticated } = useSelector(
-  //   (state: RootState) => state.auth
-  // );
-  useEffect(() => {
-    if (getUser) {
-      // setUser(JSON.parse(getUser));
-    }
-    // const profileDetails = async () => {
-    //   try {
-    //     const response = await authService.getProfile();
-    //     console.log({ response });
-    //     setUser(response ?? null);
-    //   } catch (error) {
-    //     console.log(error);
-    //   }
-    // };
 
-    // profileDetails();
-  }, [getUser]);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [_user, _setUser] = useState<any>(null);
 
   const handleLogout = async () => {
@@ -208,13 +190,15 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
               </Tooltip>
               <Dropdown menu={{ items }} trigger={['click']}>
                 <Flex>
-                  <img
-                    src={'./jpg'}
-                    alt="user profile photo"
-                    height={36}
-                    width={36}
-                    style={{ borderRadius, objectFit: 'cover' }}
-                  />
+                  {user && (
+                    <img
+                      src={imageUrl(user?.avatar)}
+                      alt="user profile photo"
+                      height={36}
+                      width={36}
+                      style={{ borderRadius, objectFit: 'cover' }}
+                    />
+                  )}
                 </Flex>
               </Dropdown>
             </Flex>

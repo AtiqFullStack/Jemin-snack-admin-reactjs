@@ -5,7 +5,7 @@ export const timeConverter = (time: any) => {
   return converted;
 };
 
-export const imageUrl = (url: string) => {
+export const imageUrl = (url: string | undefined | null) => {
   return `${BASEURL}/${url}`;
 };
 

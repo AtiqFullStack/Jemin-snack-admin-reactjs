@@ -60,9 +60,9 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ activeTab, lead }) => {
 
   const displayCurrency = (value?: number | null) => {
     if (value === null || value === undefined) return '-';
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       maximumFractionDigits: 0,
     }).format(value);
   };

@@ -338,16 +338,9 @@ const Products = () => {
       dataIndex: 'name',
       render: (name: string, record) => (
         <Space>
-          <Avatar
-            shape="square"
-            size={48}
-            src={record.image || record.imageUrl}
-            icon={<PictureOutlined />}
-            style={{ borderRadius: 8, background: '#f0f2f5' }}
-          />
           <Space direction="vertical" size={0}>
             <Text strong>{name}</Text>
-            <Text type="secondary" style={{ maxWidth: 420 }} ellipsis>
+            <Text ellipsis type="secondary" style={{ maxWidth: 200 }}>
               {record.description || 'No description'}
             </Text>
           </Space>

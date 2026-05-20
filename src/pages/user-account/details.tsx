@@ -16,6 +16,7 @@ type FieldType = {
   position?: string;
   role?: string;
   status?: 'active' | 'inactive';
+  Id?: string;
 };
 
 type OutletContextType = {
@@ -33,10 +34,11 @@ const formatValue = (value?: string | null) => {
 export const UserProfileDetailsPage = () => {
   const [form] = Form.useForm<FieldType>();
   const { user } = useOutletContext<OutletContextType>();
-
+  console.log(user);
   useEffect(() => {
     form.setFieldsValue({
       id: user?._id ?? '',
+      Id: user?.Id ?? '',
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
       fullName:
@@ -68,15 +70,15 @@ export const UserProfileDetailsPage = () => {
           <Col sm={24} lg={24}>
             <Form.Item<FieldType>
               label="User ID"
-              name="id"
+              name="Id"
               rules={[{ required: true, message: 'User ID is required' }]}
             >
               <Input
                 readOnly
                 suffix={
-                  user?._id ? (
+                  user?.Id ? (
                     <Typography.Paragraph
-                      copyable={{ text: user._id }}
+                      copyable={{ text: user.Id }}
                       style={{ margin: 0 }}
                     />
                   ) : null

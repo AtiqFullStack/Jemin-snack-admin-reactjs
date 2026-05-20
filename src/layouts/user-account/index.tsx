@@ -28,6 +28,7 @@ const { Link, Text } = Typography;
 export type UserProfileData = {
   _id: string;
   firstName: string;
+  Id?: string;
   lastName: string;
   name?: string;
   email: string;
@@ -70,6 +71,7 @@ export const UserAccountLayout = () => {
   const stylesContext = useStylesContext();
   const [activeKey, setActiveKey] = useState(TAB_ITEMS[0]?.key ?? 'details');
   const [user, setUser] = useState<UserProfileData | null>(null);
+  console.log(user);
 
   const descriptionItems = useMemo<DescriptionsProps['items']>(() => {
     const fullName =

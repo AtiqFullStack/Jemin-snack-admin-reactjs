@@ -69,7 +69,7 @@ export interface UserProfileDto {
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
-  avatarUrl?: string;
+  avatar?: string | null | undefined;
   roles: string[];
   claims?: ClaimDto[];
   createdAt: string;

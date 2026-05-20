@@ -83,6 +83,7 @@ const Candidate = () => {
     console.log(newCandidate);
     // return
     const response = (await createCandidates(newCandidate)) as any;
+    console.log(response);
     if (response) {
       setCandidates([...candidates, response.data]);
     }
@@ -183,7 +184,10 @@ const Candidate = () => {
           <Form.Item
             name="email"
             label="Email"
-            rules={[{ required: true, message: 'Enter email' }]}
+            rules={[
+              { required: true, message: 'Enter email' },
+              { type: 'email', message: 'Enter valid email address' },
+            ]}
           >
             <Input />
           </Form.Item>
@@ -191,9 +195,15 @@ const Candidate = () => {
           <Form.Item
             name="mobile"
             label="Mobile"
-            rules={[{ required: true, message: 'Enter mobile' }]}
+            rules={[
+              { required: true, message: 'Enter mobile number' },
+              {
+                pattern: /^[6-9]\d{9}$/,
+                message: 'Enter valid 10-digit mobile number',
+              },
+            ]}
           >
-            <Input />
+            <Input maxLength={10} />
           </Form.Item>
 
           <Form.Item
