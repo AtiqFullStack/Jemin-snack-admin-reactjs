@@ -63,10 +63,10 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
       <Link to={PATH_CRM.activities.leads}>Leads</Link>,
       PATH_CRM.activities.leads
     ),
-    getItem(
-      <Link to={PATH_CRM.activities.tasks}>Tasks</Link>,
-      PATH_CRM.activities.tasks
-    ),
+    // getItem(
+    //   <Link to={PATH_CRM.activities.tasks}>Tasks</Link>,
+    //   PATH_CRM.activities.tasks
+    // ),
   ]),
 
   getItem('Calls', 'submenu-calls', <PhoneOutlined />, [

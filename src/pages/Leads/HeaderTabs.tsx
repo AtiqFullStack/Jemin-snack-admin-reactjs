@@ -78,7 +78,7 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ activeTab, lead }) => {
     () => [
       { key: 'profile', label: 'Profile', icon: <UserOutlined /> },
       // { key: "proposals", label: "Proposals", icon: <FileTextOutlined /> },
-      { key: 'tasks', label: 'Tasks', icon: <CheckCircleOutlined /> },
+      // { key: 'tasks', label: 'Tasks', icon: <CheckCircleOutlined /> },
       // { key: "attachments", label: "Attachments", icon: <PaperClipOutlined /> },
       // { key: "reminders", label: "Reminders", icon: <BellOutlined /> },
       // { key: "notes", label: "Notes", icon: <FileDoneOutlined /> },
@@ -172,12 +172,12 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ activeTab, lead }) => {
 
               {/* Quick stats */}
               <Row gutter={[12, 12]}>
-                <Col xs={12} md={6}>
+                {/* <Col xs={12} md={6}>
                   <Field label="Company" value={displayText(lead.company)} />
                 </Col>
                 <Col xs={12} md={6}>
                   <Field label="Position" value={displayText(lead.position)} />
-                </Col>
+                </Col> */}
                 <Col xs={12} md={6}>
                   <Field
                     label="Lead Value"

@@ -758,10 +758,10 @@ const LeadsPage = () => {
               >
                 <Input placeholder="" />
               </Form.Item>
-
+              {/* 
               <Form.Item name="position" label="Position">
                 <Input placeholder="" />
-              </Form.Item>
+              </Form.Item> */}
 
               <Form.Item
                 name="email"
@@ -834,7 +834,7 @@ const LeadsPage = () => {
           </Row>
 
           {/* Bottom checkboxes */}
-          <Row gutter={[12, 12]}>
+          {/* <Row gutter={[12, 12]}>
             <Col span={24}>
               <Flex gap={16} align="center">
                 <Form.Item
@@ -854,7 +854,7 @@ const LeadsPage = () => {
                 </Form.Item>
               </Flex>
             </Col>
-          </Row>
+          </Row> */}
         </Form>
       </Drawer>
 
