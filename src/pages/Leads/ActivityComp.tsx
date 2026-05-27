@@ -14,6 +14,7 @@ import {
   Modal,
   Popconfirm,
   Row,
+  Select,
   Space,
   Tag,
   Timeline,
@@ -80,7 +81,7 @@ type Activity = {
 
 type CartItem = {
   productId: string;
-  size?: number;
+  size: number;
   price: number;
   quantity: number;
 };
@@ -201,43 +202,59 @@ const ActivityComp = (props: any) => {
     [allProducts, search]
   );
 
-  const getCartItem = (productId: string) =>
-    cart.find((c) => c.productId === productId);
+  // per-product selected size in left panel
+  const [pickerSize, setPickerSize] = useState<Record<string, number>>({});
 
-  const addToCart = (product: any) => {
+  const cartKey = (productId: string, size: number) => `${productId}_${size}`;
+
+  const getCartItem = (productId: string, size: number) =>
+    cart.find((c) => c.productId === productId && c.size === size);
+
+  const addToCart = (product: any, size: number) => {
+    const price = product.prices?.find((p: any) => p.size === size)?.price ?? 0;
     setCart((prev) => {
-      const exists = prev.find((c) => c.productId === product._id);
+      const exists = prev.find(
+        (c) => c.productId === product._id && c.size === size
+      );
       if (exists)
         return prev.map((c) =>
-          c.productId === product._id ? { ...c, quantity: c.quantity + 1 } : c
+          c.productId === product._id && c.size === size
+            ? { ...c, quantity: c.quantity + 1 }
+            : c
         );
-      return [
-        ...prev,
-        { productId: product._id, price: product.price ?? 0, quantity: 1 },
-      ];
+      return [...prev, { productId: product._id, size, price, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = (productId: string, size: number) => {
     setCart((prev) => {
-      const item = prev.find((c) => c.productId === productId);
+      const item = prev.find(
+        (c) => c.productId === productId && c.size === size
+      );
       if (!item) return prev;
       if (item.quantity <= 1)
-        return prev.filter((c) => c.productId !== productId);
+        return prev.filter(
+          (c) => !(c.productId === productId && c.size === size)
+        );
       return prev.map((c) =>
-        c.productId === productId ? { ...c, quantity: c.quantity - 1 } : c
+        c.productId === productId && c.size === size
+          ? { ...c, quantity: c.quantity - 1 }
+          : c
       );
     });
   };
 
   const updateCartField = (
     productId: string,
-    field: 'price' | 'quantity' | 'size',
+    size: number,
+    field: 'price' | 'quantity',
     value: number
   ) => {
     setCart((prev) =>
       prev.map((c) =>
-        c.productId === productId ? { ...c, [field]: value } : c
+        c.productId === productId && c.size === size
+          ? { ...c, [field]: value }
+          : c
       )
     );
   };
@@ -249,10 +266,7 @@ const ActivityComp = (props: any) => {
     if (!content) return message.warning('Please write something');
 
     // check if any product with sizes has no size selected
-    const missingSizes = cart.filter((item) => {
-      const p = allProducts.find((ap: any) => ap._id === item.productId);
-      return p?.availableSize?.length > 0 && !item.size;
-    });
+    const missingSizes = cart.filter((item) => !item.size);
     if (missingSizes.length > 0) {
       const names = missingSizes
         .map((item) => {
@@ -710,13 +724,50 @@ const ActivityComp = (props: any) => {
                   (ap: any) => ap._id === item.productId
                 );
                 return (
-                  <Flex key={item.productId} align="center" gap={8}>
-                    <ProductImage image={p?.image} name={p?.name} size={28} />
-                    <Text style={{ flex: 1, fontSize: 12 }}>{p?.name}</Text>
-                    <Tag color="green" style={{ fontSize: 11 }}>
-                      ×{item.quantity}
-                    </Tag>
-                    <Text style={{ fontSize: 12, color: '#389e0d' }}>
+                  <div
+                    key={`${item.productId}_${item.size}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      background: '#fff',
+                      border: '1px solid #d9f7be',
+                      borderRadius: 10,
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <ProductImage image={p?.image} name={p?.name} size={38} />
+                    <div style={{ flex: 1 }}>
+                      <Text strong style={{ fontSize: 13 }}>
+                        {p?.name || '—'}
+                      </Text>
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: 8,
+                          marginTop: 2,
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <Tag style={{ fontSize: 11, margin: 0 }}>
+                          {item.size} {p?.unit}
+                        </Tag>
+                        <Tag color="green" style={{ fontSize: 11, margin: 0 }}>
+                          Qty: {item.quantity}
+                        </Tag>
+                        <Tag color="blue" style={{ fontSize: 11, margin: 0 }}>
+                          ₹{item.price}
+                        </Tag>
+                      </div>
+                    </div>
+                    <Text
+                      strong
+                      style={{
+                        fontSize: 13,
+                        color: '#389e0d',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       ₹{(item.price * item.quantity).toLocaleString()}
                     </Text>
                     <Button
@@ -726,11 +777,17 @@ const ActivityComp = (props: any) => {
                       icon={<CloseOutlined />}
                       onClick={() =>
                         setCart((prev) =>
-                          prev.filter((c) => c.productId !== item.productId)
+                          prev.filter(
+                            (c) =>
+                              !(
+                                c.productId === item.productId &&
+                                c.size === item.size
+                              )
+                          )
                         )
                       }
                     />
-                  </Flex>
+                  </div>
                 );
               })}
             </div>
@@ -815,10 +872,10 @@ const ActivityComp = (props: any) => {
             </Space>
           </Flex>
         }
-        width={700}
+        width={860}
         styles={{ body: { padding: 0 } }}
       >
-        <div style={{ display: 'flex', height: 520 }}>
+        <div style={{ display: 'flex', height: 540 }}>
           {/* Left: product list */}
           <div
             style={{
@@ -852,69 +909,77 @@ const ActivityComp = (props: any) => {
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {filteredProducts.map((p: any) => {
-                  const cartItem = getCartItem(p._id);
+                  const selectedSize = pickerSize[p._id] ?? p.prices?.[0]?.size;
+                  const cartItem = selectedSize
+                    ? getCartItem(p._id, selectedSize)
+                    : null;
                   const inCart = !!cartItem;
+                  const cartCount = cart
+                    .filter((c) => c.productId === p._id)
+                    .reduce((s, c) => s + c.quantity, 0);
                   return (
                     <div
                       key={p._id}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 12,
+                        gap: 10,
                         padding: '10px 12px',
                         borderRadius: 10,
-                        cursor: 'pointer',
-                        border: `1px solid ${inCart ? '#b7eb8f' : '#f0f0f0'}`,
-                        background: inCart ? '#f6ffed' : '#fff',
-                        transition: 'all 0.15s',
+                        border: `1px solid ${
+                          cartCount > 0 ? '#b7eb8f' : '#f0f0f0'
+                        }`,
+                        background: cartCount > 0 ? '#f6ffed' : '#fff',
                       }}
                     >
-                      <ProductImage image={p.image} name={p.name} size={44} />
-                      <div style={{ flex: 1 }}>
+                      <ProductImage image={p.image} name={p.name} size={40} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <Text strong style={{ fontSize: 13 }}>
                           {p.name}
                         </Text>
-                        <div
-                          style={{
-                            display: 'flex',
-                            gap: 6,
-                            marginTop: 2,
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          {p.availableSize?.length > 0 ? (
-                            p.availableSize.map((s: number) => (
-                              <Tag key={s} style={{ fontSize: 11, margin: 0 }}>
-                                {s} {p.unit} / ₹{p.price}
-                              </Tag>
-                            ))
-                          ) : (
-                            <Text type="secondary" style={{ fontSize: 11 }}>
-                              ₹{p.price} / {p.unit}
-                            </Text>
-                          )}
-                        </div>
+                        {cartCount > 0 && (
+                          <Text
+                            type="secondary"
+                            style={{ fontSize: 11, display: 'block' }}
+                          >
+                            {cartCount} in cart
+                          </Text>
+                        )}
                       </div>
+                      {p.prices?.length > 0 && (
+                        <Select
+                          size="small"
+                          style={{ width: 150 }}
+                          value={selectedSize}
+                          onChange={(val) =>
+                            setPickerSize((prev) => ({ ...prev, [p._id]: val }))
+                          }
+                          options={p.prices.map((pr: any) => ({
+                            value: pr.size,
+                            label: `${pr.size} ${p.unit} — ₹${pr.price}`,
+                          }))}
+                        />
+                      )}
                       {inCart ? (
                         <Flex align="center" gap={4}>
                           <Button
                             size="small"
                             shape="circle"
                             icon={<MinusOutlined />}
-                            onClick={() => removeFromCart(p._id)}
+                            onClick={() => removeFromCart(p._id, selectedSize!)}
                           />
                           <Text
                             strong
-                            style={{ minWidth: 20, textAlign: 'center' }}
+                            style={{ minWidth: 18, textAlign: 'center' }}
                           >
-                            {cartItem.quantity}
+                            {cartItem!.quantity}
                           </Text>
                           <Button
                             size="small"
                             shape="circle"
                             type="primary"
                             icon={<PlusOutlined />}
-                            onClick={() => addToCart(p)}
+                            onClick={() => addToCart(p, selectedSize!)}
                           />
                         </Flex>
                       ) : (
@@ -922,7 +987,10 @@ const ActivityComp = (props: any) => {
                           size="small"
                           type="dashed"
                           icon={<PlusOutlined />}
-                          onClick={() => addToCart(p)}
+                          onClick={() =>
+                            selectedSize && addToCart(p, selectedSize)
+                          }
+                          disabled={!selectedSize}
                         >
                           Add
                         </Button>
@@ -935,7 +1003,7 @@ const ActivityComp = (props: any) => {
           </div>
 
           {/* Right: cart / edit details */}
-          <div style={{ width: 260, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ width: 340, display: 'flex', flexDirection: 'column' }}>
             <div
               style={{
                 padding: '12px 16px',
@@ -961,10 +1029,9 @@ const ActivityComp = (props: any) => {
                     const p = allProducts.find(
                       (ap: any) => ap._id === item.productId
                     );
-                    const sizes: number[] = p?.availableSize || [];
                     return (
                       <div
-                        key={item.productId}
+                        key={`${item.productId}_${item.size}`}
                         style={{
                           background: '#fafafa',
                           borderRadius: 10,
@@ -982,9 +1049,17 @@ const ActivityComp = (props: any) => {
                             name={p?.name}
                             size={32}
                           />
-                          <Text strong style={{ fontSize: 12, flex: 1 }}>
-                            {p?.name}
-                          </Text>
+                          <div style={{ flex: 1 }}>
+                            <Text strong style={{ fontSize: 12 }}>
+                              {p?.name}
+                            </Text>
+                            <Text
+                              type="secondary"
+                              style={{ fontSize: 11, display: 'block' }}
+                            >
+                              {item.size} {p?.unit} — ₹{item.price}
+                            </Text>
+                          </div>
                           <Tooltip title="Remove">
                             <Button
                               type="text"
@@ -994,7 +1069,11 @@ const ActivityComp = (props: any) => {
                               onClick={() =>
                                 setCart((prev) =>
                                   prev.filter(
-                                    (c) => c.productId !== item.productId
+                                    (c) =>
+                                      !(
+                                        c.productId === item.productId &&
+                                        c.size === item.size
+                                      )
                                   )
                                 )
                               }
@@ -1003,68 +1082,34 @@ const ActivityComp = (props: any) => {
                         </Flex>
 
                         <Row gutter={6}>
-                          {sizes.length > 0 && (
-                            <Col span={24} style={{ marginBottom: 6 }}>
-                              <Flex
-                                align="center"
-                                gap={4}
-                                style={{ marginBottom: 4 }}
-                              >
-                                <Text type="secondary" style={{ fontSize: 11 }}>
-                                  Size ({p?.unit})
-                                </Text>
-                                {!item.size && (
-                                  <Text
-                                    style={{ fontSize: 10, color: '#ff4d4f' }}
-                                  >
-                                    * required
-                                  </Text>
-                                )}
-                              </Flex>
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  gap: 4,
-                                  flexWrap: 'wrap',
-                                }}
-                              >
-                                {sizes.map((s) => (
-                                  <Tag
-                                    key={s}
-                                    style={{
-                                      cursor: 'pointer',
-                                      margin: 0,
-                                      fontWeight: item.size === s ? 700 : 400,
-                                    }}
-                                    color={
-                                      item.size === s ? 'green' : 'default'
-                                    }
-                                    onClick={() =>
-                                      updateCartField(item.productId, 'size', s)
-                                    }
-                                  >
-                                    {s} {p?.unit}
-                                  </Tag>
-                                ))}
-                              </div>
-                            </Col>
-                          )}
                           <Col span={12}>
-                            <Text type="secondary" style={{ fontSize: 11 }}>
+                            <Text
+                              type="secondary"
+                              style={{
+                                fontSize: 11,
+                                display: 'block',
+                                marginBottom: 4,
+                              }}
+                            >
                               Price (₹)
                             </Text>
                             <InputNumber
                               size="small"
-                              style={{ width: '100%' }}
+                              style={{ width: '100%', background: '#f5f5f5' }}
                               min={0}
                               value={item.price}
-                              onChange={(v) =>
-                                updateCartField(item.productId, 'price', v ?? 0)
-                              }
+                              readOnly
                             />
                           </Col>
                           <Col span={12}>
-                            <Text type="secondary" style={{ fontSize: 11 }}>
+                            <Text
+                              type="secondary"
+                              style={{
+                                fontSize: 11,
+                                display: 'block',
+                                marginBottom: 4,
+                              }}
+                            >
                               Qty
                             </Text>
                             <InputNumber
@@ -1075,6 +1120,7 @@ const ActivityComp = (props: any) => {
                               onChange={(v) =>
                                 updateCartField(
                                   item.productId,
+                                  item.size,
                                   'quantity',
                                   v ?? 1
                                 )

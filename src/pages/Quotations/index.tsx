@@ -20,10 +20,11 @@ import {
   Typography,
 } from 'antd';
 import {
+  DeleteOutlined,
   FilePdfOutlined,
-  MinusCircleOutlined,
   PlusOutlined,
   ReloadOutlined,
+  ShoppingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import apiClient, { BASEURL } from '../../services/api/apiClient';
@@ -48,6 +49,20 @@ const QuotationsPage = () => {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [sourceType, setSourceType] = useState<'lead' | 'customer'>('lead');
   const [billTo, setBillTo] = useState<BillTo>(EMPTY_BILL);
+
+  // cart state
+  type CartRow = {
+    productId: string;
+    size: number | undefined;
+    price: number;
+    quantity: number;
+  };
+  const [cart, setCart] = useState<CartRow[]>([]);
+  const [tax, setTax] = useState<number>(0);
+  const [discount, setDiscount] = useState<number>(0);
+
+  const subtotal = cart.reduce((s, c) => s + c.price * c.quantity, 0);
+  const total = subtotal + tax - discount;
 
   const { getProducts } = useProducts();
 
@@ -130,33 +145,28 @@ const QuotationsPage = () => {
     form.resetFields();
     setBillTo(EMPTY_BILL);
     setSourceType('lead');
+    setCart([]);
+    setTax(0);
+    setDiscount(0);
   };
 
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
-      setSaving(true);
-
-      const products = (values.products || [])
-        .filter((p: any) => p?.productId)
-        .map((p: any) => ({
-          productId: p.productId,
-          price: p.price ?? 0,
-          quantity: p.quantity ?? 1,
-          ...(p.size != null ? { size: p.size } : {}),
-        }));
-
-      if (!products.length) {
+      if (!cart.length) {
         message.warning('Please add at least one product');
         return;
       }
+      setSaving(true);
 
-      const payload: any = {
-        products,
-        tax: values.tax || 0,
-        discount: values.discount || 0,
-        billTo, // send edited billTo
-      };
+      const products = cart.map((c) => ({
+        productId: c.productId,
+        price: c.price,
+        quantity: c.quantity,
+        ...(c.size != null ? { size: c.size } : {}),
+      }));
+
+      const payload: any = { products, tax, discount, billTo };
       if (sourceType === 'lead') payload.leadId = values.sourceId;
       else payload.customerId = values.sourceId;
 
@@ -312,13 +322,7 @@ const QuotationsPage = () => {
           </Space>
         }
       >
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            products: [{ productId: undefined, quantity: 1, price: 0 }],
-          }}
-        >
+        <Form form={form} layout="vertical">
           {/* ── Source toggle ── */}
           <Form.Item label="Bill To Source">
             <Flex gap={8}>
@@ -451,166 +455,283 @@ const QuotationsPage = () => {
           <Divider style={{ margin: '8px 0 16px' }} />
 
           {/* ── Products ── */}
-          <Form.List name="products">
-            {(fields, { add, remove }) => (
-              <div>
-                <Flex
-                  justify="space-between"
-                  align="center"
-                  style={{ marginBottom: 8 }}
-                >
-                  <Text strong>Products</Text>
-                  <Button
-                    size="small"
-                    icon={<PlusOutlined />}
-                    onClick={() =>
-                      add({ productId: undefined, quantity: 1, price: 0 })
-                    }
-                  >
-                    Add Row
-                  </Button>
-                </Flex>
+          <div>
+            <Flex
+              justify="space-between"
+              align="center"
+              style={{ marginBottom: 10 }}
+            >
+              <Text strong style={{ fontSize: 14 }}>
+                Products
+              </Text>
+              <Button
+                size="small"
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() =>
+                  setCart((prev) => [
+                    ...prev,
+                    { productId: '', size: undefined, price: 0, quantity: 1 },
+                  ])
+                }
+              >
+                Add Product
+              </Button>
+            </Flex>
 
-                {fields.map(({ key, name }) => (
-                  <Form.Item key={key} noStyle shouldUpdate>
-                    {() => {
-                      const productId = form.getFieldValue([
-                        'products',
-                        name,
-                        'productId',
-                      ]);
-                      const found = allProducts.find(
-                        (p: any) => p._id === productId
-                      );
-                      const sizes: number[] = found?.availableSize?.length
-                        ? found.availableSize
-                        : [];
-
-                      return (
-                        <Card
-                          size="small"
-                          style={{ marginBottom: 8, background: '#fafafa' }}
-                        >
-                          <Row gutter={[8, 6]} align="middle">
-                            <Col span={22}>
-                              <Form.Item
-                                name={[name, 'productId']}
-                                noStyle
-                                rules={[
-                                  { required: true, message: 'Select product' },
-                                ]}
-                              >
-                                <Select
-                                  showSearch
-                                  placeholder="Select product"
-                                  style={{ width: '100%' }}
-                                  optionFilterProp="label"
-                                  options={allProducts.map((p: any) => ({
-                                    value: p._id,
-                                    label: p.name,
-                                  }))}
-                                  onChange={(val) => {
-                                    const p = allProducts.find(
-                                      (ap: any) => ap._id === val
-                                    );
-                                    if (p) {
-                                      form.setFieldValue(
-                                        ['products', name, 'price'],
-                                        p.price ?? 0
-                                      );
-                                      form.setFieldValue(
-                                        ['products', name, 'size'],
-                                        undefined
-                                      );
-                                    }
-                                  }}
-                                />
-                              </Form.Item>
-                            </Col>
-                            <Col span={2} style={{ textAlign: 'right' }}>
-                              <Button
-                                type="text"
-                                danger
-                                size="small"
-                                icon={<MinusCircleOutlined />}
-                                onClick={() => remove(name)}
-                              />
-                            </Col>
-
-                            {sizes.length > 0 && (
-                              <Col span={8}>
-                                <Text type="secondary" style={{ fontSize: 11 }}>
-                                  Size ({found?.unit})
-                                </Text>
-                                <Form.Item name={[name, 'size']} noStyle>
-                                  <Select
-                                    placeholder="Select size"
-                                    style={{ width: '100%' }}
-                                    allowClear
-                                    options={sizes.map((s) => ({
-                                      value: s,
-                                      label: `${s} ${found?.unit}`,
-                                    }))}
-                                  />
-                                </Form.Item>
-                              </Col>
-                            )}
-
-                            <Col span={sizes.length > 0 ? 8 : 12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>
-                                Price (₹)
-                              </Text>
-                              <Form.Item name={[name, 'price']} noStyle>
-                                <InputNumber
-                                  style={{ width: '100%' }}
-                                  min={0}
-                                  placeholder="Price"
-                                />
-                              </Form.Item>
-                            </Col>
-
-                            <Col span={sizes.length > 0 ? 8 : 12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>
-                                Quantity
-                              </Text>
-                              <Form.Item name={[name, 'quantity']} noStyle>
-                                <InputNumber
-                                  style={{ width: '100%' }}
-                                  min={1}
-                                  placeholder="Qty"
-                                />
-                              </Form.Item>
-                            </Col>
-                          </Row>
-                        </Card>
-                      );
-                    }}
-                  </Form.Item>
-                ))}
-              </div>
+            {cart.length === 0 && (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="No products added"
+                style={{ margin: '16px 0' }}
+              />
             )}
-          </Form.List>
 
-          <Row gutter={12} style={{ marginTop: 16 }}>
-            <Col span={12}>
-              <Form.Item name="tax" label="Tax (₹)">
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={0}
-                  placeholder="0"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="discount" label="Discount (₹)">
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={0}
-                  placeholder="0"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+            {cart.map((item, idx) => {
+              const found = allProducts.find(
+                (p: any) => p._id === item.productId
+              );
+              return (
+                <Card
+                  key={idx}
+                  size="small"
+                  style={{
+                    marginBottom: 10,
+                    borderRadius: 10,
+                    border: '1px solid #e8e8e8',
+                    background: '#fafafa',
+                  }}
+                >
+                  <Flex gap={8} align="flex-start">
+                    {/* product image */}
+                    {found?.image ? (
+                      <img
+                        src={`${BASEURL}/${found.image}`}
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 8,
+                          objectFit: 'cover',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 8,
+                          background: '#f0f0f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <ShoppingOutlined
+                          style={{ color: '#bbb', fontSize: 20 }}
+                        />
+                      </div>
+                    )}
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* product select */}
+                      <Select
+                        showSearch
+                        placeholder="Select product"
+                        style={{ width: '100%', marginBottom: 8 }}
+                        optionFilterProp="label"
+                        value={item.productId || undefined}
+                        options={allProducts.map((p: any) => ({
+                          value: p._id,
+                          label: p.name,
+                        }))}
+                        onChange={(val) => {
+                          // just set product, reset size & price — no auto-merge on product select
+                          setCart((prev) =>
+                            prev.map((c, i) =>
+                              i === idx
+                                ? {
+                                    ...c,
+                                    productId: val,
+                                    size: undefined,
+                                    price: 0,
+                                  }
+                                : c
+                            )
+                          );
+                        }}
+                      />
+
+                      <Row gutter={8}>
+                        {/* size select from prices array */}
+                        {found?.prices?.length > 0 && (
+                          <Col span={8}>
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              Size
+                            </Text>
+                            <Select
+                              size="small"
+                              style={{ width: '100%' }}
+                              value={item.size}
+                              placeholder="Select size"
+                              options={found.prices.map((pr: any) => ({
+                                value: pr.size,
+                                label: `${pr.size} ${found.unit}`,
+                              }))}
+                              onChange={(val) => {
+                                const pr = found.prices.find(
+                                  (p: any) => p.size === val
+                                );
+                                const newPrice = pr?.price ?? item.price;
+                                setCart((prev) => {
+                                  const dupIdx = prev.findIndex(
+                                    (c, i) =>
+                                      i !== idx &&
+                                      c.productId === item.productId &&
+                                      c.size === val
+                                  );
+                                  if (dupIdx !== -1) {
+                                    return prev
+                                      .map((c, i) =>
+                                        i === dupIdx
+                                          ? {
+                                              ...c,
+                                              quantity:
+                                                c.quantity + item.quantity,
+                                            }
+                                          : c
+                                      )
+                                      .filter((_, i) => i !== idx);
+                                  }
+                                  return prev.map((c, i) =>
+                                    i === idx
+                                      ? { ...c, size: val, price: newPrice }
+                                      : c
+                                  );
+                                });
+                              }}
+                            />
+                          </Col>
+                        )}
+
+                        <Col span={found?.prices?.length > 0 ? 8 : 12}>
+                          <Text type="secondary" style={{ fontSize: 11 }}>
+                            Price (₹)
+                          </Text>
+                          <InputNumber
+                            size="small"
+                            style={{ width: '100%', background: '#f5f5f5' }}
+                            min={0}
+                            value={item.price}
+                            readOnly
+                          />
+                        </Col>
+
+                        <Col span={found?.prices?.length > 0 ? 8 : 12}>
+                          <Text type="secondary" style={{ fontSize: 11 }}>
+                            Qty
+                          </Text>
+                          <InputNumber
+                            size="small"
+                            style={{ width: '100%' }}
+                            min={1}
+                            value={item.quantity}
+                            onChange={(v) =>
+                              setCart((prev) =>
+                                prev.map((c, i) =>
+                                  i === idx ? { ...c, quantity: v ?? 1 } : c
+                                )
+                              )
+                            }
+                          />
+                        </Col>
+                      </Row>
+                    </div>
+
+                    <Flex align="center" gap={4} style={{ flexShrink: 0 }}>
+                      <Text
+                        strong
+                        style={{
+                          color: '#389e0d',
+                          fontSize: 13,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                      </Text>
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={() =>
+                          setCart((prev) => prev.filter((_, i) => i !== idx))
+                        }
+                      />
+                    </Flex>
+                  </Flex>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* ── Summary ── */}
+          {cart.length > 0 && (
+            <Card
+              size="small"
+              style={{
+                marginTop: 8,
+                borderRadius: 10,
+                background: '#f6ffed',
+                border: '1px solid #d9f7be',
+              }}
+            >
+              <Row gutter={[16, 8]} align="middle">
+                <Col span={24}>
+                  <Flex justify="space-between">
+                    <Text type="secondary">Subtotal</Text>
+                    <Text strong>₹{subtotal.toLocaleString('en-IN')}</Text>
+                  </Flex>
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Tax (₹)
+                  </Text>
+                  <InputNumber
+                    size="small"
+                    style={{ width: '100%' }}
+                    min={0}
+                    value={tax}
+                    onChange={(v) => setTax(v ?? 0)}
+                  />
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Discount (₹)
+                  </Text>
+                  <InputNumber
+                    size="small"
+                    style={{ width: '100%' }}
+                    min={0}
+                    value={discount}
+                    onChange={(v) => setDiscount(v ?? 0)}
+                  />
+                </Col>
+                <Col span={24}>
+                  <Divider style={{ margin: '6px 0' }} />
+                  <Flex justify="space-between" align="center">
+                    <Text strong style={{ fontSize: 15 }}>
+                      Total
+                    </Text>
+                    <Text strong style={{ fontSize: 18, color: '#389e0d' }}>
+                      ₹{total.toLocaleString('en-IN')}
+                    </Text>
+                  </Flex>
+                </Col>
+              </Row>
+            </Card>
+          )}
         </Form>
       </Drawer>
     </div>

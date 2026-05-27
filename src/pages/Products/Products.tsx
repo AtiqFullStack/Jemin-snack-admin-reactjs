@@ -55,10 +55,9 @@ type Product = {
   image?: string;
   imageUrl?: string;
   category?: ProductCategory;
-  availableSize?: number[];
+  prices?: { size: number; price: number }[];
   unit?: string;
   quantity?: number;
-  price?: number;
   isActive?: boolean;
 };
 
@@ -66,10 +65,40 @@ type ProductFormValues = {
   name: string;
   description: string;
   category: string;
-  availableSize: number[] | string[];
   unit: string;
-  price: number;
+  prices: { size: number; price: number }[];
   isActive: boolean;
+};
+
+const SizePriceSelect = ({
+  prices,
+  unit,
+}: {
+  prices: { size: number; price: number }[];
+  unit?: string;
+}) => {
+  const first = prices[0];
+  const [selected, setSelected] = useState<number>(first?.size);
+  const price = prices.find((p) => p.size === selected)?.price;
+  return (
+    <Space size={4}>
+      <Select
+        size="small"
+        style={{ width: 73 }}
+        value={selected}
+        onChange={setSelected}
+        options={prices.map((p) => ({
+          value: p.size,
+          label: `${p.size} ${unit || ''}`,
+        }))}
+      />
+      {price != null && (
+        <Text style={{ fontSize: 15, color: '#389e0d', whiteSpace: 'nowrap' }}>
+          ₹{price}
+        </Text>
+      )}
+    </Space>
+  );
 };
 
 const Products = () => {
@@ -202,14 +231,19 @@ const Products = () => {
         name: product.name,
         description: product.description || '',
         category: getCategoryId(product.category),
-        availableSize: product.availableSize?.slice(0, 1) ?? [],
         unit: product.unit || 'gm',
-        price: product.price ?? 0,
+        prices: product.prices?.length
+          ? product.prices
+          : [{ size: undefined, price: undefined }],
         isActive: product.isActive ?? true,
       });
     } else {
       productForm.resetFields();
-      productForm.setFieldsValue({ isActive: true, unit: 'gm' });
+      productForm.setFieldsValue({
+        isActive: true,
+        unit: 'gm',
+        prices: [{ size: undefined, price: undefined }],
+      });
     }
   };
 
@@ -265,11 +299,8 @@ const Products = () => {
       formData.append('name', values.name);
       formData.append('description', values.description);
       formData.append('category', values.category);
-      values.availableSize
-        .map(Number)
-        .forEach((s) => formData.append('availableSize', String(s)));
       formData.append('unit', values.unit);
-      formData.append('price', String(values.price));
+      formData.append('prices', JSON.stringify(values.prices));
       formData.append('isActive', String(values.isActive ?? true));
 
       if (imageFileList[0]?.originFileObj) {
@@ -371,39 +402,36 @@ const Products = () => {
           {record.image ? (
             <Image
               src={`${BASEURL}/${record.image}`}
-              width={40}
-              height={40}
-              style={{ objectFit: 'cover', borderRadius: 6 }}
+              width={32}
+              height={32}
+              style={{ objectFit: 'cover', borderRadius: 4 }}
               fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyBYlFiXAHMN6YQAAAAA"
             />
           ) : (
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 6,
+                width: 32,
+                height: 32,
+                borderRadius: 4,
                 background: '#f0f0f0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 18,
+                fontSize: 16,
               }}
             >
               📦
             </div>
           )}
-          <Space direction="vertical" size={0}>
-            <Text strong>{name}</Text>
-            <Text ellipsis type="secondary" style={{ maxWidth: 180 }}>
-              {record.description || 'No description'}
-            </Text>
-          </Space>
+          <Text strong style={{ maxWidth: 140 }} ellipsis={{ tooltip: name }}>
+            {name}
+          </Text>
         </Space>
       ),
     },
     {
       title: 'Category',
-      width: 140,
+      width: 100,
       render: (_, record) => {
         const hasCategory = Boolean(getCategoryId(record.category));
         return (
@@ -414,27 +442,16 @@ const Products = () => {
       },
     },
     {
-      title: 'Size / Unit',
-      width: 110,
-      render: (_, record) => (
-        <Text>
-          {record.availableSize?.[0] ?? '—'} {record.unit || ''}
-        </Text>
-      ),
-    },
-    {
-      title: 'Price',
-      width: 100,
-      render: (_, record) =>
-        record.price != null ? (
-          <Text>₹{record.price}</Text>
-        ) : (
-          <Text type="secondary">—</Text>
-        ),
+      title: 'Size / Price',
+      width: 130,
+      render: (_, record) => {
+        if (!record.prices?.length) return <Text type="secondary">—</Text>;
+        return <SizePriceSelect prices={record.prices} unit={record.unit} />;
+      },
     },
     {
       title: 'Status',
-      width: 90,
+      width: 75,
       render: (_, record) => (
         <Tag color={record.isActive ? 'green' : 'red'}>
           {record.isActive ? 'Active' : 'Inactive'}
@@ -443,7 +460,7 @@ const Products = () => {
     },
     {
       title: 'Actions',
-      width: 130,
+      width: 80,
       align: 'right',
       render: (_, record) => (
         <Space>
@@ -608,17 +625,17 @@ const Products = () => {
                   <Input
                     allowClear
                     prefix={<SearchOutlined />}
-                    placeholder="Search products"
+                    placeholder="Search"
                     value={searchText}
                     onChange={(event) => setSearchText(event.target.value)}
-                    style={{ width: 240 }}
+                    style={{ width: 160 }}
                   />
                   <Select
                     allowClear
                     placeholder="All types"
                     value={categoryFilter}
                     onChange={setCategoryFilter}
-                    style={{ width: 180 }}
+                    style={{ width: 130 }}
                     options={types.map((type) => ({
                       label: type.name,
                       value: type._id,
@@ -634,7 +651,7 @@ const Products = () => {
                 rowKey="_id"
                 loading={productsLoading}
                 pagination={{ pageSize: 8, showSizeChanger: true }}
-                // scroll={{ x: 720 }}
+                scroll={{ x: 600 }}
                 locale={{
                   emptyText: (
                     <Empty
@@ -713,23 +730,6 @@ const Products = () => {
           <Row gutter={12}>
             <Col xs={24} md={12}>
               <Form.Item
-                name="availableSize"
-                label="Available Size"
-                rules={[{ required: true, message: 'Size is required' }]}
-              >
-                <Select
-                  mode="tags"
-                  placeholder="Select or type a size"
-                  maxCount={1}
-                  options={[16, 18, 22, 32, 34, 36, 38].map((s) => ({
-                    label: s,
-                    value: s,
-                  }))}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={12}>
-              <Form.Item
                 name="unit"
                 label="Unit"
                 rules={[{ required: true, message: 'Unit is required' }]}
@@ -745,25 +745,96 @@ const Products = () => {
             </Col>
           </Row>
 
-          <Row gutter={12}>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="price"
-                label="Price (₹)"
-                rules={[
-                  { required: true, message: 'Price is required' },
-                  { type: 'number', min: 0, message: 'Cannot be negative' },
-                ]}
-              >
-                <InputNumber
-                  min={0}
-                  placeholder="e.g. 50"
-                  prefix="₹"
-                  style={{ width: '100%' }}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.List
+            name="prices"
+            rules={[
+              {
+                validator: async (_, v) => {
+                  if (!v?.length)
+                    return Promise.reject('Add at least one size & price');
+                },
+              },
+            ]}
+          >
+            {(fields, { add, remove }, { errors }) => (
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 6,
+                  }}
+                >
+                  <Text strong style={{ fontSize: 13 }}>
+                    Size & Price
+                  </Text>
+                  <Button
+                    size="small"
+                    type="dashed"
+                    icon={<PlusOutlined />}
+                    onClick={() => add({ size: undefined, price: undefined })}
+                  >
+                    Add Size
+                  </Button>
+                </div>
+                {fields.map(({ key, name }) => (
+                  <Row
+                    key={key}
+                    gutter={8}
+                    align="middle"
+                    style={{ marginBottom: 8 }}
+                  >
+                    <Col span={10}>
+                      <Form.Item
+                        name={[name, 'size']}
+                        rules={[{ required: true, message: 'Size required' }]}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <Select
+                          placeholder="Select size"
+                          options={[16, 18, 22, 32, 34, 36, 38].map((s) => ({
+                            label: s,
+                            value: s,
+                          }))}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={10}>
+                      <Form.Item
+                        name={[name, 'price']}
+                        rules={[
+                          { required: true, message: 'Price required' },
+                          {
+                            type: 'number',
+                            min: 0,
+                            message: 'Cannot be negative',
+                          },
+                        ]}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <InputNumber
+                          min={0}
+                          placeholder="Price (₹)"
+                          prefix="₹"
+                          style={{ width: '100%' }}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={4}>
+                      <Button
+                        danger
+                        type="text"
+                        icon={<DeleteOutlined />}
+                        onClick={() => remove(name)}
+                      />
+                    </Col>
+                  </Row>
+                ))}
+                <Form.ErrorList errors={errors} />
+              </>
+            )}
+          </Form.List>
 
           <Form.Item
             name="description"
