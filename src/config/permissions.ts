@@ -11,6 +11,7 @@ export type PermissionObj = {
 // CRM Routes
 export const PATH_CRM = {
   dashboard: '/dashboards/default',
+  customers: '/crm/customers',
   leads: '/crm/leads',
   locations: '/crm/location',
   activities: {
@@ -28,6 +29,7 @@ export const PATH_CRM = {
   calls: '/crm/calls',
   recordings: '/crm/recordings',
   products: '/crm/products',
+  quotations: '/crm/quotations',
   reports: {
     overview: '/crm/reports/overview',
     sales: '/crm/reports/sales',
@@ -45,11 +47,13 @@ export const PATH_CRM = {
 
 export const ROUTE_MODULE_MAP: Record<string, string> = {
   [PATH_CRM.leads]: 'leads',
+  [PATH_CRM.customers]: 'customers',
   [PATH_CRM.activities.leads]: 'leads',
   [PATH_CRM.activities.tasks]: 'tasks',
   [PATH_CRM.calls]: 'calls',
   [PATH_CRM.recordings]: 'recordings',
   [PATH_CRM.products]: 'products',
+  [PATH_CRM.quotations]: 'quotations',
   [PATH_CRM.locations]: 'locations',
   [PATH_CRM.hr.Attendance]: 'attendance',
   [PATH_CRM.hr.leave]: 'leave',
@@ -103,6 +107,12 @@ export const MODULES = {
   },
 
   // Sales Module
+  customers: {
+    label: 'Customers',
+    group: 'Sales',
+    actions: ['read', 'create', 'update', 'delete'],
+    scopes: ['all', 'assigned'],
+  },
   leads: {
     label: 'Leads',
     group: 'Sales',

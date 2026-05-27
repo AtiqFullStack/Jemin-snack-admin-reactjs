@@ -5,17 +5,21 @@ import {
   Col,
   Empty,
   Form,
+  Image,
   Input,
+  InputNumber,
   Modal,
   Popconfirm,
   Row,
   Select,
   Space,
   Statistic,
+  Switch,
   Table,
   Tag,
   Tooltip,
   Typography,
+  Upload,
   message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -27,7 +31,10 @@ import {
   ReloadOutlined,
   SearchOutlined,
   TagsOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
+import type { UploadFile } from 'antd/es/upload/interface';
+import { BASEURL } from 'src/services/api/apiClient';
 import useProducts from 'src/services/useProducts';
 import { usePermissions } from 'src/hooks';
 
@@ -49,14 +56,20 @@ type Product = {
   imageUrl?: string;
   category?: ProductCategory;
   availableSize?: number[];
+  unit?: string;
+  quantity?: number;
+  price?: number;
+  isActive?: boolean;
 };
 
 type ProductFormValues = {
   name: string;
   description: string;
-  image: string;
   category: string;
-  availableSize: number[];
+  availableSize: number[] | string[];
+  unit: string;
+  price: number;
+  isActive: boolean;
 };
 
 const Products = () => {
@@ -122,7 +135,7 @@ const Products = () => {
     try {
       setProductsLoading(true);
       const res = await getProducts();
-      setProducts(res?.data?.products || res?.data || []);
+      setProducts(res?.data?.products || []);
     } catch {
       message.error('Unable to load products');
     } finally {
@@ -177,22 +190,26 @@ const Products = () => {
     typeForm.resetFields();
   };
 
+  const [imageFileList, setImageFileList] = useState<UploadFile[]>([]);
+
   const openProductModal = (product?: Product) => {
     setEditingProduct(product || null);
     setProductModal(true);
+    setImageFileList([]);
 
-    const DEFAULT_SIZES = [16, 18, 22, 34, 32, 34, 36, 38];
     if (product) {
       productForm.setFieldsValue({
         name: product.name,
         description: product.description || '',
-        image: product.image || product.imageUrl || '',
         category: getCategoryId(product.category),
-        availableSize: product.availableSize ?? DEFAULT_SIZES,
+        availableSize: product.availableSize?.slice(0, 1) ?? [],
+        unit: product.unit || 'gm',
+        price: product.price ?? 0,
+        isActive: product.isActive ?? true,
       });
     } else {
       productForm.resetFields();
-      productForm.setFieldsValue({ availableSize: DEFAULT_SIZES });
+      productForm.setFieldsValue({ isActive: true, unit: 'gm' });
     }
   };
 
@@ -244,11 +261,26 @@ const Products = () => {
       const values = await productForm.validateFields();
       setSavingProduct(true);
 
+      const formData = new FormData();
+      formData.append('name', values.name);
+      formData.append('description', values.description);
+      formData.append('category', values.category);
+      values.availableSize
+        .map(Number)
+        .forEach((s) => formData.append('availableSize', String(s)));
+      formData.append('unit', values.unit);
+      formData.append('price', String(values.price));
+      formData.append('isActive', String(values.isActive ?? true));
+
+      if (imageFileList[0]?.originFileObj) {
+        formData.append('image', imageFileList[0].originFileObj);
+      }
+
       if (editingProduct) {
-        await updateProducts(values, editingProduct._id);
+        await updateProducts(formData, editingProduct._id);
         message.success('Product updated');
       } else {
-        await createProducts(values);
+        await createProducts(formData);
         message.success('Product created');
       }
 
@@ -336,9 +368,33 @@ const Products = () => {
       dataIndex: 'name',
       render: (name: string, record) => (
         <Space>
+          {record.image ? (
+            <Image
+              src={`${BASEURL}/${record.image}`}
+              width={40}
+              height={40}
+              style={{ objectFit: 'cover', borderRadius: 6 }}
+              fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyBYlFiXAHMN6YQAAAAA"
+            />
+          ) : (
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 6,
+                background: '#f0f0f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+              }}
+            >
+              📦
+            </div>
+          )}
           <Space direction="vertical" size={0}>
             <Text strong>{name}</Text>
-            <Text ellipsis type="secondary" style={{ maxWidth: 200 }}>
+            <Text ellipsis type="secondary" style={{ maxWidth: 180 }}>
               {record.description || 'No description'}
             </Text>
           </Space>
@@ -347,7 +403,7 @@ const Products = () => {
     },
     {
       title: 'Category',
-      width: 180,
+      width: 140,
       render: (_, record) => {
         const hasCategory = Boolean(getCategoryId(record.category));
         return (
@@ -356,6 +412,34 @@ const Products = () => {
           </Tag>
         );
       },
+    },
+    {
+      title: 'Size / Unit',
+      width: 110,
+      render: (_, record) => (
+        <Text>
+          {record.availableSize?.[0] ?? '—'} {record.unit || ''}
+        </Text>
+      ),
+    },
+    {
+      title: 'Price',
+      width: 100,
+      render: (_, record) =>
+        record.price != null ? (
+          <Text>₹{record.price}</Text>
+        ) : (
+          <Text type="secondary">—</Text>
+        ),
+    },
+    {
+      title: 'Status',
+      width: 90,
+      render: (_, record) => (
+        <Tag color={record.isActive ? 'green' : 'red'}>
+          {record.isActive ? 'Active' : 'Inactive'}
+        </Tag>
+      ),
     },
     {
       title: 'Actions',
@@ -626,34 +710,60 @@ const Products = () => {
             </Col>
           </Row>
 
-          {/* <Form.Item
-                        name="image"
-                        label="Image URL"
-                        rules={[
-                            { required: false, message: 'Image URL is required' },
-                            { type: 'url', message: 'Enter a valid URL' },
-                        ]}
-                    >
-                        <Input placeholder="https://example.com/product.png" />
-                    </Form.Item> */}
+          <Row gutter={12}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="availableSize"
+                label="Available Size"
+                rules={[{ required: true, message: 'Size is required' }]}
+              >
+                <Select
+                  mode="tags"
+                  placeholder="Select or type a size"
+                  maxCount={1}
+                  options={[16, 18, 22, 32, 34, 36, 38].map((s) => ({
+                    label: s,
+                    value: s,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="unit"
+                label="Unit"
+                rules={[{ required: true, message: 'Unit is required' }]}
+              >
+                <Select
+                  placeholder="Select unit"
+                  options={['gm', 'kg', 'ml', 'ltr'].map((u) => ({
+                    label: u,
+                    value: u,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="availableSize"
-            label="Available Sizes"
-            rules={[
-              { required: true, message: 'At least one size is required' },
-            ]}
-          >
-            <Select
-              mode="tags"
-              placeholder="Select or add sizes"
-              tokenSeparators={[',']}
-              options={[16, 18, 22, 32, 34, 36, 38].map((s) => ({
-                label: s,
-                value: s,
-              }))}
-            />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="price"
+                label="Price (₹)"
+                rules={[
+                  { required: true, message: 'Price is required' },
+                  { type: 'number', min: 0, message: 'Cannot be negative' },
+                ]}
+              >
+                <InputNumber
+                  min={0}
+                  placeholder="e.g. 50"
+                  prefix="₹"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
             name="description"
@@ -661,10 +771,49 @@ const Products = () => {
             rules={[{ required: true, message: 'Description is required' }]}
           >
             <TextArea
-              rows={4}
+              rows={3}
               placeholder="Enter a short product description"
             />
           </Form.Item>
+
+          <Row gutter={12} align="middle">
+            <Col xs={24} md={16}>
+              <Form.Item label="Product Image" style={{ marginBottom: 0 }}>
+                <Upload
+                  listType="picture"
+                  maxCount={1}
+                  beforeUpload={() => false}
+                  fileList={imageFileList}
+                  onChange={({ fileList }) => setImageFileList(fileList)}
+                  accept="image/*"
+                >
+                  <Button icon={<UploadOutlined />}>Upload Image</Button>
+                </Upload>
+                {editingProduct?.image && imageFileList.length === 0 && (
+                  <Image
+                    src={`${BASEURL}/${editingProduct.image}`}
+                    width={60}
+                    height={60}
+                    style={{
+                      objectFit: 'cover',
+                      borderRadius: 6,
+                      marginTop: 8,
+                    }}
+                  />
+                )}
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="isActive"
+                label="Active"
+                valuePropName="checked"
+                style={{ marginBottom: 0 }}
+              >
+                <Switch />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </div>

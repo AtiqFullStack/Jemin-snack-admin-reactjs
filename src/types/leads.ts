@@ -74,4 +74,5 @@ export type Lead = {
   updatedAt: string;
   createdBy: any;
   priority: any;
+  isConverted?: boolean;
 };

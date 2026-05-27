@@ -1,16 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Avatar,
+  Badge,
   Button,
   Card,
+  Col,
+  Divider,
   Empty,
   Flex,
   Input,
+  InputNumber,
   message,
+  Modal,
   Popconfirm,
+  Row,
   Space,
   Tag,
   Timeline,
+  Tooltip,
   Typography,
   Upload,
 } from 'antd';
@@ -18,13 +25,23 @@ import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   ClockCircleOutlined,
-  DeleteOutlined,
-  PictureOutlined,
   CloseOutlined,
+  DeleteOutlined,
+  FilePdfOutlined,
+  MinusOutlined,
+  PictureOutlined,
+  PlusOutlined,
+  SearchOutlined,
   SendOutlined,
+  ShoppingCartOutlined,
+  ShoppingOutlined,
 } from '@ant-design/icons';
 import activityLogservices from '../../services/activityService';
 import { getAttachmentUrl } from '../../utils/convertor';
+import useProducts from '../../services/useProducts';
+import { BASEURL } from '../../services/api/apiClient';
+import { API_ENDPOINTS } from '../../services/api/endpoints';
+import { tokenStorage } from '../../services/auth/tokenStorage';
 
 type Activity = {
   _id: string;
@@ -35,15 +52,21 @@ type Activity = {
     type?: string;
     size?: number;
   }>;
-  callData?: {
-    _id?: string;
-    direction?: 'incoming' | 'outgoing' | string;
-    status?: string;
-    duration?: number;
-  };
-  taskId?: {
-    subject?: string;
-  };
+  callData?: { direction?: string; status?: string; duration?: number };
+  taskId?: { subject?: string };
+  products?: Array<{
+    productId?: string;
+    size?: number;
+    price?: number;
+    quantity?: number;
+    product?: {
+      name?: string;
+      image?: string;
+      unit?: string;
+      availableSize?: number[];
+      price?: number;
+    };
+  }>;
   createdBy?: {
     _id: string;
     firstName?: string;
@@ -55,19 +78,25 @@ type Activity = {
   createdAt: string;
 };
 
-const { Text, Paragraph } = Typography;
-
-const formatCallDuration = (duration?: number) => {
-  if (duration === undefined || duration === null) return '0s';
-  if (duration < 60) return `${duration}s`;
-
-  const minutes = Math.floor(duration / 60);
-  const seconds = duration % 60;
-  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
+type CartItem = {
+  productId: string;
+  size?: number;
+  price: number;
+  quantity: number;
 };
 
-const getCallStatusColor = (status?: string) => {
-  switch ((status || '').toLowerCase()) {
+const { Text, Paragraph } = Typography;
+
+const formatDuration = (d?: number) => {
+  if (!d) return '0s';
+  if (d < 60) return `${d}s`;
+  const m = Math.floor(d / 60),
+    s = d % 60;
+  return s ? `${m}m ${s}s` : `${m}m`;
+};
+
+const callStatusColor = (s?: string) => {
+  switch ((s || '').toLowerCase()) {
     case 'completed':
       return 'success';
     case 'failed':
@@ -80,20 +109,66 @@ const getCallStatusColor = (status?: string) => {
   }
 };
 
+const ProductImage = ({
+  image,
+  name,
+  size = 40,
+}: {
+  image?: string;
+  name?: string;
+  size?: number;
+}) =>
+  image ? (
+    <img
+      src={`${BASEURL}/${image}`}
+      alt={name}
+      style={{
+        width: size,
+        height: size,
+        objectFit: 'cover',
+        borderRadius: 8,
+        flexShrink: 0,
+      }}
+      onError={(e) => {
+        (e.target as HTMLImageElement).style.display = 'none';
+      }}
+    />
+  ) : (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 8,
+        background: 'linear-gradient(135deg, #f0f0f0, #e0e0e0)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <ShoppingOutlined style={{ color: '#bbb', fontSize: size * 0.4 }} />
+    </div>
+  );
+
 const ActivityComp = (props: any) => {
   const { id: leadId } = props;
 
   const [allActivity, setAllActivity] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
-
   const [note, setNote] = useState('');
   const [creating, setCreating] = useState(false);
   const [fileList, setFileList] = useState<any[]>([]);
-
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // product picker state
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [allProducts, setAllProducts] = useState<any[]>([]);
 
   const { getByActivityId, creatactivityLogs, deleteactivityLogs } =
     activityLogservices();
+  const { getProducts } = useProducts();
 
   const load = async () => {
     try {
@@ -108,33 +183,109 @@ const ActivityComp = (props: any) => {
   useEffect(() => {
     if (!leadId) return;
     load();
+    getProducts({ limit: 1000 }).then((res: any) => {
+      // apiClient (axios) returns full response → res.data = API body
+      // API body shape: { success, data: { products: [...], pagination: {} } }
+      const body = res?.data ?? res;
+      const list = body?.data?.products ?? body?.products ?? body?.data ?? [];
+      setAllProducts(Array.isArray(list) ? list : []);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId]);
+
+  const filteredProducts = useMemo(
+    () =>
+      allProducts.filter(
+        (p: any) => p.name?.toLowerCase().includes(search.toLowerCase())
+      ),
+    [allProducts, search]
+  );
+
+  const getCartItem = (productId: string) =>
+    cart.find((c) => c.productId === productId);
+
+  const addToCart = (product: any) => {
+    setCart((prev) => {
+      const exists = prev.find((c) => c.productId === product._id);
+      if (exists)
+        return prev.map((c) =>
+          c.productId === product._id ? { ...c, quantity: c.quantity + 1 } : c
+        );
+      return [
+        ...prev,
+        { productId: product._id, price: product.price ?? 0, quantity: 1 },
+      ];
+    });
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart((prev) => {
+      const item = prev.find((c) => c.productId === productId);
+      if (!item) return prev;
+      if (item.quantity <= 1)
+        return prev.filter((c) => c.productId !== productId);
+      return prev.map((c) =>
+        c.productId === productId ? { ...c, quantity: c.quantity - 1 } : c
+      );
+    });
+  };
+
+  const updateCartField = (
+    productId: string,
+    field: 'price' | 'quantity' | 'size',
+    value: number
+  ) => {
+    setCart((prev) =>
+      prev.map((c) =>
+        c.productId === productId ? { ...c, [field]: value } : c
+      )
+    );
+  };
+
+  const totalCartQty = cart.reduce((s, c) => s + c.quantity, 0);
 
   const onCreate = async () => {
     const content = note.trim();
     if (!content) return message.warning('Please write something');
+
+    // check if any product with sizes has no size selected
+    const missingSizes = cart.filter((item) => {
+      const p = allProducts.find((ap: any) => ap._id === item.productId);
+      return p?.availableSize?.length > 0 && !item.size;
+    });
+    if (missingSizes.length > 0) {
+      const names = missingSizes
+        .map((item) => {
+          const p = allProducts.find((ap: any) => ap._id === item.productId);
+          return p?.name || 'Unknown';
+        })
+        .join(', ');
+      message.warning(`Please select size for: ${names}`);
+      setPickerOpen(true);
+      return;
+    }
 
     try {
       setCreating(true);
       const payload = new FormData();
       payload.append('leadId', leadId);
       payload.append('content', content);
-      fileList.forEach((file) => {
-        payload.append('leadAttachments', file.originFileObj);
-      });
+      fileList.forEach((file) =>
+        payload.append('leadAttachments', file.originFileObj)
+      );
+      if (cart.length > 0) payload.append('products', JSON.stringify(cart));
       const res: any = await creatactivityLogs(payload);
-
       if (res?.success) {
-        message.success('Activity added');
+        message.success('Activity posted!');
         setNote('');
         setFileList([]);
+        setCart([]);
         load();
       } else {
-        message.error(res?.message || 'Failed to add activity');
+        message.error(res?.message || 'Failed');
       }
     } catch (e: any) {
-      message.error(e?.message || 'Failed to add activity');
+      message.error(e?.message || 'Failed');
     } finally {
       setCreating(false);
     }
@@ -143,172 +294,322 @@ const ActivityComp = (props: any) => {
   const onDelete = async (activityId: string) => {
     try {
       setDeletingId(activityId);
-
       const res: any = await deleteactivityLogs(activityId);
-
       if (res?.success) {
-        message.success('Activity deleted');
-
-        // optimistic remove
+        message.success('Deleted');
         setAllActivity((prev) => prev.filter((x) => x._id !== activityId));
       } else {
-        message.error(res?.message || 'Failed to delete activity');
+        message.error(res?.message || 'Failed');
       }
     } catch (e: any) {
-      message.error(e?.message || 'Failed to delete activity');
+      message.error(e?.message || 'Failed');
     } finally {
       setDeletingId(null);
     }
   };
 
-  const timelineItems = useMemo(() => {
-    return allActivity.map((a: Activity) => {
-      const fullName =
-        [a.createdBy?.firstName, a.createdBy?.lastName]
-          .filter(Boolean)
-          .join(' ')
-          .trim() || '—';
-      const when = a.createdAt ? new Date(a.createdAt).toLocaleString() : '';
+  const downloadPdf = (activityId: string) => {
+    const token = tokenStorage.getAccessToken();
+    const url = `${BASEURL}/api${API_ENDPOINTS.QUOTATIONS.BY_ACTIVITY(
+      activityId
+    )}`;
+    // fetch quotation id then open pdf
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((body) => {
+        if (body?.success && body?.data?._id) {
+          window.open(
+            `${BASEURL}/api${API_ENDPOINTS.QUOTATIONS.PDF(
+              body.data._id
+            )}?token=${token}`,
+            '_blank'
+          );
+        } else {
+          message.error('Quotation not found for this activity');
+        }
+      })
+      .catch(() => message.error('Failed to fetch quotation'));
+  };
 
-      return {
-        key: a._id,
-        children: (
-          <Card size="small" style={{ borderRadius: 12 }}>
-            <Flex gap={12} align="flex-start">
-              <Avatar src={a.createdBy?.avatar || undefined}>
-                {fullName?.[0] || 'U'}
-              </Avatar>
+  const timelineItems = useMemo(
+    () =>
+      allActivity.map((a) => {
+        const fullName =
+          [a.createdBy?.firstName, a.createdBy?.lastName]
+            .filter(Boolean)
+            .join(' ') || '—';
+        const when = a.createdAt ? new Date(a.createdAt).toLocaleString() : '';
+        const hasProducts = !!a.products?.length;
 
-              <div style={{ flex: 1 }}>
-                <Flex justify="space-between" align="flex-start" wrap>
-                  <div>
-                    <Space size={6}>
-                      <Text strong>{fullName}</Text>
-                      <Tag color={'green'}>{a?.taskId?.subject}</Tag>
-                    </Space>
+        return {
+          key: a._id,
+          children: (
+            <Card
+              size="small"
+              style={{
+                borderRadius: 12,
+                border: '1px solid #f0f0f0',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              }}
+            >
+              <Flex gap={12} align="flex-start">
+                <Avatar
+                  src={a.createdBy?.avatar}
+                  style={{ background: '#1677ff', flexShrink: 0 }}
+                  size={36}
+                >
+                  {fullName[0]?.toUpperCase() || 'U'}
+                </Avatar>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Flex justify="space-between" align="flex-start">
                     <div>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {when}
-                      </Text>
+                      <Space size={6}>
+                        <Text strong style={{ fontSize: 13 }}>
+                          {fullName}
+                        </Text>
+                        {a.taskId?.subject && (
+                          <Tag color="blue" style={{ fontSize: 11 }}>
+                            {a.taskId.subject}
+                          </Tag>
+                        )}
+                      </Space>
+                      <Flex align="center" gap={8}>
+                        <Text type="secondary" style={{ fontSize: 11 }}>
+                          {when}
+                        </Text>
+                        {hasProducts && (
+                          <Tooltip title="Download Quotation PDF">
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={
+                                <FilePdfOutlined
+                                  style={{ color: '#ff4d4f', fontSize: 14 }}
+                                />
+                              }
+                              style={{ padding: '0 4px', height: 20 }}
+                              onClick={() => downloadPdf(a._id)}
+                            />
+                          </Tooltip>
+                        )}
+                      </Flex>
                     </div>
-                  </div>
-
-                  <Popconfirm
-                    title="Delete this activity?"
-                    description="This action cannot be undone."
-                    okText="Delete"
-                    okButtonProps={{ danger: true }}
-                    cancelText="Cancel"
-                    onConfirm={() => onDelete(a._id)}
-                  >
-                    <Button
-                      danger
-                      type="text"
-                      icon={<DeleteOutlined />}
-                      loading={deletingId === a._id}
-                    />
-                  </Popconfirm>
-                </Flex>
-
-                <Paragraph style={{ marginTop: 6, marginBottom: 0 }}>
-                  {a.content}
-                </Paragraph>
-                {a.callData && (
-                  <Space
-                    size={[8, 8]}
-                    wrap
-                    style={{ marginTop: 12, display: 'flex' }}
-                  >
-                    <Tag
-                      icon={
-                        a.callData.direction === 'outgoing' ? (
-                          <ArrowUpOutlined />
-                        ) : (
-                          <ArrowDownOutlined />
-                        )
-                      }
-                      color={
-                        a.callData.direction === 'outgoing' ? 'green' : 'blue'
-                      }
-                      style={{ textTransform: 'capitalize' }}
+                    <Popconfirm
+                      title="Delete this activity?"
+                      okText="Delete"
+                      okButtonProps={{ danger: true }}
+                      cancelText="Cancel"
+                      onConfirm={() => onDelete(a._id)}
                     >
-                      {a.callData.direction || 'incoming'}
-                    </Tag>
-                    <Tag icon={<ClockCircleOutlined />} color="default">
-                      {formatCallDuration(a.callData.duration)}
-                    </Tag>
-                    <Tag
-                      color={getCallStatusColor(a.callData.status)}
-                      style={{ textTransform: 'capitalize' }}
-                    >
-                      {a.callData.status || 'unknown'}
-                    </Tag>
-                  </Space>
-                )}
-                {a.attachments && a.attachments.length > 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      marginTop: '12px',
-                      flexWrap: 'wrap',
-                    }}
+                      <Button
+                        danger
+                        type="text"
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        loading={deletingId === a._id}
+                      />
+                    </Popconfirm>
+                  </Flex>
+
+                  <Paragraph
+                    style={{ marginTop: 8, marginBottom: 0, fontSize: 13 }}
                   >
-                    {a.attachments.map((attachment: any, idx: number) => (
-                      <div
-                        key={idx}
-                        style={{
-                          borderRadius: '8px',
-                          overflow: 'hidden',
-                          border: '1px solid #e8e8e8',
-                        }}
-                        onClick={() =>
-                          window.open(
-                            getAttachmentUrl(attachment.url),
-                            '_blank',
-                            'noopener,noreferrer'
+                    {a.content}
+                  </Paragraph>
+
+                  {/* Call info */}
+                  {a.callData && (
+                    <Space size={6} wrap style={{ marginTop: 10 }}>
+                      <Tag
+                        icon={
+                          a.callData.direction === 'outgoing' ? (
+                            <ArrowUpOutlined />
+                          ) : (
+                            <ArrowDownOutlined />
                           )
                         }
+                        color={
+                          a.callData.direction === 'outgoing' ? 'green' : 'blue'
+                        }
                       >
+                        {a.callData.direction || 'incoming'}
+                      </Tag>
+                      <Tag icon={<ClockCircleOutlined />}>
+                        {formatDuration(a.callData.duration)}
+                      </Tag>
+                      <Tag color={callStatusColor(a.callData.status)}>
+                        {a.callData.status || 'unknown'}
+                      </Tag>
+                    </Space>
+                  )}
+
+                  {/* Attachments */}
+                  {!!a.attachments?.length && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 8,
+                        marginTop: 10,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      {a.attachments.map((att, i) => (
                         <img
-                          src={getAttachmentUrl(attachment.url)}
-                          alt={attachment.name || 'attachment'}
+                          key={i}
+                          src={getAttachmentUrl(att.url)}
+                          alt={att.name || 'attachment'}
+                          onClick={() =>
+                            window.open(getAttachmentUrl(att.url), '_blank')
+                          }
                           style={{
-                            width: '100px',
-                            height: '100px',
+                            width: 80,
+                            height: 80,
                             objectFit: 'cover',
-                            display: 'block',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            border: '1px solid #e8e8e8',
                           }}
                         />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Products */}
+                  {!!a.products?.length && (
+                    <div style={{ marginTop: 12 }}>
+                      <Divider style={{ margin: '8px 0' }} />
+                      <Flex align="center" gap={6} style={{ marginBottom: 8 }}>
+                        <ShoppingCartOutlined style={{ color: '#52c41a' }} />
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Products Added
+                        </Text>
+                      </Flex>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 6,
+                        }}
+                      >
+                        {a.products.map((p, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 10,
+                              background: '#f6ffed',
+                              border: '1px solid #d9f7be',
+                              borderRadius: 10,
+                              padding: '8px 12px',
+                            }}
+                          >
+                            <ProductImage
+                              image={p.product?.image}
+                              name={p.product?.name}
+                              size={38}
+                            />
+                            <div style={{ flex: 1 }}>
+                              <Text strong style={{ fontSize: 13 }}>
+                                {p.product?.name || '—'}
+                              </Text>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  gap: 8,
+                                  marginTop: 2,
+                                  flexWrap: 'wrap',
+                                }}
+                              >
+                                {p.size ? (
+                                  <Tag style={{ fontSize: 11, margin: 0 }}>
+                                    {p.size} {p.product?.unit}
+                                  </Tag>
+                                ) : p.product?.unit ? (
+                                  <Tag style={{ fontSize: 11, margin: 0 }}>
+                                    {p.product.unit}
+                                  </Tag>
+                                ) : null}
+                                <Tag
+                                  color="green"
+                                  style={{ fontSize: 11, margin: 0 }}
+                                >
+                                  Qty: {p.quantity}
+                                </Tag>
+                                {p.price != null && (
+                                  <Tag
+                                    color="blue"
+                                    style={{ fontSize: 11, margin: 0 }}
+                                  >
+                                    ₹{p.price}
+                                  </Tag>
+                                )}
+                              </div>
+                            </div>
+                            {p.price != null && p.quantity && (
+                              <Text
+                                strong
+                                style={{
+                                  fontSize: 13,
+                                  color: '#389e0d',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                ₹{(p.price * p.quantity).toLocaleString()}
+                              </Text>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Flex>
-          </Card>
-        ),
-      };
-    });
-  }, [allActivity, deletingId]);
+                      {/* total */}
+                      {a.products.some((p) => p.price && p.quantity) && (
+                        <Flex justify="flex-end" style={{ marginTop: 6 }}>
+                          <Text strong style={{ fontSize: 13 }}>
+                            Total: ₹
+                            {a.products
+                              .reduce(
+                                (s, p) =>
+                                  s + (p.price || 0) * (p.quantity || 1),
+                                0
+                              )
+                              .toLocaleString()}
+                          </Text>
+                        </Flex>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Flex>
+            </Card>
+          ),
+        };
+      }),
+    [allActivity, deletingId]
+  );
 
   return (
     <div>
+      {/* Timeline */}
       <Card
-        title="Activity Log"
+        title={
+          <Flex align="center" gap={8}>
+            <ClockCircleOutlined />
+            Activity Log
+          </Flex>
+        }
         loading={loading}
         style={{ borderRadius: 12 }}
-        bodyStyle={{ padding: 14 }}
+        bodyStyle={{ padding: 16 }}
       >
-        {allActivity?.length ? (
+        {allActivity.length ? (
           <Timeline items={timelineItems} />
         ) : (
           <Empty description="No activity yet" />
         )}
       </Card>
 
-      {/* Create new activity */}
+      {/* Composer */}
       <Card
         style={{
           marginTop: 16,
@@ -316,88 +617,137 @@ const ActivityComp = (props: any) => {
           border: '1px solid #e8e8e8',
           boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         }}
-        bodyStyle={{ padding: 20 }}
+        bodyStyle={{ padding: 16 }}
       >
-        <div
-          style={{
-            background: '#fafafa',
-            borderRadius: 12,
-            padding: 16,
-            border: '1px solid #e8e8e8',
-          }}
-        >
-          <Input.TextArea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={4}
-            placeholder="Write a note... (e.g., Called customer, sent proposal, follow-up scheduled)"
-            style={{
-              borderRadius: 8,
-              border: 'none',
-              background: '#fff',
-              fontSize: 14,
-            }}
-            autoSize={{ minRows: 4, maxRows: 8 }}
-          />
+        <Input.TextArea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Write a note... (e.g., Called customer, sent proposal, follow-up scheduled)"
+          autoSize={{ minRows: 3, maxRows: 8 }}
+          style={{ borderRadius: 8, fontSize: 14, marginBottom: 12 }}
+        />
 
-          {fileList.length > 0 && (
-            <div
-              style={{
-                marginTop: 16,
-                display: 'flex',
-                gap: 12,
-                flexWrap: 'wrap',
-                padding: 12,
-                background: '#fff',
-                borderRadius: 8,
-              }}
-            >
-              {fileList.map((file, index) => (
-                <div
-                  key={index}
+        {/* Image previews */}
+        {fileList.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+              marginBottom: 12,
+            }}
+          >
+            {fileList.map((file, i) => (
+              <div key={i} style={{ position: 'relative' }}>
+                <img
+                  src={URL.createObjectURL(file.originFileObj)}
                   style={{
-                    position: 'relative',
+                    width: 80,
+                    height: 80,
+                    objectFit: 'cover',
                     borderRadius: 8,
-                    overflow: 'hidden',
                     border: '2px solid #e8e8e8',
                   }}
-                >
-                  <img
-                    src={URL.createObjectURL(file.originFileObj)}
-                    alt="preview"
-                    style={{
-                      width: 100,
-                      height: 100,
-                      objectFit: 'cover',
-                      display: 'block',
-                    }}
-                  />
-                  <Button
-                    type="primary"
-                    danger
-                    size="small"
-                    shape="circle"
-                    icon={<CloseOutlined />}
-                    style={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    }}
-                    onClick={() =>
-                      setFileList(fileList.filter((_, i) => i !== index))
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+                />
+                <Button
+                  type="primary"
+                  danger
+                  size="small"
+                  shape="circle"
+                  icon={<CloseOutlined />}
+                  style={{
+                    position: 'absolute',
+                    top: -6,
+                    right: -6,
+                    width: 20,
+                    height: 20,
+                    minWidth: 20,
+                    fontSize: 10,
+                  }}
+                  onClick={() =>
+                    setFileList(fileList.filter((_, j) => j !== i))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
-          <Flex
-            justify="space-between"
-            align="center"
-            style={{ marginTop: 16 }}
+        {/* Cart preview */}
+        {cart.length > 0 && (
+          <div
+            style={{
+              background: '#f6ffed',
+              border: '1px solid #d9f7be',
+              borderRadius: 10,
+              padding: 12,
+              marginBottom: 12,
+            }}
           >
+            <Flex
+              justify="space-between"
+              align="center"
+              style={{ marginBottom: 8 }}
+            >
+              <Flex align="center" gap={6}>
+                <ShoppingCartOutlined style={{ color: '#52c41a' }} />
+                <Text strong style={{ fontSize: 13 }}>
+                  {cart.length} product{cart.length > 1 ? 's' : ''} added
+                </Text>
+              </Flex>
+              <Button
+                type="link"
+                size="small"
+                onClick={() => setPickerOpen(true)}
+                style={{ padding: 0 }}
+              >
+                Edit
+              </Button>
+            </Flex>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {cart.map((item) => {
+                const p = allProducts.find(
+                  (ap: any) => ap._id === item.productId
+                );
+                return (
+                  <Flex key={item.productId} align="center" gap={8}>
+                    <ProductImage image={p?.image} name={p?.name} size={28} />
+                    <Text style={{ flex: 1, fontSize: 12 }}>{p?.name}</Text>
+                    <Tag color="green" style={{ fontSize: 11 }}>
+                      ×{item.quantity}
+                    </Tag>
+                    <Text style={{ fontSize: 12, color: '#389e0d' }}>
+                      ₹{(item.price * item.quantity).toLocaleString()}
+                    </Text>
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<CloseOutlined />}
+                      onClick={() =>
+                        setCart((prev) =>
+                          prev.filter((c) => c.productId !== item.productId)
+                        )
+                      }
+                    />
+                  </Flex>
+                );
+              })}
+            </div>
+            <Divider style={{ margin: '8px 0' }} />
+            <Flex justify="flex-end">
+              <Text strong>
+                Total: ₹
+                {cart
+                  .reduce((s, c) => s + c.price * c.quantity, 0)
+                  .toLocaleString()}
+              </Text>
+            </Flex>
+          </div>
+        )}
+
+        <Flex justify="space-between" align="center">
+          <Space>
             <Upload
               fileList={fileList}
               onChange={({ fileList }) => setFileList(fileList)}
@@ -406,33 +756,363 @@ const ActivityComp = (props: any) => {
               showUploadList={false}
               accept="image/*"
             >
-              <Button
-                icon={<PictureOutlined />}
-                size="large"
-                style={{ borderRadius: 8 }}
-              >
-                Attach Images
+              <Button icon={<PictureOutlined />} style={{ borderRadius: 8 }}>
+                Images
               </Button>
             </Upload>
 
-            <Button
-              type="primary"
-              size="large"
-              icon={<SendOutlined />}
-              onClick={onCreate}
-              loading={creating}
-              disabled={!note.trim()}
+            <Badge count={totalCartQty} size="small">
+              <Button
+                icon={<ShoppingCartOutlined />}
+                style={{ borderRadius: 8 }}
+                type={cart.length > 0 ? 'primary' : 'default'}
+                onClick={() => setPickerOpen(true)}
+              >
+                Products
+              </Button>
+            </Badge>
+          </Space>
+
+          <Button
+            type="primary"
+            icon={<SendOutlined />}
+            onClick={onCreate}
+            loading={creating}
+            disabled={!note.trim()}
+            style={{ borderRadius: 8, paddingInline: 24 }}
+          >
+            Post Activity
+          </Button>
+        </Flex>
+      </Card>
+
+      {/* Product Picker Modal */}
+      <Modal
+        title={
+          <Flex align="center" gap={8}>
+            <ShoppingCartOutlined />
+            <span>Add Products</span>
+            {totalCartQty > 0 && (
+              <Tag color="green">{totalCartQty} in cart</Tag>
+            )}
+          </Flex>
+        }
+        open={pickerOpen}
+        onCancel={() => setPickerOpen(false)}
+        footer={
+          <Flex justify="space-between" align="center">
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {cart.length} product{cart.length !== 1 ? 's' : ''} · ₹
+              {cart
+                .reduce((s, c) => s + c.price * c.quantity, 0)
+                .toLocaleString()}
+            </Text>
+            <Space>
+              <Button onClick={() => setCart([])}>Clear All</Button>
+              <Button type="primary" onClick={() => setPickerOpen(false)}>
+                Done
+              </Button>
+            </Space>
+          </Flex>
+        }
+        width={700}
+        styles={{ body: { padding: 0 } }}
+      >
+        <div style={{ display: 'flex', height: 520 }}>
+          {/* Left: product list */}
+          <div
+            style={{
+              flex: 1,
+              borderRight: '1px solid #f0f0f0',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div
               style={{
-                borderRadius: 8,
-                paddingLeft: 24,
-                paddingRight: 24,
+                padding: '12px 16px',
+                borderBottom: '1px solid #f0f0f0',
               }}
             >
-              Post Activity
-            </Button>
-          </Flex>
+              <Input
+                prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+                placeholder="Search products..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                allowClear
+              />
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
+              {filteredProducts.length === 0 && (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="No products found"
+                  style={{ marginTop: 40 }}
+                />
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {filteredProducts.map((p: any) => {
+                  const cartItem = getCartItem(p._id);
+                  const inCart = !!cartItem;
+                  return (
+                    <div
+                      key={p._id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        cursor: 'pointer',
+                        border: `1px solid ${inCart ? '#b7eb8f' : '#f0f0f0'}`,
+                        background: inCart ? '#f6ffed' : '#fff',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <ProductImage image={p.image} name={p.name} size={44} />
+                      <div style={{ flex: 1 }}>
+                        <Text strong style={{ fontSize: 13 }}>
+                          {p.name}
+                        </Text>
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: 6,
+                            marginTop: 2,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          {p.availableSize?.length > 0 ? (
+                            p.availableSize.map((s: number) => (
+                              <Tag key={s} style={{ fontSize: 11, margin: 0 }}>
+                                {s} {p.unit} / ₹{p.price}
+                              </Tag>
+                            ))
+                          ) : (
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              ₹{p.price} / {p.unit}
+                            </Text>
+                          )}
+                        </div>
+                      </div>
+                      {inCart ? (
+                        <Flex align="center" gap={4}>
+                          <Button
+                            size="small"
+                            shape="circle"
+                            icon={<MinusOutlined />}
+                            onClick={() => removeFromCart(p._id)}
+                          />
+                          <Text
+                            strong
+                            style={{ minWidth: 20, textAlign: 'center' }}
+                          >
+                            {cartItem.quantity}
+                          </Text>
+                          <Button
+                            size="small"
+                            shape="circle"
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => addToCart(p)}
+                          />
+                        </Flex>
+                      ) : (
+                        <Button
+                          size="small"
+                          type="dashed"
+                          icon={<PlusOutlined />}
+                          onClick={() => addToCart(p)}
+                        >
+                          Add
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: cart / edit details */}
+          <div style={{ width: 260, display: 'flex', flexDirection: 'column' }}>
+            <div
+              style={{
+                padding: '12px 16px',
+                borderBottom: '1px solid #f0f0f0',
+              }}
+            >
+              <Text strong style={{ fontSize: 13 }}>
+                Cart
+              </Text>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
+              {cart.length === 0 ? (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="No items"
+                  style={{ marginTop: 40 }}
+                />
+              ) : (
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+                >
+                  {cart.map((item) => {
+                    const p = allProducts.find(
+                      (ap: any) => ap._id === item.productId
+                    );
+                    const sizes: number[] = p?.availableSize || [];
+                    return (
+                      <div
+                        key={item.productId}
+                        style={{
+                          background: '#fafafa',
+                          borderRadius: 10,
+                          padding: 10,
+                          border: '1px solid #f0f0f0',
+                        }}
+                      >
+                        <Flex
+                          align="center"
+                          gap={8}
+                          style={{ marginBottom: 8 }}
+                        >
+                          <ProductImage
+                            image={p?.image}
+                            name={p?.name}
+                            size={32}
+                          />
+                          <Text strong style={{ fontSize: 12, flex: 1 }}>
+                            {p?.name}
+                          </Text>
+                          <Tooltip title="Remove">
+                            <Button
+                              type="text"
+                              danger
+                              size="small"
+                              icon={<CloseOutlined />}
+                              onClick={() =>
+                                setCart((prev) =>
+                                  prev.filter(
+                                    (c) => c.productId !== item.productId
+                                  )
+                                )
+                              }
+                            />
+                          </Tooltip>
+                        </Flex>
+
+                        <Row gutter={6}>
+                          {sizes.length > 0 && (
+                            <Col span={24} style={{ marginBottom: 6 }}>
+                              <Flex
+                                align="center"
+                                gap={4}
+                                style={{ marginBottom: 4 }}
+                              >
+                                <Text type="secondary" style={{ fontSize: 11 }}>
+                                  Size ({p?.unit})
+                                </Text>
+                                {!item.size && (
+                                  <Text
+                                    style={{ fontSize: 10, color: '#ff4d4f' }}
+                                  >
+                                    * required
+                                  </Text>
+                                )}
+                              </Flex>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  gap: 4,
+                                  flexWrap: 'wrap',
+                                }}
+                              >
+                                {sizes.map((s) => (
+                                  <Tag
+                                    key={s}
+                                    style={{
+                                      cursor: 'pointer',
+                                      margin: 0,
+                                      fontWeight: item.size === s ? 700 : 400,
+                                    }}
+                                    color={
+                                      item.size === s ? 'green' : 'default'
+                                    }
+                                    onClick={() =>
+                                      updateCartField(item.productId, 'size', s)
+                                    }
+                                  >
+                                    {s} {p?.unit}
+                                  </Tag>
+                                ))}
+                              </div>
+                            </Col>
+                          )}
+                          <Col span={12}>
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              Price (₹)
+                            </Text>
+                            <InputNumber
+                              size="small"
+                              style={{ width: '100%' }}
+                              min={0}
+                              value={item.price}
+                              onChange={(v) =>
+                                updateCartField(item.productId, 'price', v ?? 0)
+                              }
+                            />
+                          </Col>
+                          <Col span={12}>
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              Qty
+                            </Text>
+                            <InputNumber
+                              size="small"
+                              style={{ width: '100%' }}
+                              min={1}
+                              value={item.quantity}
+                              onChange={(v) =>
+                                updateCartField(
+                                  item.productId,
+                                  'quantity',
+                                  v ?? 1
+                                )
+                              }
+                            />
+                          </Col>
+                        </Row>
+                        <Flex justify="flex-end" style={{ marginTop: 6 }}>
+                          <Text style={{ fontSize: 12, color: '#389e0d' }}>
+                            = ₹{(item.price * item.quantity).toLocaleString()}
+                          </Text>
+                        </Flex>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {cart.length > 0 && (
+              <div
+                style={{ padding: '10px 16px', borderTop: '1px solid #f0f0f0' }}
+              >
+                <Flex justify="space-between">
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Total
+                  </Text>
+                  <Text strong style={{ color: '#389e0d' }}>
+                    ₹
+                    {cart
+                      .reduce((s, c) => s + c.price * c.quantity, 0)
+                      .toLocaleString()}
+                  </Text>
+                </Flex>
+              </div>
+            )}
+          </div>
         </div>
-      </Card>
+      </Modal>
     </div>
   );
 };

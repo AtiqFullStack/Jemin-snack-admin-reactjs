@@ -75,7 +75,8 @@ const useProducts = () => {
     try {
       const res = await apiClient.post(
         API_ENDPOINTS.PRODUCT.PRODUCT.POST,
-        payload
+        payload,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       if (res.data.success) getProducts();
       return res.data;
@@ -88,7 +89,8 @@ const useProducts = () => {
     try {
       const res = await apiClient.put(
         API_ENDPOINTS.PRODUCT.PRODUCT.UPDATE(id),
-        payload
+        payload,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       if (res.data.success) getProducts();
       return res.data;

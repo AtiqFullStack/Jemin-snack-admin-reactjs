@@ -13,15 +13,20 @@ import {
   Row,
   Col,
   Space,
+  Button,
+  Modal,
+  message,
 } from 'antd';
 import {
   MailOutlined,
   PhoneOutlined,
   GlobalOutlined,
   EnvironmentOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import ActivityComp from './ActivityComp';
 import Tasks from './Tasks';
+import useCustomerService from '../../services/useCustomerService';
 
 type TabKey =
   | 'profile'
@@ -38,6 +43,30 @@ interface HeaderTabsProps {
 }
 
 const HeaderTabs: React.FC<HeaderTabsProps> = ({ activeTab, lead }) => {
+  const { convertLeadToCustomer } = useCustomerService();
+  const [converting, setConverting] = useState(false);
+  const [isConverted, setIsConverted] = useState(lead.isConverted ?? false);
+
+  const handleConvert = () => {
+    Modal.confirm({
+      title: 'Convert Lead to Customer',
+      content: `Convert "${lead.name}" into a customer? Lead status will be set to Won.`,
+      okText: 'Convert',
+      onOk: async () => {
+        try {
+          setConverting(true);
+          await convertLeadToCustomer(lead._id);
+          message.success(`${lead.name} converted to customer successfully`);
+          setIsConverted(true);
+        } catch {
+          message.error('Failed to convert lead');
+        } finally {
+          setConverting(false);
+        }
+      },
+    });
+  };
+
   const displayText = (value?: string | number | null) => {
     if (value === null || value === undefined) return '-';
     if (typeof value === 'string') {
@@ -160,6 +189,24 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ activeTab, lead }) => {
                     >
                       {displayText(assignedName)}
                     </Tag>
+                    {isConverted ? (
+                      <Tag
+                        color="green"
+                        style={{ padding: '4px 10px', borderRadius: 999 }}
+                      >
+                        ✓ Converted
+                      </Tag>
+                    ) : (
+                      <Button
+                        size="small"
+                        type="primary"
+                        icon={<SwapOutlined />}
+                        loading={converting}
+                        onClick={handleConvert}
+                      >
+                        Convert to Customer
+                      </Button>
+                    )}
                   </Flex>
                 </Col>
               </Row>

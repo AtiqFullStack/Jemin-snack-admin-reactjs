@@ -96,6 +96,16 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/leave/${id}/status`,
   },
 
+  //=========================CUSTOMERS===========================
+  CUSTOMERS: {
+    LIST: '/customers',
+    GET: (id: string) => `/customers/${id}`,
+    CREATE: '/customers',
+    UPDATE: (id: string) => `/customers/${id}`,
+    DELETE: (id: string) => `/customers/${id}`,
+    CONVERT: (leadId: string) => `/customers/convert/${leadId}`,
+  },
+
   //=========================LEADS===========================
 
   LEADS: {
@@ -105,6 +115,16 @@ export const API_ENDPOINTS = {
     BULK_CREATE: '/leads/bulk',
     UPDATE: (id: string) => `/leads/${id}`,
     DELETE: (id: string) => `/leads/${id}`,
+  },
+
+  //=========================QUOTATIONS===========================
+  QUOTATIONS: {
+    LIST: '/quotations',
+    GET: (id: string) => `/quotations/${id}`,
+    BY_ACTIVITY: (activityId: string) =>
+      `/quotations/by-activity/${activityId}`,
+    CREATE_MANUAL: '/quotations/manual',
+    PDF: (id: string) => `/quotations/${id}/pdf`,
   },
 
   //=========================ACTIVITY LOGS===========================
