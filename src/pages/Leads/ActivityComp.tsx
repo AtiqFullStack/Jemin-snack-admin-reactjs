@@ -205,8 +205,6 @@ const ActivityComp = (props: any) => {
   // per-product selected size in left panel
   const [pickerSize, setPickerSize] = useState<Record<string, number>>({});
 
-  const cartKey = (productId: string, size: number) => `${productId}_${size}`;
-
   const getCartItem = (productId: string, size: number) =>
     cart.find((c) => c.productId === productId && c.size === size);
 

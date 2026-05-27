@@ -11,7 +11,6 @@ import {
   ProductOutlined,
   SettingOutlined,
   SolutionOutlined,
-  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';

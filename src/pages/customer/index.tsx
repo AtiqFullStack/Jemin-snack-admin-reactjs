@@ -14,7 +14,6 @@ import {
   Row,
   Select,
   Space,
-  Statistic,
   Table,
   Tag,
   Tooltip,
@@ -77,7 +76,7 @@ const CustomersPage = () => {
   const { getLeads } = leadServices();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [leads, setLeads] = useState<any[]>([]);
+  const [, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -131,23 +130,6 @@ const CustomersPage = () => {
     } finally {
       setLoadingCities(false);
     }
-  };
-
-  const handleLeadSelect = (leadId: string) => {
-    const lead = leads.find((l: any) => l._id === leadId);
-    if (!lead) return;
-    form.setFieldsValue({
-      name: lead.name,
-      phone: lead.phone,
-      email: lead.email,
-      street: lead.address,
-      state: lead.state,
-      city: lead.city,
-      pincode: lead.zip,
-      country: lead.country || 'India',
-      companyName: lead.company,
-    });
-    if (lead.state) handleStateChange(lead.state);
   };
 
   const openDrawer = (customer?: Customer) => {
@@ -235,9 +217,6 @@ const CustomersPage = () => {
       setDeletingId(null);
     }
   };
-
-  const totalActive = customers.filter((c) => c.isActive).length;
-  const fromLead = customers.filter((c) => c.lead).length;
 
   const filtered = customers.filter((c) => {
     const s = search.trim().toLowerCase();
