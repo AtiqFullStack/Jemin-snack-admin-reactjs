@@ -4,6 +4,7 @@ import {
   Card,
   Col,
   Empty,
+  Flex,
   Form,
   Image,
   Input,
@@ -25,6 +26,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import {
   AppstoreAddOutlined,
+  CloseOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
@@ -101,6 +103,159 @@ const SizePriceSelect = ({
   );
 };
 
+const PRESET_SIZES = [14, 16, 18, 20, 28, 30, 32, 36, 38, 40];
+const CUSTOM_SIZES_KEY = 'jemini_custom_sizes';
+
+const getCustomSizes = (): number[] => {
+  try {
+    return JSON.parse(localStorage.getItem(CUSTOM_SIZES_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+const saveCustomSizes = (sizes: number[]) => {
+  localStorage.setItem(CUSTOM_SIZES_KEY, JSON.stringify(sizes));
+};
+
+const SizeInput = ({
+  value,
+  onChange,
+}: {
+  value?: number;
+  onChange?: (v?: number) => void;
+}) => {
+  const [inputVal, setInputVal] = useState('');
+  const [open, setOpen] = useState(false);
+  const [customSizes, setCustomSizes] = useState<number[]>(getCustomSizes);
+
+  const allSizes = useMemo(() => {
+    const merged = [...new Set([...PRESET_SIZES, ...customSizes])].sort(
+      (a, b) => a - b
+    );
+    return merged;
+  }, [customSizes]);
+
+  const addCustomSize = (v: number) => {
+    if (!allSizes.includes(v)) {
+      const updated = [...customSizes, v];
+      setCustomSizes(updated);
+      saveCustomSizes(updated);
+    }
+    onChange?.(v);
+    setInputVal('');
+    setOpen(false);
+  };
+
+  const removeCustomSize = (v: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const updated = customSizes.filter((s) => s !== v);
+    setCustomSizes(updated);
+    saveCustomSizes(updated);
+    if (value === v) onChange?.(undefined);
+  };
+
+  const typedNum = Number(inputVal);
+  const isValidCustom =
+    inputVal !== '' &&
+    !isNaN(typedNum) &&
+    typedNum > 0 &&
+    !allSizes.includes(typedNum);
+
+  const filteredSizes = allSizes.filter((s) =>
+    inputVal ? String(s).includes(inputVal) : true
+  );
+
+  const options = filteredSizes.map((s) => ({
+    value: s,
+    label: (
+      <Flex justify="space-between" align="center">
+        <span>{s}</span>
+        {customSizes.includes(s) && (
+          <CloseOutlined
+            style={{ fontSize: 10, color: '#ff4d4f' }}
+            onClick={(e) => removeCustomSize(s, e as any)}
+          />
+        )}
+      </Flex>
+    ),
+  }));
+
+  if (value != null) {
+    return (
+      <div
+        style={{
+          border: '1px solid #d9d9d9',
+          borderRadius: 6,
+          padding: '3px 8px',
+          display: 'flex',
+          alignItems: 'center',
+          background: '#fff',
+          minHeight: 32,
+        }}
+      >
+        <Tag
+          closable
+          onClose={() => onChange?.(undefined)}
+          color="blue"
+          style={{ margin: 0, fontSize: 13 }}
+        >
+          {value}
+        </Tag>
+      </div>
+    );
+  }
+
+  return (
+    <Select
+      showSearch
+      open={open}
+      onDropdownVisibleChange={setOpen}
+      placeholder="Type or select a size"
+      style={{ width: '100%' }}
+      searchValue={inputVal}
+      onSearch={setInputVal}
+      value={undefined}
+      onChange={(v: number) => {
+        onChange?.(v);
+        setInputVal('');
+        setOpen(false);
+      }}
+      filterOption={false}
+      onInputKeyDown={(e) => {
+        if (e.key === 'Enter' && isValidCustom) {
+          e.preventDefault();
+          e.stopPropagation();
+          addCustomSize(typedNum);
+        }
+      }}
+      dropdownRender={(menu) => (
+        <>
+          {menu}
+          {isValidCustom && (
+            <div
+              style={{
+                padding: '6px 12px',
+                cursor: 'pointer',
+                color: '#1677ff',
+                borderTop: '1px solid #f0f0f0',
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                addCustomSize(typedNum);
+              }}
+            >
+              <PlusOutlined style={{ marginRight: 6 }} />
+              Add <strong>{typedNum}</strong> to list
+            </div>
+          )}
+        </>
+      )}
+      options={options}
+    />
+  );
+};
+
 const Products = () => {
   const {
     getTypes,
@@ -163,7 +318,7 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setProductsLoading(true);
-      const res = await getProducts();
+      const res = await getProducts({ limit: 1000 });
       setProducts(res?.data?.products || []);
     } catch {
       message.error('Unable to load products');
@@ -791,13 +946,7 @@ const Products = () => {
                         rules={[{ required: true, message: 'Size required' }]}
                         style={{ marginBottom: 0 }}
                       >
-                        <Select
-                          placeholder="Select size"
-                          options={[16, 18, 22, 32, 34, 36, 38].map((s) => ({
-                            label: s,
-                            value: s,
-                          }))}
-                        />
+                        <SizeInput />
                       </Form.Item>
                     </Col>
                     <Col span={10}>

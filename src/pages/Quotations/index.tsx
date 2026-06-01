@@ -30,6 +30,7 @@ import {
 import apiClient, { BASEURL } from '../../services/api/apiClient';
 import { tokenStorage } from '../../services/auth/tokenStorage';
 import useProducts from '../../services/useProducts';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const { Text } = Typography;
 
@@ -65,6 +66,7 @@ const QuotationsPage = () => {
   const total = subtotal + tax - discount;
 
   const { getProducts } = useProducts();
+  const { canCreate } = usePermissions();
 
   const fetchQuotations = async () => {
     try {
@@ -279,13 +281,15 @@ const QuotationsPage = () => {
           <Button icon={<ReloadOutlined />} onClick={fetchQuotations}>
             Refresh
           </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setDrawerOpen(true)}
-          >
-            Create Quotation
-          </Button>
+          {canCreate('quotations') && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setDrawerOpen(true)}
+            >
+              Create Quotation
+            </Button>
+          )}
         </Space>
       </Flex>
 

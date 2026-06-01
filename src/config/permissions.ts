@@ -143,6 +143,12 @@ export const MODULES = {
     actions: ['read', 'create', 'update', 'delete'],
     scopes: ['all'],
   },
+  quotations: {
+    label: 'Quotations',
+    group: 'Sales',
+    actions: ['read', 'create', 'update', 'delete'],
+    scopes: ['all', 'own'],
+  },
 
   // Communication Module
   calls: {
