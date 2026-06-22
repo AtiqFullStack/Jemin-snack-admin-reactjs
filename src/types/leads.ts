@@ -75,4 +75,9 @@ export type Lead = {
   createdBy: any;
   priority: any;
   isConverted?: boolean;
+  attachments?: [
+    {
+      uri: string;
+    },
+  ];
 };

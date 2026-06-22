@@ -27,6 +27,7 @@ import {
 import ActivityComp from './ActivityComp';
 import Tasks from './Tasks';
 import useCustomerService from '../../services/useCustomerService';
+import { imageUrl } from 'src/utils/convertor';
 
 type TabKey =
   | 'profile'
@@ -227,12 +228,50 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ activeTab, lead }) => {
                     value={displayCurrency(lead.leadValue)}
                   />
                 </Col>
+
                 <Col xs={12} md={6}>
                   <Field label="Score" value={displayText(lead.score)} />
                 </Col>
               </Row>
             </Card>
-
+            {lead.attachments && lead.attachments.length > 0 && (
+              <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
+                <Col span={24}>
+                  <Card
+                    title="Attachments"
+                    style={{ borderRadius: 12 }}
+                    bodyStyle={{ padding: 14 }}
+                  >
+                    <Row gutter={[12, 12]}>
+                      {lead.attachments.map((attachment, index) => (
+                        <Col key={index} xs={12} sm={8} md={6} lg={4}>
+                          <a
+                            href={imageUrl(attachment.uri)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <img
+                              src={imageUrl(attachment.uri)}
+                              alt={attachment.uri.split('/').pop()}
+                              style={{
+                                width: '100%',
+                                aspectRatio: '1',
+                                objectFit: 'cover',
+                                borderRadius: 8,
+                                border: '1px solid #e2e8f0',
+                              }}
+                            />
+                            {/* <div style={{ fontSize: 11, color: '#475569', marginTop: 4, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {attachment.uri.split('/').pop()}
+                            </div> */}
+                          </a>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card>
+                </Col>
+              </Row>
+            )}
             {/* Details grid */}
             <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
               <Col xs={24} md={12}>
