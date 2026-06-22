@@ -23,6 +23,7 @@ import roleService from '../../../services/roleService';
 import { usePermissions } from '../../../hooks';
 import ShiftSelector from 'src/components/ShiftSelector';
 import { imageUrl, ProfileWithPlaceholder } from 'src/utils/convertor';
+import ImageModal from 'src/components/ImageModal';
 
 type UserStatus = 'active' | 'inactive';
 
@@ -49,6 +50,7 @@ type Role = {
 const StaffPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const { canCreate, canUpdate, canDelete } = usePermissions();
+  const [selectedStaff, setSelectedStaff] = useState<any>(null);
 
   //  Services
   const { getStaff, createStaff, updateStaff } = staffService();
@@ -60,6 +62,22 @@ const StaffPage = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
+
+  // Image Modal
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
 
   const normalizeUser = (user: any): User => ({
     ...user,
@@ -240,6 +258,10 @@ const StaffPage = () => {
         console.log(_);
         return (
           <img
+            onClick={() => {
+              setSelectedStaff(record);
+              showModal();
+            }}
             style={{ width: 70, height: 70, borderRadius: '50%' }}
             src={ProfileWithPlaceholder(record)}
           ></img>
@@ -334,6 +356,14 @@ const StaffPage = () => {
 
   return (
     <div style={{ padding: 24 }}>
+      {isModalOpen && (
+        <ImageModal
+          imageUrl={ProfileWithPlaceholder(selectedStaff)}
+          isModalOpen={isModalOpen}
+          onClose={handleCancel}
+          title={selectedStaff?.firstName + ' ' + selectedStaff?.lastName}
+        />
+      )}
       <Card
         title="Staff Management"
         extra={
