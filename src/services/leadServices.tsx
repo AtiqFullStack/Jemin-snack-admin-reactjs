@@ -75,6 +75,20 @@ const leadServices = () => {
     }
   };
 
+  const addAttachements = async (payload: FormData) => {
+    try {
+      const response = await apiRequest.post(
+        API_ENDPOINTS.LEADS.ADD_ATTACHEMENTS,
+        payload,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error uploading attachments:', error);
+      throw error;
+    }
+  };
+
   return {
     creatLeads,
     getLeads,
@@ -82,6 +96,7 @@ const leadServices = () => {
     getById,
     deleteLeads,
     bulkCreateLeads,
+    addAttachements,
   };
 };
 

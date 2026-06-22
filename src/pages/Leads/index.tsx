@@ -29,8 +29,10 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
+import type { UploadFile } from 'antd/es/upload/interface';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { UserAvatar } from '../../components';
+import { imageUrl } from '../../utils/convertor';
 import leadServices from '../../services/leadServices';
 import staffService from '../../services/staffService';
 import { timeConverter } from '../../utils/convertor';
@@ -63,8 +65,14 @@ const LeadsPage = () => {
   //   window.location.href = `jeminisnacks://lead/${id}`;
   // };
 
-  const { creatLeads, getLeads, deleteLeads, updateLeads, bulkCreateLeads } =
-    leadServices();
+  const {
+    creatLeads,
+    getLeads,
+    deleteLeads,
+    updateLeads,
+    bulkCreateLeads,
+    addAttachements,
+  } = leadServices();
   const { getStaff } = staffService();
   const [allStates, setAllStates] = useState([]);
   const [allCities, setAllCities] = useState([]);
@@ -80,6 +88,7 @@ const LeadsPage = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState('');
   const [activityPage, setActvityTab] = useState(false);
+  const [attachmentFiles, setAttachmentFiles] = useState<UploadFile[]>([]);
 
   useEffect(() => {
     const fetchStates = async () => {
@@ -300,6 +309,19 @@ const LeadsPage = () => {
   const handleSaveLead = async () => {
     const values = await form.validateFields();
 
+    let attachmentPaths: { uri: string }[] = [];
+    if (!editingLead && attachmentFiles.length > 0) {
+      const formData = new FormData();
+      attachmentFiles.forEach((f) => {
+        if (f.originFileObj)
+          formData.append('leadAttachments', f.originFileObj);
+      });
+      const uploadRes = (await addAttachements(formData)) as any;
+      if (uploadRes?.file) {
+        attachmentPaths = uploadRes.file.map((f: any) => ({ uri: f.path }));
+      }
+    }
+
     const payload = {
       status: values.status,
       source: values.source,
@@ -322,6 +344,7 @@ const LeadsPage = () => {
       description: values.description,
       isPublic: values.is_public,
       contacted_today: values.contacted_today,
+      ...(attachmentPaths.length > 0 && { attachments: attachmentPaths }),
     };
 
     let res;
@@ -341,6 +364,7 @@ const LeadsPage = () => {
       await fetchLeads();
       setIsDrawerOpen(false);
       form.resetFields();
+      setAttachmentFiles([]);
     } else {
       message.error(
         res?.message ||
@@ -860,6 +884,29 @@ const LeadsPage = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          {/* Attachments - only on create */}
+          {!editingLead && (
+            <Row gutter={[12, 12]}>
+              <Col span={24}>
+                <Form.Item label="Attachments">
+                  <Upload
+                    listType="picture-card"
+                    fileList={attachmentFiles}
+                    beforeUpload={() => false}
+                    onChange={({ fileList }) => setAttachmentFiles(fileList)}
+                    multiple
+                    accept="image/*"
+                  >
+                    <div>
+                      <PlusOutlined />
+                      <div style={{ marginTop: 8 }}>Upload</div>
+                    </div>
+                  </Upload>
+                </Form.Item>
+              </Col>
+            </Row>
+          )}
 
           {/* Bottom checkboxes */}
           {/* <Row gutter={[12, 12]}>

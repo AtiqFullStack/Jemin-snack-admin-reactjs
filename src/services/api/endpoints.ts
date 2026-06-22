@@ -115,6 +115,7 @@ export const API_ENDPOINTS = {
     BULK_CREATE: '/leads/bulk',
     UPDATE: (id: string) => `/leads/${id}`,
     DELETE: (id: string) => `/leads/${id}`,
+    ADD_ATTACHEMENTS: '/upload/leadAttachements',
   },
 
   //=========================QUOTATIONS===========================
