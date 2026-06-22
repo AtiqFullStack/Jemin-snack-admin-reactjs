@@ -326,7 +326,24 @@ const QuotationsPage = () => {
           </Space>
         }
       >
-        <Form form={form} layout="vertical">
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={(label, { required }) =>
+            required ? (
+              <>
+                {label} <span style={{ color: '#ff4d4f' }}>*</span>
+              </>
+            ) : (
+              <span>
+                {label}&nbsp;
+                <span style={{ color: '#8c8c8c', fontSize: 12 }}>
+                  (Optional)
+                </span>
+              </span>
+            )
+          }
+        >
           {/* ── Source toggle ── */}
           <Form.Item label="Bill To Source">
             <Flex gap={8}>

@@ -3,7 +3,6 @@ import {
   Dropdown,
   Flex,
   FloatButton,
-  Input,
   Layout,
   MenuProps,
   message,
@@ -13,11 +12,9 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import {
-  AppstoreOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  MessageOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import {
@@ -171,22 +168,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                   }}
                 />
               </Tooltip>
-              <Input.Search
-                placeholder="search"
-                style={{
-                  width: isMobile ? '100%' : '400px',
-                  marginLeft: isMobile ? 0 : '.5rem',
-                }}
-                size="middle"
-              />
             </Flex>
             <Flex align="center" gap="small">
-              <Tooltip title="Apps">
-                <Button icon={<AppstoreOutlined />} type="text" size="large" />
-              </Tooltip>
-              <Tooltip title="Messages">
-                <Button icon={<MessageOutlined />} type="text" size="large" />
-              </Tooltip>
               <Dropdown menu={{ items }} trigger={['click']}>
                 <Flex>
                   {user && (

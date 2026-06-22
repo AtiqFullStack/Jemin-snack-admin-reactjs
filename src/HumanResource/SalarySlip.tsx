@@ -110,7 +110,9 @@ const SalarySlip = () => {
         }
       );
 
-      setData(response.data);
+      const body = response.data;
+      // apiClient returns axios response → body = { success, data: { period, totalEmployees, payslips } }
+      setData(body?.data ?? body);
     } catch (error) {
       console.log(error);
       message.error('Unable to load salary slips.');

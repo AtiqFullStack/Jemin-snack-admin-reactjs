@@ -97,7 +97,7 @@ const CustomersPage = () => {
     try {
       setLoading(true);
       const res = (await getCustomers()) as any;
-      setCustomers(res?.data?.customers || res?.data || []);
+      setCustomers([...(res?.data?.customers || res?.data || [])].reverse());
     } catch {
       message.error('Unable to load customers');
     } finally {
@@ -444,7 +444,24 @@ const CustomersPage = () => {
           </Space>
         }
       >
-        <Form form={form} layout="vertical">
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={(label, { required }) =>
+            required ? (
+              <>
+                {label} <span style={{ color: '#ff4d4f' }}>*</span>
+              </>
+            ) : (
+              <span>
+                {label}&nbsp;
+                <span style={{ color: '#8c8c8c', fontSize: 12 }}>
+                  (Optional)
+                </span>
+              </span>
+            )
+          }
+        >
           {/* Lead info banner — only on edit if customer came from a lead */}
           {editingCustomer?.lead && (
             <div

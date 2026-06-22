@@ -175,7 +175,7 @@ const ActivityComp = (props: any) => {
     try {
       setLoading(true);
       const res: any = await getByActivityId(leadId);
-      if (res?.success) setAllActivity(res.data || []);
+      if (res?.success) setAllActivity([...(res.data || [])].reverse());
     } finally {
       setLoading(false);
     }

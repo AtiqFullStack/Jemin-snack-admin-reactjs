@@ -17,3 +17,10 @@ export const getAttachmentUrl = (url?: string) => {
   const normalizedUrl = url.replace(/^\/+/, '');
   return `${base}/${normalizedUrl}`;
 };
+
+export const ProfileWithPlaceholder = (staff: any) => {
+  if (staff?.avatar) {
+    return `${BASEURL}/${staff?.avatar}`;
+  }
+  return `${BASEURL}/uploads/profilePictures/male.png`;
+};

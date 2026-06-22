@@ -805,7 +805,7 @@ const Products = () => {
                 rowHoverable={false}
                 rowKey="_id"
                 loading={productsLoading}
-                pagination={{ pageSize: 8, showSizeChanger: true }}
+                pagination={{ pageSize: 10 }}
                 scroll={{ x: 600 }}
                 locale={{
                   emptyText: (
@@ -829,7 +829,24 @@ const Products = () => {
         okText={editingType ? 'Update Type' : 'Create Type'}
         destroyOnHidden
       >
-        <Form form={typeForm} layout="vertical">
+        <Form
+          form={typeForm}
+          layout="vertical"
+          requiredMark={(label, { required }) =>
+            required ? (
+              <>
+                {label} <span style={{ color: '#ff4d4f' }}>*</span>
+              </>
+            ) : (
+              <span>
+                {label}&nbsp;
+                <span style={{ color: '#8c8c8c', fontSize: 12 }}>
+                  (Optional)
+                </span>
+              </span>
+            )
+          }
+        >
           <Form.Item
             name="name"
             label="Type Name"
@@ -849,7 +866,24 @@ const Products = () => {
         width={680}
         destroyOnHidden
       >
-        <Form form={productForm} layout="vertical">
+        <Form
+          form={productForm}
+          layout="vertical"
+          requiredMark={(label, { required }) =>
+            required ? (
+              <>
+                {label} <span style={{ color: '#ff4d4f' }}>*</span>
+              </>
+            ) : (
+              <span>
+                {label}&nbsp;
+                <span style={{ color: '#8c8c8c', fontSize: 12 }}>
+                  (Optional)
+                </span>
+              </span>
+            )
+          }
+        >
           <Row gutter={12}>
             <Col xs={24} md={12}>
               <Form.Item
@@ -943,6 +977,7 @@ const Products = () => {
                     <Col span={10}>
                       <Form.Item
                         name={[name, 'size']}
+                        label="Size"
                         rules={[{ required: true, message: 'Size required' }]}
                         style={{ marginBottom: 0 }}
                       >
@@ -952,12 +987,13 @@ const Products = () => {
                     <Col span={10}>
                       <Form.Item
                         name={[name, 'price']}
+                        label="Price (₹)"
                         rules={[
                           { required: true, message: 'Price required' },
                           {
                             type: 'number',
-                            min: 0,
-                            message: 'Cannot be negative',
+                            min: 1,
+                            message: 'Min price is 1',
                           },
                         ]}
                         style={{ marginBottom: 0 }}

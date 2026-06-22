@@ -12,12 +12,17 @@ import {
   message,
   Modal,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  CheckOutlined,
+  StopOutlined,
+} from '@ant-design/icons';
 import staffService from '../../../services/staffService';
 import roleService from '../../../services/roleService';
 import { usePermissions } from '../../../hooks';
 import ShiftSelector from 'src/components/ShiftSelector';
-import { imageUrl } from 'src/utils/convertor';
+import { imageUrl, ProfileWithPlaceholder } from 'src/utils/convertor';
 
 type UserStatus = 'active' | 'inactive';
 
@@ -46,7 +51,7 @@ const StaffPage = () => {
   const { canCreate, canUpdate, canDelete } = usePermissions();
 
   //  Services
-  const { getStaff, createStaff, updateStaff, deleteStaff } = staffService();
+  const { getStaff, createStaff, updateStaff } = staffService();
   const { getRoles } = roleService();
 
   // ✅ Dynamic roles (replace with API)
@@ -202,21 +207,26 @@ const StaffPage = () => {
     }
   };
 
-  const handleDelete = (record: User) => {
+  const handleToggleStatus = (record: User) => {
+    const isActive = record.status === 'active';
     Modal.confirm({
-      title: 'Delete user?',
-      content: `This will permanently remove "${record.firstName} ${record.lastName}".`,
-      okText: 'Delete',
-      okType: 'danger',
+      title: `${isActive ? 'Block' : 'Activate'} user?`,
+      content: `Are you sure you want to ${isActive ? 'block' : 'activate'} "${
+        record.firstName
+      } ${record.lastName}"?`,
+      okText: isActive ? 'Block' : 'Activate',
+      okType: isActive ? 'danger' : 'primary',
       cancelText: 'Cancel',
       onOk: async () => {
-        const res = (await deleteStaff(record._id)) as any;
+        const res = (await updateStaff(record._id, {
+          status: isActive ? 'inactive' : 'active',
+        })) as any;
         if (res.success) {
-          message.success(res.message);
+          message.success(
+            `User ${isActive ? 'blocked' : 'activated'} successfully`
+          );
           await getStaffs();
         }
-        // setUsers((prev) => prev.filter((u) => u._id !== record._id));
-        // message.success('User deleted');
       },
     });
   };
@@ -226,12 +236,15 @@ const StaffPage = () => {
       title: 'Image',
       dataIndex: 'avatar',
       key: 'avatar',
-      render: (_: any) => (
-        <img
-          style={{ width: 70, height: 70, borderRadius: '50%' }}
-          src={imageUrl(_)}
-        ></img>
-      ),
+      render: (_: any, record: any) => {
+        console.log(_);
+        return (
+          <img
+            style={{ width: 70, height: 70, borderRadius: '50%' }}
+            src={ProfileWithPlaceholder(record)}
+          ></img>
+        );
+      },
     },
     {
       title: 'StaffId',
@@ -301,9 +314,17 @@ const StaffPage = () => {
           {canDelete('settings.users') && (
             <Button
               size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record)}
+              danger={record.status === 'active'}
+              type={record.status === 'active' ? 'default' : 'primary'}
+              icon={
+                record.status === 'active' ? (
+                  <StopOutlined />
+                ) : (
+                  <CheckOutlined />
+                )
+              }
+              onClick={() => handleToggleStatus(record)}
+              title={record.status === 'active' ? 'Block' : 'Activate'}
             />
           )}
         </Space>

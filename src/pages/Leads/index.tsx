@@ -673,17 +673,31 @@ const LeadsPage = () => {
           </Space>
         }
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 8 }}>
+        <Form
+          form={form}
+          layout="vertical"
+          style={{ marginTop: 8 }}
+          requiredMark={(label, { required }) =>
+            required ? (
+              <>
+                {label} <span style={{ color: '#ff4d4f' }}>*</span>
+              </>
+            ) : (
+              <>
+                {label}{' '}
+                <span style={{ color: '#8c8c8c', fontSize: 12 }}>
+                  (optional)
+                </span>
+              </>
+            )
+          }
+        >
           {/* Top row: Status, Source, Assigned */}
           <Row gutter={[12, 12]}>
             <Col xs={24} md={8}>
               <Form.Item
                 name="status"
-                label={
-                  <>
-                    <span style={{ color: 'red' }}>*</span> Status
-                  </>
-                }
+                label="Status"
                 rules={[{ required: true, message: 'Status required' }]}
               >
                 <Select placeholder="Nothing selected" options={LEADSTATUS} />
@@ -693,11 +707,7 @@ const LeadsPage = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="source"
-                label={
-                  <>
-                    <span style={{ color: 'red' }}>*</span> Source
-                  </>
-                }
+                label="Source"
                 rules={[{ required: true, message: 'Source required' }]}
               >
                 <Select placeholder="Nothing selected" options={LEADSOURCE} />
@@ -748,11 +758,7 @@ const LeadsPage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="name"
-                label={
-                  <>
-                    <span style={{ color: 'red' }}>*</span> Name
-                  </>
-                }
+                label="Name"
                 rules={[{ required: true, message: 'Name required' }]}
               >
                 <Input placeholder="" />
@@ -766,34 +772,58 @@ const LeadsPage = () => {
                 name="email"
                 label="Email Address"
                 rules={[{ type: 'email', message: 'Invalid email' }]}
+                style={{ marginBottom: 16 }}
               >
                 <Input placeholder="" />
               </Form.Item>
 
-              <Form.Item name="website" label="Website">
+              <Form.Item
+                name="website"
+                label="Website"
+                style={{ marginBottom: 16 }}
+              >
                 <Input placeholder="" />
               </Form.Item>
 
-              <Form.Item name="phone" label="Phone">
+              <Form.Item
+                name="phone"
+                label="Phone"
+                rules={[{ required: true, message: 'Phone is required' }]}
+                style={{ marginBottom: 16 }}
+              >
                 <Input placeholder="" />
               </Form.Item>
 
-              <Form.Item name="lead_value" label="Lead value">
+              <Form.Item
+                name="lead_value"
+                label="Lead value"
+                style={{ marginBottom: 16 }}
+              >
                 <Input type="number" addonAfter="$" placeholder="" />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="state" label="State">
+              <Form.Item
+                name="state"
+                label="State"
+                rules={[{ required: true, message: 'State is required' }]}
+                style={{ marginBottom: 16 }}
+              >
                 <Select
                   showSearch
-                  placeholder="Select state first"
+                  placeholder="Select state"
                   options={allStates}
                   onChange={handleStateChange}
                 />
               </Form.Item>
 
-              <Form.Item name="city" label="City">
+              <Form.Item
+                name="city"
+                label="City"
+                rules={[{ required: true, message: 'City is required' }]}
+                style={{ marginBottom: 16 }}
+              >
                 <Select
                   showSearch
                   placeholder="Select state first"
@@ -803,21 +833,20 @@ const LeadsPage = () => {
                 />
               </Form.Item>
 
-              <Form.Item name="zip" label="Zip Code">
+              <Form.Item
+                name="zip"
+                label="Zip Code"
+                rules={[{ required: true, message: 'Zip code is required' }]}
+                style={{ marginBottom: 16 }}
+              >
                 <Input placeholder="" />
               </Form.Item>
 
-              {/* <Form.Item name="language" label="Default Language">
-                <Select
-                  options={[
-                  { value: 'System Default', label: 'System Default' },
-                  { value: 'English', label: 'English' },
-                  ]}
-                />
-                
-              </Form.Item> */}
-
-              <Form.Item name="address" label="Address">
+              <Form.Item
+                name="address"
+                label="Address"
+                style={{ marginBottom: 16 }}
+              >
                 <Input.TextArea rows={2} placeholder="" />
               </Form.Item>
             </Col>

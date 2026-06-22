@@ -1,15 +1,24 @@
-import { useEffect } from 'react';
-import { Button, Col, Form, Input, Radio, Row, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import {
+  Button,
+  Col,
+  Form,
+  Input,
+  Radio,
+  Row,
+  Typography,
+  message,
+} from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { Card } from '../../components';
 import { useOutletContext } from 'react-router-dom';
 import type { UserProfileData } from '../../layouts/user-account';
+import staffService from '../../services/staffService';
 
 type FieldType = {
   id?: string;
   firstName?: string;
   lastName?: string;
-  fullName?: string;
   email?: string;
   phone?: string;
   department?: string;
@@ -23,26 +32,19 @@ type OutletContextType = {
   user: UserProfileData | null;
 };
 
-const formatValue = (value?: string | null) => {
-  if (!value) {
-    return '';
-  }
-
-  return value.trim();
-};
+const formatValue = (value?: string | null) => (value ? value.trim() : '');
 
 export const UserProfileDetailsPage = () => {
   const [form] = Form.useForm<FieldType>();
   const { user } = useOutletContext<OutletContextType>();
-  console.log(user);
+  const [saving, setSaving] = useState(false);
+  const { updateStaff } = staffService();
+
   useEffect(() => {
     form.setFieldsValue({
-      id: user?._id ?? '',
       Id: user?.Id ?? '',
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
-      fullName:
-        user?.name ?? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim(),
       email: user?.email ?? '',
       phone: user?.phone ?? '',
       department: formatValue(user?.department),
@@ -52,8 +54,30 @@ export const UserProfileDetailsPage = () => {
     });
   }, [form, user]);
 
-  const onFinish = (values: FieldType) => {
-    console.log('Profile details form values:', values);
+  const onFinish = async (values: FieldType) => {
+    if (!user?._id) return message.error('User not found');
+    try {
+      setSaving(true);
+      const payload = {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        department: values.department,
+        position: values.position,
+        status: values.status,
+      };
+      const res: any = await updateStaff(user._id, payload);
+      if (res?.success) {
+        message.success('Profile updated successfully');
+      } else {
+        message.error(res?.message || 'Failed to update');
+      }
+    } catch (e: any) {
+      message.error(e?.message || 'Failed to update');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -68,11 +92,7 @@ export const UserProfileDetailsPage = () => {
       >
         <Row gutter={[16, 0]}>
           <Col sm={24} lg={24}>
-            <Form.Item<FieldType>
-              label="User ID"
-              name="Id"
-              rules={[{ required: true, message: 'User ID is required' }]}
-            >
+            <Form.Item<FieldType> label="User ID" name="Id">
               <Input
                 readOnly
                 suffix={
@@ -100,15 +120,6 @@ export const UserProfileDetailsPage = () => {
               label="Last Name"
               name="lastName"
               rules={[{ required: true, message: 'Last name is required' }]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col sm={24} lg={12}>
-            <Form.Item<FieldType>
-              label="Full Name"
-              name="fullName"
-              rules={[{ required: true, message: 'Full name is required' }]}
             >
               <Input />
             </Form.Item>
@@ -157,8 +168,13 @@ export const UserProfileDetailsPage = () => {
         </Row>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
-            Save changes
+          <Button
+            type="primary"
+            htmlType="submit"
+            icon={<SaveOutlined />}
+            loading={saving}
+          >
+            Save Changes
           </Button>
         </Form.Item>
       </Form>
