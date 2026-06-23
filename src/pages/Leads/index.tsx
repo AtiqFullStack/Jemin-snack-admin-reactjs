@@ -32,7 +32,7 @@ import * as XLSX from 'xlsx';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { UserAvatar } from '../../components';
-import { imageUrl } from '../../utils/convertor';
+// import { imageUrl } from '../../utils/convertor';
 import leadServices from '../../services/leadServices';
 import staffService from '../../services/staffService';
 import { timeConverter } from '../../utils/convertor';

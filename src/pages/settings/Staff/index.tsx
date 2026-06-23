@@ -22,7 +22,7 @@ import staffService from '../../../services/staffService';
 import roleService from '../../../services/roleService';
 import { usePermissions } from '../../../hooks';
 import ShiftSelector from 'src/components/ShiftSelector';
-import { imageUrl, ProfileWithPlaceholder } from 'src/utils/convertor';
+import { ProfileWithPlaceholder } from 'src/utils/convertor';
 import ImageModal from 'src/components/ImageModal';
 
 type UserStatus = 'active' | 'inactive';
@@ -69,10 +69,6 @@ const StaffPage = () => {
 
   const showModal = () => {
     setIsModalOpen(true);
-  };
-
-  const handleOk = () => {
-    setIsModalOpen(false);
   };
 
   const handleCancel = () => {
