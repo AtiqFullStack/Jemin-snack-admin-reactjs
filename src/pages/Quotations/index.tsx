@@ -56,13 +56,17 @@ const QuotationsPage = () => {
     productId: string;
     size: number | undefined;
     price: number;
+    pieces: number;
     quantity: number;
   };
   const [cart, setCart] = useState<CartRow[]>([]);
   const [tax, setTax] = useState<number>(0);
   const [discount, setDiscount] = useState<number>(0);
 
-  const subtotal = cart.reduce((s, c) => s + c.price * c.quantity, 0);
+  const subtotal = cart.reduce(
+    (s, c) => s + c.price * c.pieces * c.quantity,
+    0
+  );
   const total = subtotal + tax - discount;
 
   const { getProducts } = useProducts();
@@ -164,6 +168,7 @@ const QuotationsPage = () => {
       const products = cart.map((c) => ({
         productId: c.productId,
         price: c.price,
+        pieces: c.pieces,
         quantity: c.quantity,
         ...(c.size != null ? { size: c.size } : {}),
       }));
@@ -492,7 +497,13 @@ const QuotationsPage = () => {
                 onClick={() =>
                   setCart((prev) => [
                     ...prev,
-                    { productId: '', size: undefined, price: 0, quantity: 1 },
+                    {
+                      productId: '',
+                      size: undefined,
+                      price: 0,
+                      pieces: 1,
+                      quantity: 1,
+                    },
                   ])
                 }
               >
@@ -577,6 +588,7 @@ const QuotationsPage = () => {
                                     productId: val,
                                     size: undefined,
                                     price: 0,
+                                    pieces: 1,
                                   }
                                 : c
                             )
@@ -605,6 +617,7 @@ const QuotationsPage = () => {
                                   (p: any) => p.size === val
                                 );
                                 const newPrice = pr?.price ?? item.price;
+                                const newPieces = pr?.pieces ?? 1;
                                 setCart((prev) => {
                                   const dupIdx = prev.findIndex(
                                     (c, i) =>
@@ -627,7 +640,12 @@ const QuotationsPage = () => {
                                   }
                                   return prev.map((c, i) =>
                                     i === idx
-                                      ? { ...c, size: val, price: newPrice }
+                                      ? {
+                                          ...c,
+                                          size: val,
+                                          price: newPrice,
+                                          pieces: newPieces,
+                                        }
                                       : c
                                   );
                                 });
@@ -679,7 +697,12 @@ const QuotationsPage = () => {
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                        ₹
+                        {(
+                          item.price *
+                          item.pieces *
+                          item.quantity
+                        ).toLocaleString('en-IN')}
                       </Text>
                       <Button
                         type="text"

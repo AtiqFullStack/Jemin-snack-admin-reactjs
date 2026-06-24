@@ -974,7 +974,7 @@ const Products = () => {
                     align="middle"
                     style={{ marginBottom: 8 }}
                   >
-                    <Col span={10}>
+                    <Col span={6}>
                       <Form.Item
                         name={[name, 'size']}
                         label="Size"
@@ -984,7 +984,7 @@ const Products = () => {
                         <SizeInput />
                       </Form.Item>
                     </Col>
-                    <Col span={10}>
+                    <Col span={8}>
                       <Form.Item
                         name={[name, 'price']}
                         label="Price (₹)"
@@ -1002,6 +1002,20 @@ const Products = () => {
                           min={0}
                           placeholder="Price (₹)"
                           prefix="₹"
+                          style={{ width: '100%' }}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={6}>
+                      <Form.Item
+                        name={[name, 'pieces']}
+                        label="Pieces/Katta"
+                        rules={[{ required: true, message: 'Enter pieces' }]}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <InputNumber
+                          min={1}
+                          placeholder="No. of pieces"
                           style={{ width: '100%' }}
                         />
                       </Form.Item>
