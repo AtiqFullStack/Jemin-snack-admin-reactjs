@@ -48,6 +48,12 @@ type ProductType = {
   name: string;
 };
 
+type SubType = {
+  _id: string;
+  name: string;
+  category: string | ProductType;
+};
+
 type ProductCategory = ProductType | string | null | undefined;
 
 type Product = {
@@ -57,7 +63,8 @@ type Product = {
   image?: string;
   imageUrl?: string;
   category?: ProductCategory;
-  prices?: { size: number; price: number }[];
+  subCategory?: SubType | string | null;
+  prices?: { size: number; price: number; pieces?: number }[];
   unit?: string;
   quantity?: number;
   isActive?: boolean;
@@ -67,8 +74,9 @@ type ProductFormValues = {
   name: string;
   description: string;
   category: string;
+  subCategory?: string;
   unit: string;
-  prices: { size: number; price: number }[];
+  prices: { size: number; price: number; pieces?: number }[];
   isActive: boolean;
 };
 
@@ -266,27 +274,37 @@ const Products = () => {
     createProducts,
     updateProducts,
     deleteProducts,
+    getSubTypes,
+    createSubTypes,
+    updateSubTypes,
+    deleteSubTypes,
   } = useProducts();
 
   const { canCreate, canUpdate, canDelete } = usePermissions();
 
   const [types, setTypes] = useState<ProductType[]>([]);
+  const [subTypes, setSubTypes] = useState<SubType[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [typesLoading, setTypesLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [savingType, setSavingType] = useState(false);
+  const [savingSubType, setSavingSubType] = useState(false);
   const [savingProduct, setSavingProduct] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [typeModal, setTypeModal] = useState(false);
+  const [subTypeModal, setSubTypeModal] = useState(false);
   const [productModal, setProductModal] = useState(false);
   const [editingType, setEditingType] = useState<ProductType | null>(null);
+  const [editingSubType, setEditingSubType] = useState<SubType | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchText, setSearchText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>();
 
   const [typeForm] = Form.useForm<Pick<ProductType, 'name'>>();
+  const [subTypeForm] = Form.useForm<{ name: string; category: string }>();
   const [productForm] = Form.useForm<ProductFormValues>();
+  const selectedUnit = Form.useWatch('unit', productForm) || 'Size';
 
   const getCategoryId = (category: ProductCategory) =>
     typeof category === 'string' ? category : category?._id;
@@ -303,6 +321,18 @@ const Products = () => {
     return types.find((type) => type._id === category)?.name || 'Unassigned';
   };
 
+  const getSubCategoryName = (subCategory: Product['subCategory']) => {
+    if (!subCategory) {
+      return '';
+    }
+
+    if (typeof subCategory !== 'string') {
+      return subCategory.name || '';
+    }
+
+    return subTypes.find((subType) => subType._id === subCategory)?.name || '';
+  };
+
   const fetchTypes = async () => {
     try {
       setTypesLoading(true);
@@ -312,6 +342,17 @@ const Products = () => {
       message.error('Unable to load product types');
     } finally {
       setTypesLoading(false);
+    }
+  };
+
+  const fetchSubTypes = async (categoryId?: string) => {
+    try {
+      const res = await getSubTypes(
+        categoryId ? { category: categoryId } : undefined
+      );
+      setSubTypes(res?.data || []);
+    } catch {
+      console.log('Unable to load subtypes');
     }
   };
 
@@ -328,7 +369,7 @@ const Products = () => {
   };
 
   const refreshPage = async () => {
-    await Promise.all([fetchTypes(), fetchProducts()]);
+    await Promise.all([fetchTypes(), fetchProducts(), fetchSubTypes()]);
   };
 
   useEffect(() => {
@@ -340,18 +381,22 @@ const Products = () => {
 
     return products.filter((product) => {
       const categoryName = getCategoryName(product.category).toLowerCase();
+      const subCategoryName = getSubCategoryName(
+        product.subCategory
+      ).toLowerCase();
       const matchesSearch =
         !normalizedSearch ||
         product.name?.toLowerCase().includes(normalizedSearch) ||
         product.description?.toLowerCase().includes(normalizedSearch) ||
-        categoryName.includes(normalizedSearch);
+        categoryName.includes(normalizedSearch) ||
+        subCategoryName.includes(normalizedSearch);
 
       const matchesCategory =
         !categoryFilter || getCategoryId(product.category) === categoryFilter;
 
       return matchesSearch && matchesCategory;
     });
-  }, [categoryFilter, products, searchText, types]);
+  }, [categoryFilter, products, searchText, subTypes, types]);
 
   const uncategorizedCount = products.filter(
     (product) => !getCategoryId(product.category)
@@ -360,12 +405,8 @@ const Products = () => {
   const openTypeModal = (type?: ProductType) => {
     setEditingType(type || null);
     setTypeModal(true);
-
-    if (type) {
-      typeForm.setFieldsValue({ name: type.name });
-    } else {
-      typeForm.resetFields();
-    }
+    if (type) typeForm.setFieldsValue({ name: type.name });
+    else typeForm.resetFields();
   };
 
   const closeTypeModal = () => {
@@ -374,22 +415,49 @@ const Products = () => {
     typeForm.resetFields();
   };
 
+  const openSubTypeModal = (sub?: SubType) => {
+    setEditingSubType(sub || null);
+    setSubTypeModal(true);
+    if (sub) {
+      subTypeForm.setFieldsValue({
+        name: sub.name,
+        category:
+          typeof sub.category === 'string'
+            ? sub.category
+            : (sub.category as ProductType)?._id,
+      });
+    } else {
+      subTypeForm.resetFields();
+    }
+  };
+
+  const closeSubTypeModal = () => {
+    setSubTypeModal(false);
+    setEditingSubType(null);
+    subTypeForm.resetFields();
+  };
+
   const [imageFileList, setImageFileList] = useState<UploadFile[]>([]);
 
   const openProductModal = (product?: Product) => {
     setEditingProduct(product || null);
     setProductModal(true);
     setImageFileList([]);
-
+    const categoryId = getCategoryId(product?.category);
+    if (categoryId) fetchSubTypes(categoryId);
     if (product) {
       productForm.setFieldsValue({
         name: product.name,
         description: product.description || '',
         category: getCategoryId(product.category),
+        subCategory:
+          typeof product.subCategory === 'string'
+            ? product.subCategory
+            : (product.subCategory as SubType)?._id,
         unit: product.unit || 'gm',
         prices: product.prices?.length
           ? product.prices
-          : [{ size: undefined, price: undefined }],
+          : [{ size: undefined, price: undefined, pieces: undefined }],
         isActive: product.isActive ?? true,
       });
     } else {
@@ -397,7 +465,7 @@ const Products = () => {
       productForm.setFieldsValue({
         isActive: true,
         unit: 'gm',
-        prices: [{ size: undefined, price: undefined }],
+        prices: [{ size: undefined, price: undefined, pieces: undefined }],
       });
     }
   };
@@ -412,7 +480,6 @@ const Products = () => {
     try {
       const values = await typeForm.validateFields();
       setSavingType(true);
-
       if (editingType) {
         await updateTypes(values, editingType._id);
         message.success('Type updated');
@@ -420,15 +487,47 @@ const Products = () => {
         await createTypes(values);
         message.success('Type created');
       }
-
       closeTypeModal();
       await fetchTypes();
     } catch (error) {
-      if (!(error as { errorFields?: unknown }).errorFields) {
+      if (!(error as { errorFields?: unknown }).errorFields)
         message.error('Unable to save type');
-      }
     } finally {
       setSavingType(false);
+    }
+  };
+
+  const handleSaveSubType = async () => {
+    try {
+      const values = await subTypeForm.validateFields();
+      setSavingSubType(true);
+      if (editingSubType) {
+        await updateSubTypes(values, editingSubType._id);
+        message.success('SubType updated');
+      } else {
+        await createSubTypes(values);
+        message.success('SubType created');
+      }
+      closeSubTypeModal();
+      await fetchSubTypes();
+    } catch (error) {
+      if (!(error as { errorFields?: unknown }).errorFields)
+        message.error('Unable to save subtype');
+    } finally {
+      setSavingSubType(false);
+    }
+  };
+
+  const handleDeleteSubType = async (sub: SubType) => {
+    try {
+      setDeletingId(sub._id);
+      await deleteSubTypes(sub._id);
+      message.success('SubType deleted');
+      await fetchSubTypes();
+    } catch {
+      message.error('Unable to delete subtype');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -457,6 +556,7 @@ const Products = () => {
       formData.append('unit', values.unit);
       formData.append('prices', JSON.stringify(values.prices));
       formData.append('isActive', String(values.isActive ?? true));
+      formData.append('subCategory', values.subCategory || '');
 
       if (imageFileList[0]?.originFileObj) {
         formData.append('image', imageFileList[0].originFileObj);
@@ -590,9 +690,18 @@ const Products = () => {
       render: (_, record) => {
         const hasCategory = Boolean(getCategoryId(record.category));
         return (
-          <Tag color={hasCategory ? 'blue' : 'default'}>
-            {getCategoryName(record.category)}
-          </Tag>
+          <Space direction="vertical" size={2}>
+            <Tag color={hasCategory ? 'blue' : 'default'}>
+              {getCategoryName(record.category)}
+            </Tag>
+            {record.subCategory && (
+              <Tag color="purple" style={{ fontSize: 11 }}>
+                {typeof record.subCategory === 'string'
+                  ? record.subCategory
+                  : (record.subCategory as SubType).name}
+              </Tag>
+            )}
+          </Space>
         );
       },
     },
@@ -739,18 +848,26 @@ const Products = () => {
             <Card
               title="Product Types"
               extra={
-                <>
+                <Space>
                   {canCreate('products') && (
-                    <Button
-                      type="primary"
-                      ghost
-                      icon={<PlusOutlined />}
-                      onClick={() => openTypeModal()}
-                    >
-                      New Type
-                    </Button>
+                    <>
+                      <Button
+                        icon={<PlusOutlined />}
+                        onClick={() => openSubTypeModal()}
+                      >
+                        New SubType
+                      </Button>
+                      <Button
+                        type="primary"
+                        ghost
+                        icon={<PlusOutlined />}
+                        onClick={() => openTypeModal()}
+                      >
+                        New Type
+                      </Button>
+                    </>
                   )}
-                </>
+                </Space>
               }
             >
               <Table
@@ -769,6 +886,70 @@ const Products = () => {
                   ),
                 }}
               />
+              {subTypes.length > 0 && (
+                <>
+                  <div style={{ marginTop: 16, marginBottom: 8 }}>
+                    <Text strong style={{ fontSize: 13 }}>
+                      Sub Types
+                    </Text>
+                  </div>
+                  <Table
+                    size="small"
+                    rowKey="_id"
+                    rowHoverable={false}
+                    pagination={false}
+                    dataSource={subTypes}
+                    columns={[
+                      {
+                        title: 'Name',
+                        dataIndex: 'name',
+                        render: (v: string) => <Text>{v}</Text>,
+                      },
+                      {
+                        title: 'Type',
+                        render: (_: any, r: SubType) => (
+                          <Tag color="blue">
+                            {typeof r.category === 'string'
+                              ? types.find((t) => t._id === r.category)?.name
+                              : (r.category as ProductType).name}
+                          </Tag>
+                        ),
+                      },
+                      {
+                        title: '',
+                        width: 80,
+                        align: 'right' as const,
+                        render: (_: any, r: SubType) => (
+                          <Space>
+                            {canUpdate('products') && (
+                              <Button
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={() => openSubTypeModal(r)}
+                              />
+                            )}
+                            {canDelete('products') && (
+                              <Popconfirm
+                                title="Delete subtype?"
+                                okText="Delete"
+                                okButtonProps={{ danger: true }}
+                                onConfirm={() => handleDeleteSubType(r)}
+                              >
+                                <Button
+                                  danger
+                                  size="small"
+                                  icon={<DeleteOutlined />}
+                                  loading={deletingId === r._id}
+                                />
+                              </Popconfirm>
+                            )}
+                          </Space>
+                        ),
+                      },
+                    ]}
+                  />
+                </>
+              )}
             </Card>
           </Col>
 
@@ -857,6 +1038,57 @@ const Products = () => {
         </Form>
       </Modal>
       <Modal
+        title={editingSubType ? 'Edit SubType' : 'Create SubType'}
+        open={subTypeModal}
+        onOk={handleSaveSubType}
+        onCancel={closeSubTypeModal}
+        confirmLoading={savingSubType}
+        okText={editingSubType ? 'Update SubType' : 'Create SubType'}
+        destroyOnHidden
+      >
+        <Form
+          form={subTypeForm}
+          layout="vertical"
+          requiredMark={(label, { required }) =>
+            required ? (
+              <>
+                {label} <span style={{ color: '#ff4d4f' }}>*</span>
+              </>
+            ) : (
+              <span>
+                {label}&nbsp;
+                <span style={{ color: '#8c8c8c', fontSize: 12 }}>
+                  (Optional)
+                </span>
+              </span>
+            )
+          }
+        >
+          <Form.Item
+            name="category"
+            label="Type"
+            rules={[{ required: true, message: 'Select a product type' }]}
+          >
+            <Select
+              showSearch
+              placeholder="Select type"
+              optionFilterProp="label"
+              options={types.map((type) => ({
+                label: type.name,
+                value: type._id,
+              }))}
+            />
+          </Form.Item>
+          <Form.Item
+            name="name"
+            label="SubType Name"
+            rules={[{ required: true, message: 'SubType name is required' }]}
+          >
+            <Input placeholder="e.g. 5 Rs, 10 Rs, Family Pack" />
+          </Form.Item>
+        </Form>
+      </Modal>
+      <Modal
         title={editingProduct ? 'Edit Product' : 'Create Product'}
         open={productModal}
         onOk={handleSaveProduct}
@@ -907,6 +1139,10 @@ const Products = () => {
                   showSearch
                   placeholder="Select type"
                   optionFilterProp="label"
+                  onChange={(categoryId) => {
+                    productForm.setFieldValue('subCategory', undefined);
+                    fetchSubTypes(categoryId);
+                  }}
                   options={types.map((type) => ({
                     label: type.name,
                     value: type._id,
@@ -917,6 +1153,21 @@ const Products = () => {
           </Row>
 
           <Row gutter={12}>
+            <Col xs={24} md={12}>
+              <Form.Item name="subCategory" label="Sub Type">
+                <Select
+                  allowClear
+                  showSearch
+                  placeholder="Select subtype"
+                  optionFilterProp="label"
+                  options={subTypes.map((subType) => ({
+                    label: subType.name,
+                    value: subType._id,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+
             <Col xs={24} md={12}>
               <Form.Item
                 name="unit"
@@ -956,7 +1207,7 @@ const Products = () => {
                   }}
                 >
                   <Text strong style={{ fontSize: 13 }}>
-                    Size & Price
+                    {selectedUnit} & Price
                   </Text>
                   <Button
                     size="small"
@@ -964,7 +1215,7 @@ const Products = () => {
                     icon={<PlusOutlined />}
                     onClick={() => add({ size: undefined, price: undefined })}
                   >
-                    Add Size
+                    Add {selectedUnit}
                   </Button>
                 </div>
                 {fields.map(({ key, name }) => (
@@ -977,7 +1228,7 @@ const Products = () => {
                     <Col span={6}>
                       <Form.Item
                         name={[name, 'size']}
-                        label="Size"
+                        label={selectedUnit}
                         rules={[{ required: true, message: 'Size required' }]}
                         style={{ marginBottom: 0 }}
                       >

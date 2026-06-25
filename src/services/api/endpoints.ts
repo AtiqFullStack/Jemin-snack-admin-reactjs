@@ -147,6 +147,12 @@ export const API_ENDPOINTS = {
       UPDATE: (id: string) => `/products/type/${id}`,
       DELETE: (id: string) => `/products/type/${id}`,
     },
+    SUBTYPE: {
+      GET: '/products/subtype',
+      POST: '/products/subtype',
+      UPDATE: (id: string) => `/products/subtype/${id}`,
+      DELETE: (id: string) => `/products/subtype/${id}`,
+    },
     PRODUCT: {
       GET: '/products',
       GET_BY_ID: (id: string) => `/products/${id}`,

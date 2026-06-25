@@ -57,6 +57,54 @@ const useProducts = () => {
     }
   };
 
+  // ================= SUBTYPES =================
+
+  const getSubTypes = async (params?: any) => {
+    try {
+      const res = await apiClient.get(API_ENDPOINTS.PRODUCT.SUBTYPE.GET, {
+        params,
+      });
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const createSubTypes = async (payload?: any) => {
+    try {
+      const res = await apiClient.post(
+        API_ENDPOINTS.PRODUCT.SUBTYPE.POST,
+        payload
+      );
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateSubTypes = async (payload: any, id: string) => {
+    try {
+      const res = await apiClient.put(
+        API_ENDPOINTS.PRODUCT.SUBTYPE.UPDATE(id),
+        payload
+      );
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const deleteSubTypes = async (id: string) => {
+    try {
+      const res = await apiClient.delete(
+        API_ENDPOINTS.PRODUCT.SUBTYPE.DELETE(id)
+      );
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // ================= PRODUCTS =================
 
   const getProducts = async (params?: any) => {
@@ -124,6 +172,11 @@ const useProducts = () => {
     createProducts,
     updateProducts,
     deleteProducts,
+
+    getSubTypes,
+    createSubTypes,
+    updateSubTypes,
+    deleteSubTypes,
   };
 };
 
