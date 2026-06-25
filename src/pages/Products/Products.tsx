@@ -305,9 +305,15 @@ const Products = () => {
   const [subTypeForm] = Form.useForm<{ name: string; category: string }>();
   const [productForm] = Form.useForm<ProductFormValues>();
   const selectedUnit = Form.useWatch('unit', productForm) || 'Size';
+  const selectedCategoryId = Form.useWatch('category', productForm);
 
   const getCategoryId = (category: ProductCategory) =>
     typeof category === 'string' ? category : category?._id;
+
+  const getSubTypeCategoryId = (subType: SubType) =>
+    typeof subType.category === 'string'
+      ? subType.category
+      : subType.category?._id;
 
   const getCategoryName = (category: ProductCategory) => {
     if (!category) {
@@ -332,6 +338,16 @@ const Products = () => {
 
     return subTypes.find((subType) => subType._id === subCategory)?.name || '';
   };
+
+  const categorySubTypes = useMemo(
+    () =>
+      selectedCategoryId
+        ? subTypes.filter(
+            (subType) => getSubTypeCategoryId(subType) === selectedCategoryId
+          )
+        : [],
+    [selectedCategoryId, subTypes]
+  );
 
   const fetchTypes = async () => {
     try {
@@ -443,8 +459,6 @@ const Products = () => {
     setEditingProduct(product || null);
     setProductModal(true);
     setImageFileList([]);
-    const categoryId = getCategoryId(product?.category);
-    if (categoryId) fetchSubTypes(categoryId);
     if (product) {
       productForm.setFieldsValue({
         name: product.name,
@@ -1139,9 +1153,8 @@ const Products = () => {
                   showSearch
                   placeholder="Select type"
                   optionFilterProp="label"
-                  onChange={(categoryId) => {
+                  onChange={() => {
                     productForm.setFieldValue('subCategory', undefined);
-                    fetchSubTypes(categoryId);
                   }}
                   options={types.map((type) => ({
                     label: type.name,
@@ -1153,20 +1166,22 @@ const Products = () => {
           </Row>
 
           <Row gutter={12}>
-            <Col xs={24} md={12}>
-              <Form.Item name="subCategory" label="Sub Type">
-                <Select
-                  allowClear
-                  showSearch
-                  placeholder="Select subtype"
-                  optionFilterProp="label"
-                  options={subTypes.map((subType) => ({
-                    label: subType.name,
-                    value: subType._id,
-                  }))}
-                />
-              </Form.Item>
-            </Col>
+            {categorySubTypes.length > 0 && (
+              <Col xs={24} md={12}>
+                <Form.Item name="subCategory" label="Sub Type">
+                  <Select
+                    allowClear
+                    showSearch
+                    placeholder="Select subtype"
+                    optionFilterProp="label"
+                    options={categorySubTypes.map((subType) => ({
+                      label: subType.name,
+                      value: subType._id,
+                    }))}
+                  />
+                </Form.Item>
+              </Col>
+            )}
 
             <Col xs={24} md={12}>
               <Form.Item
