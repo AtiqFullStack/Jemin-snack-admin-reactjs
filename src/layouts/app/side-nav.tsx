@@ -82,7 +82,7 @@ const CRM_MENU_ITEMS: MenuProps['items'] = [
   ),
 
   getItem(
-    <Link to={PATH_CRM.quotations}>Quotations</Link>,
+    <Link to={PATH_CRM.quotations}>Orders</Link>,
     PATH_CRM.quotations,
     <FileTextOutlined />
   ),

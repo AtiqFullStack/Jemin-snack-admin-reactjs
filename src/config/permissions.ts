@@ -144,7 +144,7 @@ export const MODULES = {
     scopes: ['all'],
   },
   quotations: {
-    label: 'Quotations',
+    label: 'Orders',
     group: 'Sales',
     actions: ['read', 'create', 'update', 'delete'],
     scopes: ['all', 'own'],

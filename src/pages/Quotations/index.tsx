@@ -14,6 +14,7 @@ import {
   Row,
   Select,
   Space,
+  Spin,
   Table,
   Tag,
   Tooltip,
@@ -21,6 +22,7 @@ import {
 } from 'antd';
 import {
   DeleteOutlined,
+  EditOutlined,
   FilePdfOutlined,
   PlusOutlined,
   ReloadOutlined,
@@ -34,6 +36,24 @@ import { usePermissions } from '../../hooks/usePermissions';
 
 const { Text } = Typography;
 
+const STATUS_OPTIONS = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'PROCESSING', label: 'Processing' },
+  { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'DELIVERED', label: 'Delivered' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
+
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: 'orange',
+  CONFIRMED: 'blue',
+  PROCESSING: 'purple',
+  SHIPPED: 'cyan',
+  DELIVERED: 'green',
+  CANCELLED: 'red',
+};
+
 type BillTo = { name: string; phone: string; email: string; address: string };
 
 const EMPTY_BILL: BillTo = { name: '', phone: '', email: '', address: '' };
@@ -42,8 +62,12 @@ const QuotationsPage = () => {
   const [quotations, setQuotations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [editingQuotation, setEditingQuotation] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
 
   const [leads, setLeads] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -141,6 +165,71 @@ const QuotationsPage = () => {
     }
   };
 
+  const updateOrderStatus = async (id: string, status: string) => {
+    try {
+      setStatusUpdating(id);
+      const res: any = await apiClient.put(`/quotations/orderstatus/${id}`, {
+        orderStatus: status,
+      });
+      if (res.data?.success) {
+        message.success('Status updated');
+        setQuotations((prev) =>
+          prev.map((q) => (q._id === id ? { ...q, orderStatus: status } : q))
+        );
+      } else {
+        message.error(res.data?.message || 'Failed to update status');
+      }
+    } catch {
+      message.error('Failed to update status');
+    } finally {
+      setStatusUpdating(null);
+    }
+  };
+
+  const openEditDrawer = (quotation: any) => {
+    setEditingQuotation(quotation);
+    setEditDrawerOpen(true);
+    editForm.setFieldsValue({
+      tax: quotation.tax ?? 0,
+      discount: quotation.discount ?? 0,
+    });
+    setBillTo(quotation.billTo ?? EMPTY_BILL);
+  };
+
+  const closeEditDrawer = () => {
+    setEditDrawerOpen(false);
+    setEditingQuotation(null);
+    editForm.resetFields();
+    setBillTo(EMPTY_BILL);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const values = await editForm.validateFields();
+      setSaving(true);
+      const res: any = await apiClient.put(
+        `/quotations/${editingQuotation._id}`,
+        {
+          billTo,
+          tax: values.tax,
+          discount: values.discount,
+        }
+      );
+      if (res.data?.success) {
+        message.success('Order updated!');
+        closeEditDrawer();
+        fetchQuotations();
+      } else {
+        message.error(res.data?.message || 'Failed');
+      }
+    } catch (e: any) {
+      if (e?.errorFields) return;
+      message.error(e?.message || 'Failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const openPdf = (id: string) => {
     const token = tokenStorage.getAccessToken();
     window.open(`${BASEURL}/api/quotations/${id}/pdf?token=${token}`, '_blank');
@@ -179,7 +268,7 @@ const QuotationsPage = () => {
 
       const res: any = await apiClient.post('/quotations/manual', payload);
       if (res.data?.success) {
-        message.success('Quotation created!');
+        message.success('Order created!');
         closeDrawer();
         fetchQuotations();
         openPdf(res.data.data._id);
@@ -196,7 +285,7 @@ const QuotationsPage = () => {
 
   const columns = [
     {
-      title: 'Quotation No',
+      title: 'Order No',
       dataIndex: 'quotationNo',
       render: (v: string) => (
         <Text strong style={{ color: '#1677ff' }}>
@@ -255,18 +344,46 @@ const QuotationsPage = () => {
       render: (v: string) => new Date(v).toLocaleDateString('en-IN'),
     },
     {
-      title: 'PDF',
-      key: 'pdf',
-      render: (_: any, row: any) => (
-        <Tooltip title="Download PDF">
-          <Button
-            type="text"
-            icon={
-              <FilePdfOutlined style={{ color: '#ff4d4f', fontSize: 18 }} />
-            }
-            onClick={() => openPdf(row._id)}
+      title: 'Status',
+      dataIndex: 'orderStatus',
+      render: (status: string, row: any) => (
+        <Spin spinning={statusUpdating === row._id} size="small">
+          <Select
+            size="small"
+            value={status || 'PENDING'}
+            disabled={statusUpdating === row._id}
+            style={{ width: 120 }}
+            options={STATUS_OPTIONS.map((o) => ({
+              ...o,
+              label: <Tag color={STATUS_COLORS[o.value]}>{o.label}</Tag>,
+            }))}
+            onChange={(val) => updateOrderStatus(row._id, val)}
           />
-        </Tooltip>
+        </Spin>
+      ),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_: any, row: any) => (
+        <Space>
+          {/* <Tooltip title="Edit">
+            <Button
+              type="text"
+              icon={<EditOutlined style={{ color: '#1677ff' }} />}
+              onClick={() => openEditDrawer(row)}
+            />
+          </Tooltip> */}
+          <Tooltip title="Download PDF">
+            <Button
+              type="text"
+              icon={
+                <FilePdfOutlined style={{ color: '#ff4d4f', fontSize: 18 }} />
+              }
+              onClick={() => openPdf(row._id)}
+            />
+          </Tooltip>
+        </Space>
       ),
     },
   ];
@@ -275,7 +392,7 @@ const QuotationsPage = () => {
     <div style={{ padding: 24 }}>
       <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
         <div>
-          <Text style={{ fontSize: 20, fontWeight: 700 }}>Quotations</Text>
+          <Text style={{ fontSize: 20, fontWeight: 700 }}>Orders</Text>
           <div>
             <Text type="secondary">
               Auto-generated from activities + manually created
@@ -292,7 +409,7 @@ const QuotationsPage = () => {
               icon={<PlusOutlined />}
               onClick={() => setDrawerOpen(true)}
             >
-              Create Quotation
+              Create Order
             </Button>
           )}
         </Space>
@@ -310,15 +427,116 @@ const QuotationsPage = () => {
             emptyText: (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="No quotations yet"
+                description="No orders yet"
               />
             ),
           }}
         />
       </Card>
 
+      {/* ── Edit Drawer ── */}
       <Drawer
-        title="Create Quotation"
+        title={`Edit Order — ${editingQuotation?.quotationNo || ''}`}
+        open={editDrawerOpen}
+        onClose={closeEditDrawer}
+        width={480}
+        extra={
+          <Space>
+            <Button onClick={closeEditDrawer}>Cancel</Button>
+            <Button type="primary" loading={saving} onClick={handleUpdate}>
+              Save Changes
+            </Button>
+          </Space>
+        }
+      >
+        <Form form={editForm} layout="vertical">
+          {editingQuotation?.billTo && (
+            <Card
+              size="small"
+              style={{
+                marginBottom: 16,
+                background: '#f6ffed',
+                border: '1px solid #b7eb8f',
+                borderRadius: 10,
+              }}
+              title={
+                <Flex align="center" gap={6}>
+                  <UserOutlined style={{ color: '#52c41a' }} />
+                  <Text strong style={{ fontSize: 13 }}>
+                    Bill To Details
+                  </Text>
+                </Flex>
+              }
+            >
+              <Row gutter={[12, 8]}>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>
+                    Name
+                  </Text>
+                  <Input
+                    size="small"
+                    value={billTo.name}
+                    onChange={(e) =>
+                      setBillTo((p) => ({ ...p, name: e.target.value }))
+                    }
+                  />
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>
+                    Phone
+                  </Text>
+                  <Input
+                    size="small"
+                    value={billTo.phone}
+                    onChange={(e) =>
+                      setBillTo((p) => ({ ...p, phone: e.target.value }))
+                    }
+                  />
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>
+                    Email
+                  </Text>
+                  <Input
+                    size="small"
+                    value={billTo.email}
+                    onChange={(e) =>
+                      setBillTo((p) => ({ ...p, email: e.target.value }))
+                    }
+                  />
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>
+                    Address
+                  </Text>
+                  <Input
+                    size="small"
+                    value={billTo.address}
+                    onChange={(e) =>
+                      setBillTo((p) => ({ ...p, address: e.target.value }))
+                    }
+                  />
+                </Col>
+              </Row>
+            </Card>
+          )}
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="tax" label="Tax (₹)">
+                <InputNumber style={{ width: '100%' }} min={0} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="discount" label="Discount (₹)">
+                <InputNumber style={{ width: '100%' }} min={0} />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Drawer>
+
+      <Drawer
+        title="Create Order"
         open={drawerOpen}
         onClose={closeDrawer}
         width={680}
