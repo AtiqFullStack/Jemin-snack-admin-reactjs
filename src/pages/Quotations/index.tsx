@@ -22,7 +22,6 @@ import {
 } from 'antd';
 import {
   DeleteOutlined,
-  EditOutlined,
   FilePdfOutlined,
   PlusOutlined,
   ReloadOutlined,
@@ -186,15 +185,15 @@ const QuotationsPage = () => {
     }
   };
 
-  const openEditDrawer = (quotation: any) => {
-    setEditingQuotation(quotation);
-    setEditDrawerOpen(true);
-    editForm.setFieldsValue({
-      tax: quotation.tax ?? 0,
-      discount: quotation.discount ?? 0,
-    });
-    setBillTo(quotation.billTo ?? EMPTY_BILL);
-  };
+  // const openEditDrawer = (quotation: any) => {
+  //   setEditingQuotation(quotation);
+  //   setEditDrawerOpen(true);
+  //   editForm.setFieldsValue({
+  //     tax: quotation.tax ?? 0,
+  //     discount: quotation.discount ?? 0,
+  //   });
+  //   setBillTo(quotation.billTo ?? EMPTY_BILL);
+  // };
 
   const closeEditDrawer = () => {
     setEditDrawerOpen(false);
