@@ -64,7 +64,12 @@ type Product = {
   imageUrl?: string;
   category?: ProductCategory;
   subCategory?: SubType | string | null;
-  prices?: { size: number; price: number; pieces?: number }[];
+  prices?: {
+    size: number;
+    price: number;
+    pieces?: number;
+    subCategory?: string | SubType | null;
+  }[];
   unit?: string;
   quantity?: number;
   isActive?: boolean;
@@ -74,9 +79,13 @@ type ProductFormValues = {
   name: string;
   description: string;
   category: string;
-  subCategory?: string;
   unit: string;
-  prices: { size: number; price: number; pieces?: number }[];
+  prices: {
+    size: number;
+    price: number;
+    pieces?: number;
+    subCategory?: string;
+  }[];
   isActive: boolean;
 };
 
@@ -464,14 +473,25 @@ const Products = () => {
         name: product.name,
         description: product.description || '',
         category: getCategoryId(product.category),
-        subCategory:
-          typeof product.subCategory === 'string'
-            ? product.subCategory
-            : (product.subCategory as SubType)?._id,
         unit: product.unit || 'gm',
         prices: product.prices?.length
-          ? product.prices
-          : [{ size: undefined, price: undefined, pieces: undefined }],
+          ? product.prices.map((p) => ({
+              size: p.size,
+              price: p.price,
+              pieces: p.pieces,
+              subCategory:
+                typeof p.subCategory === 'string'
+                  ? p.subCategory
+                  : (p.subCategory as SubType)?._id || undefined,
+            }))
+          : [
+              {
+                size: undefined,
+                price: undefined,
+                pieces: undefined,
+                subCategory: undefined,
+              },
+            ],
         isActive: product.isActive ?? true,
       });
     } else {
@@ -479,7 +499,14 @@ const Products = () => {
       productForm.setFieldsValue({
         isActive: true,
         unit: 'gm',
-        prices: [{ size: undefined, price: undefined, pieces: undefined }],
+        prices: [
+          {
+            size: undefined,
+            price: undefined,
+            pieces: undefined,
+            subCategory: undefined,
+          },
+        ],
       });
     }
   };
@@ -570,7 +597,6 @@ const Products = () => {
       formData.append('unit', values.unit);
       formData.append('prices', JSON.stringify(values.prices));
       formData.append('isActive', String(values.isActive ?? true));
-      formData.append('subCategory', values.subCategory || '');
 
       if (imageFileList[0]?.originFileObj) {
         formData.append('image', imageFileList[0].originFileObj);
@@ -721,10 +747,33 @@ const Products = () => {
     },
     {
       title: 'Size / Price',
-      width: 130,
+      width: 160,
       render: (_, record) => {
         if (!record.prices?.length) return <Text type="secondary">—</Text>;
-        return <SizePriceSelect prices={record.prices} unit={record.unit} />;
+        return (
+          <Space direction="vertical" size={2}>
+            <SizePriceSelect prices={record.prices as any} unit={record.unit} />
+            {record.prices.some((p) => p.subCategory) && (
+              <Space size={4} wrap>
+                {[
+                  ...new Set(
+                    record.prices
+                      .map((p) =>
+                        typeof p.subCategory === 'object'
+                          ? (p.subCategory as SubType)?.name
+                          : subTypes.find((s) => s._id === p.subCategory)?.name
+                      )
+                      .filter(Boolean)
+                  ),
+                ].map((name) => (
+                  <Tag key={name} color="purple" style={{ fontSize: 10 }}>
+                    {name}
+                  </Tag>
+                ))}
+              </Space>
+            )}
+          </Space>
+        );
       },
     },
     {
@@ -1166,23 +1215,6 @@ const Products = () => {
           </Row>
 
           <Row gutter={12}>
-            {categorySubTypes.length > 0 && (
-              <Col xs={24} md={12}>
-                <Form.Item name="subCategory" label="Sub Type">
-                  <Select
-                    allowClear
-                    showSearch
-                    placeholder="Select subtype"
-                    optionFilterProp="label"
-                    options={categorySubTypes.map((subType) => ({
-                      label: subType.name,
-                      value: subType._id,
-                    }))}
-                  />
-                </Form.Item>
-              </Col>
-            )}
-
             <Col xs={24} md={12}>
               <Form.Item
                 name="unit"
@@ -1228,73 +1260,98 @@ const Products = () => {
                     size="small"
                     type="dashed"
                     icon={<PlusOutlined />}
-                    onClick={() => add({ size: undefined, price: undefined })}
+                    onClick={() =>
+                      add({
+                        size: undefined,
+                        price: undefined,
+                        pieces: undefined,
+                        subCategory: undefined,
+                      })
+                    }
                   >
                     Add {selectedUnit}
                   </Button>
                 </div>
                 {fields.map(({ key, name }) => (
-                  <Row
+                  <div
                     key={key}
-                    gutter={8}
-                    align="middle"
-                    style={{ marginBottom: 8 }}
+                    style={{
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 8,
+                      padding: '10px 12px',
+                      marginBottom: 10,
+                      background: '#fafafa',
+                    }}
                   >
-                    <Col span={6}>
-                      <Form.Item
-                        name={[name, 'size']}
-                        label={selectedUnit}
-                        rules={[{ required: true, message: 'Size required' }]}
-                        style={{ marginBottom: 0 }}
-                      >
-                        <SizeInput />
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item
-                        name={[name, 'price']}
-                        label="Price (₹)"
-                        rules={[
-                          { required: true, message: 'Price required' },
-                          {
-                            type: 'number',
-                            min: 1,
-                            message: 'Min price is 1',
-                          },
-                        ]}
-                        style={{ marginBottom: 0 }}
-                      >
-                        <InputNumber
-                          min={0}
-                          placeholder="Price (₹)"
-                          prefix="₹"
-                          style={{ width: '100%' }}
+                    {categorySubTypes.length > 0 && (
+                      <Row gutter={8} style={{ marginBottom: 4 }}>
+                        <Col span={20}>
+                          <Form.Item
+                            name={[name, 'subCategory']}
+                            label="Sub Category"
+                            style={{ marginBottom: 0 }}
+                          >
+                            <Select
+                              allowClear
+                              placeholder="Select sub category (optional)"
+                              optionFilterProp="label"
+                              options={categorySubTypes.map((st) => ({
+                                label: st.name,
+                                value: st._id,
+                              }))}
+                            />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    )}
+                    <Row gutter={8} align="middle">
+                      <Col span={6}>
+                        <Form.Item
+                          name={[name, 'size']}
+                          label={selectedUnit}
+                          style={{ marginBottom: 0 }}
+                        >
+                          <SizeInput />
+                        </Form.Item>
+                      </Col>
+                      <Col span={8}>
+                        <Form.Item
+                          name={[name, 'price']}
+                          label="Price (₹)"
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0}
+                            placeholder="Price (₹)"
+                            prefix="₹"
+                            style={{ width: '100%' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item
+                          name={[name, 'pieces']}
+                          label="Pieces/Katta"
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={1}
+                            placeholder="No. of pieces"
+                            style={{ width: '100%' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col span={4}>
+                        <Button
+                          danger
+                          type="text"
+                          icon={<DeleteOutlined />}
+                          onClick={() => remove(name)}
+                          style={{ marginTop: 22 }}
                         />
-                      </Form.Item>
-                    </Col>
-                    <Col span={6}>
-                      <Form.Item
-                        name={[name, 'pieces']}
-                        label="Pieces/Katta"
-                        rules={[{ required: true, message: 'Enter pieces' }]}
-                        style={{ marginBottom: 0 }}
-                      >
-                        <InputNumber
-                          min={1}
-                          placeholder="No. of pieces"
-                          style={{ width: '100%' }}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      <Button
-                        danger
-                        type="text"
-                        icon={<DeleteOutlined />}
-                        onClick={() => remove(name)}
-                      />
-                    </Col>
-                  </Row>
+                      </Col>
+                    </Row>
+                  </div>
                 ))}
                 <Form.ErrorList errors={errors} />
               </>
