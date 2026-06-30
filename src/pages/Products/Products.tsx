@@ -63,7 +63,7 @@ type Product = {
   image?: string;
   imageUrl?: string;
   category?: ProductCategory;
-  subCategory?: SubType | string | null;
+  subCategory?: any;
   prices?: {
     size: number;
     price: number;
@@ -87,6 +87,7 @@ type ProductFormValues = {
     subCategory?: string;
   }[];
   isActive: boolean;
+  subCategory: any;
 };
 
 const SizePriceSelect = ({
