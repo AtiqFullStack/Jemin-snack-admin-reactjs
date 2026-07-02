@@ -44,6 +44,7 @@ import LeadViewModal from './LeadViewModal';
 import { usePermissions } from '../../hooks/usePermissions';
 import configService from '../../services/configService';
 import stateService from 'src/services/stateService';
+import { exportLeads } from './exportLeads';
 
 const LeadsPage = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -611,6 +612,12 @@ const LeadsPage = () => {
                         }}
                       >
                         Import Leads
+                      </Button>
+                      <Button
+                        icon={<DownloadOutlined />}
+                        onClick={() => exportLeads(filtered)}
+                      >
+                        Export Leads
                       </Button>
                       <Button
                         type="primary"
