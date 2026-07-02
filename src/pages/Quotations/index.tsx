@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 import {
   Button,
   Card,
   Col,
+  DatePicker,
   Divider,
   Drawer,
   Empty,
@@ -11,6 +13,7 @@ import {
   Input,
   InputNumber,
   message,
+  Modal,
   Row,
   Select,
   Space,
@@ -22,6 +25,7 @@ import {
 } from 'antd';
 import {
   DeleteOutlined,
+  EyeOutlined,
   FilePdfOutlined,
   PlusOutlined,
   ReloadOutlined,
@@ -65,6 +69,24 @@ const QuotationsPage = () => {
   const [editingQuotation, setEditingQuotation] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<any>(null);
+  const [viewLoading, setViewLoading] = useState(false);
+
+  const openViewDrawer = async (row: any) => {
+    setViewingOrder(row);
+    try {
+      setViewLoading(true);
+      const res: any = await apiClient.get(`/quotations/${row._id}`);
+      if (res.data?.success) setViewingOrder(res.data.data);
+    } finally {
+      setViewLoading(false);
+    }
+  };
+  const [pendingStatus, setPendingStatus] = useState<{
+    id: string;
+    status: string;
+  } | null>(null);
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<any>(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
 
@@ -164,12 +186,23 @@ const QuotationsPage = () => {
     }
   };
 
-  const updateOrderStatus = async (id: string, status: string) => {
+  const updateOrderStatus = async (
+    id: string,
+    status: string,
+    deliveryDate?: any
+  ) => {
     try {
       setStatusUpdating(id);
-      const res: any = await apiClient.put(`/quotations/orderstatus/${id}`, {
-        orderStatus: status,
-      });
+      const payload: any = { orderStatus: status };
+      if (deliveryDate) {
+        const d = deliveryDate.toDate();
+        d.setHours(12, 0, 0, 0);
+        payload.expectedDeliveryDate = d.toISOString();
+      }
+      const res: any = await apiClient.put(
+        `/quotations/orderstatus/${id}`,
+        payload
+      );
       if (res.data?.success) {
         message.success('Status updated');
         setQuotations((prev) =>
@@ -182,6 +215,21 @@ const QuotationsPage = () => {
       message.error('Failed to update status');
     } finally {
       setStatusUpdating(null);
+    }
+  };
+
+  const DELIVERY_DATE_STATUSES = ['CONFIRMED', 'PROCESSING', 'SHIPPED'];
+
+  const handleStatusChange = (id: string, status: string) => {
+    if (DELIVERY_DATE_STATUSES.includes(status)) {
+      const existing = quotations.find((q) => q._id === id);
+      const prefill = existing?.expectedDeliveryDate
+        ? dayjs(existing.expectedDeliveryDate)
+        : null;
+      setExpectedDeliveryDate(prefill);
+      setPendingStatus({ id, status });
+    } else {
+      updateOrderStatus(id, status);
     }
   };
 
@@ -356,7 +404,7 @@ const QuotationsPage = () => {
               ...o,
               label: <Tag color={STATUS_COLORS[o.value]}>{o.label}</Tag>,
             }))}
-            onChange={(val) => updateOrderStatus(row._id, val)}
+            onChange={(val) => handleStatusChange(row._id, val)}
           />
         </Spin>
       ),
@@ -373,6 +421,13 @@ const QuotationsPage = () => {
               onClick={() => openEditDrawer(row)}
             />
           </Tooltip> */}
+          <Tooltip title="View">
+            <Button
+              type="text"
+              icon={<EyeOutlined style={{ color: '#1677ff' }} />}
+              onClick={() => openViewDrawer(row)}
+            />
+          </Tooltip>
           <Tooltip title="Download PDF">
             <Button
               type="text"
@@ -432,6 +487,306 @@ const QuotationsPage = () => {
           }}
         />
       </Card>
+
+      {/* ── View Order Drawer ── */}
+      <Drawer
+        title={
+          <Flex align="center" gap={10}>
+            <Text strong style={{ fontSize: 16 }}>
+              Order Details
+            </Text>
+            {viewingOrder?.quotationNo && (
+              <Tag color="blue" style={{ fontSize: 13 }}>
+                {viewingOrder.quotationNo}
+              </Tag>
+            )}
+          </Flex>
+        }
+        open={!!viewingOrder}
+        onClose={() => setViewingOrder(null)}
+        width={560}
+        extra={
+          <Button
+            type="primary"
+            icon={<FilePdfOutlined />}
+            onClick={() => openPdf(viewingOrder?._id)}
+          >
+            Download PDF
+          </Button>
+        }
+      >
+        {viewingOrder &&
+          (() => {
+            if (viewLoading)
+              return (
+                <div style={{ textAlign: 'center', padding: 40 }}>
+                  <Spin />
+                </div>
+              );
+            const o = viewingOrder;
+            const taxable = (o.products || []).reduce(
+              (s: number, p: any) =>
+                s + (p.price || 0) * (p.pieces || 1) * (p.quantity || 1),
+              0
+            );
+            const cgst = parseFloat(((taxable * 2.5) / 100).toFixed(2));
+            const sgst = parseFloat(((taxable * 2.5) / 100).toFixed(2));
+            const grandTotal = Math.round(
+              taxable + cgst + sgst - (o.discount || 0)
+            );
+            const fmt = (v: number) =>
+              Number(v || 0).toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+              });
+            const fmtDate = (d: string) =>
+              d
+                ? new Date(d).toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                : '—';
+
+            return (
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+              >
+                {/* Status + Source */}
+                <Flex gap={10} wrap="wrap">
+                  <Tag
+                    color={STATUS_COLORS[o.orderStatus] || 'default'}
+                    style={{ fontSize: 13, padding: '4px 12px' }}
+                  >
+                    {STATUS_OPTIONS.find((s) => s.value === o.orderStatus)
+                      ?.label ||
+                      o.orderStatus ||
+                      'Pending'}
+                  </Tag>
+                  <Tag
+                    color={o.source === 'activity' ? 'blue' : 'green'}
+                    style={{ fontSize: 13, padding: '4px 12px' }}
+                  >
+                    {o.source}
+                  </Tag>
+                </Flex>
+
+                {/* Bill To */}
+                <Card
+                  size="small"
+                  title={<Text strong>Bill To</Text>}
+                  style={{ borderRadius: 10 }}
+                >
+                  <Text strong style={{ fontSize: 15 }}>
+                    {o.billTo?.name || '—'}
+                  </Text>
+                  {o.billTo?.phone && (
+                    <div>
+                      <Text type="secondary">📞 {o.billTo.phone}</Text>
+                    </div>
+                  )}
+                  {o.billTo?.email && (
+                    <div>
+                      <Text type="secondary">✉️ {o.billTo.email}</Text>
+                    </div>
+                  )}
+                  {o.billTo?.address && (
+                    <div>
+                      <Text type="secondary">📍 {o.billTo.address}</Text>
+                    </div>
+                  )}
+                </Card>
+
+                {/* Dates */}
+                <Card
+                  size="small"
+                  title={<Text strong>Dates</Text>}
+                  style={{ borderRadius: 10 }}
+                >
+                  <Row gutter={[12, 8]}>
+                    <Col span={12}>
+                      <Text type="secondary" style={{ fontSize: 11 }}>
+                        Order Date
+                      </Text>
+                      <div>
+                        <Text strong>{fmtDate(o.createdAt)}</Text>
+                      </div>
+                    </Col>
+                    {o.expectedDeliveryDate && (
+                      <Col span={12}>
+                        <Text type="secondary" style={{ fontSize: 11 }}>
+                          Expected Delivery
+                        </Text>
+                        <div>
+                          <Text strong style={{ color: '#1677ff' }}>
+                            {fmtDate(o.expectedDeliveryDate)}
+                          </Text>
+                        </div>
+                      </Col>
+                    )}
+                    {o.deliveredAt && (
+                      <Col span={12}>
+                        <Text type="secondary" style={{ fontSize: 11 }}>
+                          Delivered On
+                        </Text>
+                        <div>
+                          <Text strong style={{ color: '#16a34a' }}>
+                            {fmtDate(o.deliveredAt)}
+                          </Text>
+                        </div>
+                      </Col>
+                    )}
+                  </Row>
+                </Card>
+
+                {/* Products */}
+                <Card
+                  size="small"
+                  title={
+                    <Text strong>Products ({o.products?.length || 0})</Text>
+                  }
+                  style={{ borderRadius: 10, padding: 0 }}
+                >
+                  {(o.products || []).map((p: any, i: number) => (
+                    <Flex
+                      key={i}
+                      justify="space-between"
+                      align="center"
+                      style={{
+                        padding: '10px 12px',
+                        borderBottom: '1px solid #f1f5f9',
+                      }}
+                    >
+                      <Flex align="center" gap={10}>
+                        {p.image ? (
+                          <img
+                            src={`${BASEURL}/${p.image}`}
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 6,
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 6,
+                              background: '#f0f0f0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <ShoppingOutlined style={{ color: '#bbb' }} />
+                          </div>
+                        )}
+                        <div>
+                          <Text strong style={{ fontSize: 13 }}>
+                            {p.name || 'Product'}
+                          </Text>
+                          <div>
+                            {p.size && (
+                              <Tag style={{ fontSize: 11 }}>
+                                {p.size}
+                                {p.unit || 'gm'}
+                              </Tag>
+                            )}
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              Qty: {p.quantity || 1} &nbsp;|&nbsp; ₹{p.price}/pc
+                            </Text>
+                          </div>
+                        </div>
+                      </Flex>
+                      <Text strong style={{ color: '#16a34a' }}>
+                        ₹
+                        {fmt(
+                          (p.price || 0) * (p.pieces || 1) * (p.quantity || 1)
+                        )}
+                      </Text>
+                    </Flex>
+                  ))}
+                </Card>
+
+                {/* Bill Summary */}
+                <Card
+                  size="small"
+                  title={<Text strong>Bill Summary</Text>}
+                  style={{ borderRadius: 10 }}
+                >
+                  <Flex justify="space-between" style={{ marginBottom: 6 }}>
+                    <Text type="secondary">Taxable Value</Text>
+                    <Text>₹{fmt(taxable)}</Text>
+                  </Flex>
+                  <Flex justify="space-between" style={{ marginBottom: 6 }}>
+                    <Text type="secondary">CGST (2.5%)</Text>
+                    <Text>₹{fmt(cgst)}</Text>
+                  </Flex>
+                  <Flex justify="space-between" style={{ marginBottom: 6 }}>
+                    <Text type="secondary">SGST (2.5%)</Text>
+                    <Text>₹{fmt(sgst)}</Text>
+                  </Flex>
+                  {!!o.discount && (
+                    <Flex justify="space-between" style={{ marginBottom: 6 }}>
+                      <Text type="secondary">Discount</Text>
+                      <Text style={{ color: '#16a34a' }}>
+                        - ₹{fmt(o.discount)}
+                      </Text>
+                    </Flex>
+                  )}
+                  <Divider style={{ margin: '8px 0' }} />
+                  <Flex justify="space-between">
+                    <Text strong style={{ fontSize: 15 }}>
+                      Grand Total
+                    </Text>
+                    <Text strong style={{ fontSize: 16, color: '#16a34a' }}>
+                      ₹{fmt(grandTotal)}
+                    </Text>
+                  </Flex>
+                </Card>
+              </div>
+            );
+          })()}
+      </Drawer>
+
+      {/* ── Expected Delivery Date Modal ── */}
+      <Modal
+        title="Set Expected Delivery Date"
+        open={!!pendingStatus}
+        onCancel={() => {
+          setPendingStatus(null);
+          setExpectedDeliveryDate(null);
+        }}
+        onOk={() => {
+          if (pendingStatus)
+            updateOrderStatus(
+              pendingStatus.id,
+              pendingStatus.status,
+              expectedDeliveryDate
+            );
+          setPendingStatus(null);
+          setExpectedDeliveryDate(null);
+        }}
+        okText="Confirm"
+        okButtonProps={{ disabled: !expectedDeliveryDate }}
+      >
+        <div style={{ marginBottom: 8 }}>
+          <Tag color={STATUS_COLORS[pendingStatus?.status || '']}>
+            {
+              STATUS_OPTIONS.find((o) => o.value === pendingStatus?.status)
+                ?.label
+            }
+          </Tag>
+        </div>
+        <DatePicker
+          style={{ width: '100%' }}
+          placeholder="Select expected delivery date"
+          value={expectedDeliveryDate}
+          onChange={(date) => setExpectedDeliveryDate(date)}
+          disabledDate={(d) => d && d.isBefore(new Date(), 'day')}
+        />
+      </Modal>
 
       {/* ── Edit Drawer ── */}
       <Drawer

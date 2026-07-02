@@ -87,6 +87,7 @@ type ProductFormValues = {
     subCategory?: string;
   }[];
   isActive: boolean;
+  subCategory: any;
 };
 
 const SizePriceSelect = ({
