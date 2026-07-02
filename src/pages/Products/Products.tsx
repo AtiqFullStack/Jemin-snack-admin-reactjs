@@ -63,7 +63,7 @@ type Product = {
   image?: string;
   imageUrl?: string;
   category?: ProductCategory;
-  subCategory?: SubType | string | null;
+  subCategory?: any;
   prices?: {
     size: number;
     price: number;
